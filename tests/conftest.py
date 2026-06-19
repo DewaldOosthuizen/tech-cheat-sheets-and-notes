@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from pathlib import Path
 
 # The PyMdown Snippets base_path as configured in mkdocs.yml.
@@ -11,6 +12,10 @@ from pathlib import Path
 # resolves to  <repo>/docs/azure/diagrams/networking/decision-flow.mmd
 REPO_ROOT = Path(__file__).parent.parent
 SNIPPET_BASE = REPO_ROOT / "docs"
+SCRIPTS_DIR = str(REPO_ROOT / "scripts")
+
+if SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, SCRIPTS_DIR)
 
 _SNIPPET_RE = re.compile(r"""--8<--\s+["']([^"']+)["']""")
 

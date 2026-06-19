@@ -9,11 +9,9 @@ Covers all 4 sub-issues:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
+from conftest import REPO_ROOT
 
-REPO_ROOT = Path(__file__).parent.parent.parent
 DOCS = REPO_ROOT / "docs"
 
 AWS_DOMAINS = [

@@ -1,10 +1,7 @@
 """Tests for issue #134 - FEATURE: Expand cheat sheet with AZ-500 Security Engineer content."""
 
-from pathlib import Path
+from conftest import REPO_ROOT, expand_snippets
 
-from conftest import expand_snippets
-
-REPO_ROOT = Path(__file__).parent.parent.parent
 SNIPPETS_DIR = REPO_ROOT / "docs" / "azure" / "files"
 
 

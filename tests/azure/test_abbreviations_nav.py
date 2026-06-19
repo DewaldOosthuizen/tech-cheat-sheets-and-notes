@@ -8,12 +8,9 @@ Verifies that:
   - docs/azure/files/exams/exams.md has Abbreviations as first data row in the table
 """
 
-import pathlib
-
 import pytest
 import yaml
-
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
+from conftest import REPO_ROOT
 
 AZURE_ABBREV_MD = REPO_ROOT / "docs" / "azure" / "files" / "abbreviations" / "abbreviations.md"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"

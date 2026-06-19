@@ -6,11 +6,9 @@ Verifies that:
   - mkdocs.yml registers the AWS Exam Coverage page
 """
 
-import pathlib
-
 import pytest
+from conftest import REPO_ROOT
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AWS_EXAMS_MD = REPO_ROOT / "docs" / "aws" / "files" / "exams" / "exams.md"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"

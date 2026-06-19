@@ -10,12 +10,9 @@ Verifies that:
   - monitoring.md has Application Insights developer focus section
 """
 
-import pathlib
-
 import pytest
-from conftest import expand_snippets
+from conftest import REPO_ROOT, expand_snippets
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 EXAMS_MD = REPO_ROOT / "docs" / "azure" / "files" / "exams" / "exams.md"
 COMPUTE_MD = REPO_ROOT / "docs" / "azure" / "files" / "compute" / "compute.md"
 STORAGE_MD = REPO_ROOT / "docs" / "azure" / "files" / "storage" / "storage.md"
