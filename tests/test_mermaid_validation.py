@@ -1,12 +1,9 @@
 """Tests for issue #42 - error handling and exit-code reporting in validate_mermaid.py."""
 
 import shutil
-import sys
 from unittest.mock import patch
 
 import pytest
-
-sys.path.insert(0, "scripts")
 import validate_mermaid
 
 

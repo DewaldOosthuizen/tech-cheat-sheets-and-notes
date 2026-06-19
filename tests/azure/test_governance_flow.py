@@ -10,27 +10,25 @@ Verifies that:
   - The diagram directive is exactly 'flowchart TD' (not 'graph TD')
 """
 
-import pathlib
 import re
 
 import pytest
-from conftest import expand_snippets
+from conftest import REPO_ROOT, expand_snippets
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 GOVERNANCE = REPO_ROOT / "docs" / "azure" / "files" / "governance" / "governance.md"
 
 
 @pytest.fixture(scope="module")
-def az305_text():
+def governance_text():
     # Expand --8<-- snippet directives so diagram content is visible to assertions.
     return expand_snippets(GOVERNANCE.read_text())
 
 
 @pytest.fixture(scope="module")
-def governance_section(az305_text):
+def governance_section(governance_text):
     """Extract the GOVERNANCE section text for narrower assertions."""
     # The governance file IS the governance section now — use its full content.
-    return az305_text
+    return governance_text
 
 
 class TestGovernanceDecisionFlowSubsectionExists:
@@ -39,10 +37,10 @@ class TestGovernanceDecisionFlowSubsectionExists:
     def test_subsection_heading_present(self, governance_section):
         assert "## Governance Enforcement Decision Flow" in governance_section
 
-    def test_subsection_uses_h2_not_h3(self, az305_text):
+    def test_subsection_uses_h2_not_h3(self, governance_text):
         # Must be ## not ###
-        assert "## Governance Enforcement Decision Flow" in az305_text
-        assert "### Governance Enforcement Decision Flow" not in az305_text
+        assert "## Governance Enforcement Decision Flow" in governance_text
+        assert "### Governance Enforcement Decision Flow" not in governance_text
 
 
 class TestGovernanceDecisionFlowDiagramDirective:

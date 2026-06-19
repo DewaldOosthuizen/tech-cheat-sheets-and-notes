@@ -8,11 +8,9 @@ Verifies that:
   - Existing exam tips and VM Family Decision Flow diagram are preserved
 """
 
-import pathlib
-
 import pytest
+from conftest import REPO_ROOT
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 COMPUTE_MD = REPO_ROOT / "docs" / "azure" / "files" / "compute" / "compute.md"
 
 EXPECTED_VM_SERIES = [

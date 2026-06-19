@@ -259,6 +259,14 @@ adding new sections or reorganizing content, verify ordering in both `index.md` 
 - Keep scripts small and single-purpose.
 - Add or update tests in `tests/` whenever script behaviour changes.
 
+### Shared Test Infrastructure
+
+`tests/conftest.py` is the single shared support module for the pytest suite.
+Import shared constants and helpers such as `REPO_ROOT`, `SNIPPET_BASE`, and
+`expand_snippets()` from `conftest` instead of redefining them in individual
+modules. Suite-wide bootstrap logic that multiple test modules depend on, such
+as the `validate_mermaid` import-path setup, also belongs there.
+
 ### Section Snippet Files
 
 Each top-level domain section lives in its own standalone snippet file:

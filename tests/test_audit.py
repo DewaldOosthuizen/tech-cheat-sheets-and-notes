@@ -8,12 +8,11 @@ Covers:
 """
 
 import re
-from pathlib import Path
 
+from conftest import REPO_ROOT
 from packaging.requirements import Requirement
 from packaging.version import Version
 
-REPO_ROOT = Path(__file__).parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 LINT_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "lint.yml"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"

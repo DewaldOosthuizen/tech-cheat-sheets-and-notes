@@ -12,12 +12,9 @@ Verifies that:
   - The exam tip mentions Standard GPv2 and all six tiers
 """
 
-import pathlib
-
 import pytest
-from conftest import expand_snippets
+from conftest import REPO_ROOT, expand_snippets
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 STORAGE_MD = REPO_ROOT / "docs" / "azure" / "files" / "storage" / "storage.md"
 
 

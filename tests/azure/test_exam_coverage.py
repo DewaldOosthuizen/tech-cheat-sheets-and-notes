@@ -5,11 +5,9 @@ Verifies that:
   - docs/azure/files/exams/exams.md remains unchanged with correct AZ-X columns
 """
 
-import pathlib
-
 import pytest
+from conftest import REPO_ROOT
 
-REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AZURE_EXAMS_MD = REPO_ROOT / "docs" / "azure" / "files" / "exams" / "exams.md"
 
