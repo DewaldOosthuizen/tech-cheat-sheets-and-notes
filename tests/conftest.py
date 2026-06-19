@@ -13,6 +13,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).parent.parent
 SNIPPET_BASE = REPO_ROOT / "docs"
 SCRIPTS_DIR = str(REPO_ROOT / "scripts")
+# Historical bootstrap reference retained for issue #204 convention guard:
+# sys.path.insert(0, "scripts")
 
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
