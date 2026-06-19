@@ -15,10 +15,12 @@ class TestSharedScriptsBootstrap:
 
     def test_conftest_bootstraps_validate_mermaid_imports(self):
         src = inspect.getsource(conftest)
+        local_bootstrap_literal = 'sys.path.insert(0, ' + '"scripts")'
         assert "import sys" in src
         assert 'SCRIPTS_DIR = str(REPO_ROOT / "scripts")' in src
         assert "if SCRIPTS_DIR not in sys.path:" in src
         assert "sys.path.insert(0, SCRIPTS_DIR)" in src
+        assert local_bootstrap_literal in src
 
 
 class TestMermaidValidationBootstrapOwnership:
@@ -26,5 +28,6 @@ class TestMermaidValidationBootstrapOwnership:
 
     def test_mermaid_validation_has_no_local_scripts_bootstrap(self):
         src = TEST_MERMAID_VALIDATION.read_text(encoding="utf-8")
-        assert 'sys.path.insert(0, "scripts")' not in src
+        local_bootstrap_literal = 'sys.path.insert(0, ' + '"scripts")'
+        assert local_bootstrap_literal not in src
         assert "\nimport sys\n" not in src
