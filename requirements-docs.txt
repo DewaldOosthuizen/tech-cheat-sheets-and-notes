@@ -4,4 +4,4 @@
 #
 # Keep the version constraint in sync with pyproject.toml:
 #   [project.optional-dependencies] dev -> mkdocs-material
-mkdocs-material>=9.7.6,<10
+mkdocs-material>=9.7.7,<10
