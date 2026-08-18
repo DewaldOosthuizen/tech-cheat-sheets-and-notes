@@ -47,7 +47,7 @@ MMD_FILES_VALIDATE := $(shell find docs/azure/diagrams -name '*.mmd' 2>/dev/null
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install \
         markdownlint \
-        puppeteer-config mermaid-check \
+	puppeteer-config npm-audit mermaid-check \
         python-lint python-lint-fix \
         python-audit \
         python-test python-test-311 python-test-312 python-test-313 python-test-all \
@@ -64,6 +64,7 @@ help:
 	@echo "  make venv              Create .venv and install dev deps (idempotent)"
 	@echo "  make install           venv + npm ci"
 	@echo "  make markdownlint      Lint Markdown files"
+	@echo "  make npm-audit         Audit Node dependencies for high-severity vulnerabilities"
 	@echo "  make mermaid-check     Validate Mermaid diagrams (MD files + .mmd files)"
 	@echo "  make python-lint       ruff check + format check (inside .venv)"
 	@echo "  make python-lint-fix   Auto-fix safe ruff violations"
@@ -106,10 +107,14 @@ puppeteer-config:
 mermaid-check: puppeteer-config
 	@echo "--- mermaid-check ---"
 	npm ci
-	npm audit --audit-level=high
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
 	  $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE)
+
+npm-audit:
+	@echo "--- npm-audit ---"
+	npm ci
+	npm audit --audit-level=high
 
 # ── Python lint ───────────────────────────────────────────────────────────────
 python-lint: venv
@@ -213,11 +218,11 @@ docs-build: venv
 	$(VENV_BIN)/mkdocs build --strict
 
 # ── Full CI pipeline ──────────────────────────────────────────────────────────
-ci: markdownlint mermaid-check python-lint-fix python-lint python-audit python-test docs-build
+ci: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test docs-build
 	@echo ""
 	@echo "=== CI passed ==="
 
-ci-full: markdownlint mermaid-check python-lint-fix python-lint python-audit python-test link-check
+ci-full: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test link-check
 	@echo ""
 	@echo "=== CI (full, including link-check) passed ==="
 
