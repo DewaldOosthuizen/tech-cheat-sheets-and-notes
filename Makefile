@@ -42,7 +42,7 @@ MD_FILES_VALIDATE := $(shell find docs -name '*.md' \
   ! -path 'docs/azure/diagrams/*' \
   ! -path 'docs/overrides/*')
 # All standalone .mmd diagram files
-MMD_FILES_VALIDATE := $(shell find docs/azure/diagrams -name '*.mmd' 2>/dev/null)
+MMD_FILES_VALIDATE := $(shell find docs/azure/diagrams docs/aws/diagrams -name '*.mmd' 2>/dev/null)
 
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install \
@@ -109,7 +109,7 @@ mermaid-check: puppeteer-config
 	npm ci
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
-	  $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE)
+	  $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE) $(MMD_FILES_VALIDATE)
 
 npm-audit:
 	@echo "--- npm-audit ---"
