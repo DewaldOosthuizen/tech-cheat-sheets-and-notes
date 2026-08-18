@@ -121,5 +121,5 @@ jobs:
         - name: Validate Mermaid diagrams
           run: |
             python3 scripts/validate_mermaid.py \
-              $(find docs/azure/files -name '*.md' | sort) \
-              $(find docs/azure/diagrams -name '*.mmd' | sort)
+              $(find docs/azure/files docs/aws/files -name '*.md' | sort) \
+              $(find docs/azure/diagrams docs/aws/diagrams -name '*.mmd' | sort)
