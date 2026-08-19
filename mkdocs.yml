@@ -58,6 +58,8 @@ markdown_extensions:
 nav:
   - Home: index.md
   # Always alphabetically order top-level sections for easier navigation and maintenance.
+  - Programming:
+    - Java: programming/files/java/java.md
   - Cloud Service Providers:
     - AWS:
         - Abbreviations: aws/files/abbreviations/abbreviations.md

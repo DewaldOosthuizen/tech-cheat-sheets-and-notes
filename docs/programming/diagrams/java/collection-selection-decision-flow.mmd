@@ -1,0 +1,15 @@
+flowchart TD
+    A[Need a collection] --> B{Key-value pairs?}
+    B -- Yes --> C{Need insertion order?}
+    C -- Yes --> D[LinkedHashMap]
+    C -- No, need sorted keys --> E[TreeMap]
+    C -- No --> F[HashMap]
+    B -- No --> G{Duplicates allowed?}
+    G -- No --> H{Need sorted order?}
+    H -- Yes --> I[TreeSet]
+    H -- No, need insertion order --> J[LinkedHashSet]
+    H -- No --> K[HashSet]
+    G -- Yes --> L{Frequent index access?}
+    L -- Yes --> M[ArrayList]
+    L -- No, frequent insert/remove at ends --> N[ArrayDeque]
+    L -- No, frequent insert/remove in middle --> O[LinkedList]
