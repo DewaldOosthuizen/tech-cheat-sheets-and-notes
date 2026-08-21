@@ -106,14 +106,14 @@ class TestGoogleExamsFileContent:
     def test_waf_row_present(self, google_exams_text):
         assert "Well-Architected" in google_exams_text
 
-    def test_twelve_data_rows(self, google_exams_text):
-        # 11 domain rows + 1 abbreviations row = 12 total data rows
+    def test_eleven_data_rows(self, google_exams_text):
+        # 10 domain rows + 1 abbreviations row = 11 total data rows
         data_rows = [
             line
             for line in google_exams_text.splitlines()
             if line.strip().startswith("|") and "---" not in line and "Section" not in line
         ]
-        assert len(data_rows) == 12, f"Expected 12 data rows, got {len(data_rows)}"
+        assert len(data_rows) == 11, f"Expected 11 data rows, got {len(data_rows)}"
 
     def test_table_rows_use_single_pipe_prefix(self, google_exams_text):
         """Every table row must begin with exactly one pipe, not || or |||."""

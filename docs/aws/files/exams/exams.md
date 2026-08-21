@@ -1,7 +1,7 @@
 # Exam Track Index
 
 | Section | CLF-C02 | SAA-C03 | SAP-C02 |
-| --- | --- | --- | --- |
+| --- | --- | --- |
 | [Abbreviations](../abbreviations/abbreviations.md) | — | — | — |
 | [Compute](../compute/compute.md) | Partial | Full | Full |
 | [Networking](../networking/networking.md) | Partial | Full | Full |
