@@ -13,9 +13,10 @@ answer "which one and why?" — not step-by-step tutorials or portal walkthrough
 
 | Topic |
 |-------|
-| Microsoft Azure |
-| Amazon Web Services |
-| Programming (Java) |
+|| Microsoft Azure |
+|| Amazon Web Services |
+|| Google Cloud |
+|| Programming (Java) |
 
 More topics (other cloud providers, DevOps tooling, architecture patterns) will be added over time.
 Each new topic lives under its own subdirectory inside `docs/`.
@@ -31,6 +32,16 @@ docs/
       <slug>.mmd                — exam-agnostic slug
     files/<section>/            — shared section snippet files
       <section>.md              — e.g. networking/networking.md
+  aws/
+    files/
+      <domain>/<domain>.md       — One page per domain (compute, networking, …)
+    diagrams/<section>/
+      <slug>.mmd
+  google/
+    files/
+      <domain>/<domain>.md       — One page per domain (compute, networking, …)
+    diagrams/<section>/
+      <slug>.mmd
   index.md                      — MkDocs site home page
 mkdocs.yml                      — MkDocs Material site configuration
 ```

@@ -1,0 +1,36 @@
+flowchart TD
+    Start[Choose Google Cloud storage/data service] --> Q1{Data type and access pattern?}
+
+    Q1 -->|Unstructured objects — files, images, backups| Q2{Access frequency?}
+    Q2 -->|Frequent| GCS_STD[Cloud Storage Standard class]
+    Q2 -->|Infrequent| GCS_NEARLINE[Cloud Storage Nearline — 30-day min]
+    Q2 -->|Rare, archive| GCS_COLDLINE[Cloud Storage Coldline — 90-day min]
+    Q2 -->|Long-term archival| GCS_ARCHIVE[Cloud Storage Archive — 365-day min]
+
+    Q1 -->|Block storage — VM boot/data disks| PD[Persistent Disk — balanced, SSD, extreme SSD]
+
+    Q1 -->|File shares — NFS/SMB, lift-and-shift| FS[Filestore — managed NFS, Basic/High Scale/Enterprise]
+
+    Q1 -->|Relational — structured OLTP| Q3{Transactional or analytical?}
+    Q3 -->|Transactional OLTP| SPANNER[Cloud Spanner — globally consistent, horizontal scale]
+    Q3 -->|Transactional, regional| ALLOYDB[AlloyDB — PostgreSQL-compatible, high performance]
+    Q3 -->|Transactional, MySQL-compatible| CLOUDSQL[Cloud SQL — managed MySQL/PostgreSQL/SQL Server]
+
+    Q1 -->|NoSQL — wide-column, high throughput| BT[Cloud Bigtable — low-latency wide-column store]
+
+    Q1 -->|NoSQL — document, mobile/web app| FB[Firestore — document DB, real-time sync, offline]
+
+    Q1 -->|Analytics — OLAP, data warehouse| BQ[BigQuery — serverless DW, SQL over petabytes]
+
+    GCS_STD --> End[Choose replication: regional, dual-region, multi-region]
+    GCS_NEARLINE --> End
+    GCS_COLDLINE --> End
+    GCS_ARCHIVE --> End
+    PD --> End
+    FS --> End
+    SPANNER --> End
+    ALLOYDB --> End
+    CLOUDSQL --> End
+    BT --> End
+    FB --> End
+    BQ --> End

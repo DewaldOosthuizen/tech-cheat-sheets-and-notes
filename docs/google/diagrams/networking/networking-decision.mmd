@@ -1,0 +1,33 @@
+flowchart TD
+    Start[Choose Google Cloud networking service] --> Q1{Global or regional traffic?}
+
+    Q1 -->|Global — users worldwide| Q2{HTTP/S content delivery?}
+    Q2 -->|Yes — static/dynamic content| GCDN[Cloud CDN — edge cache for GCS, Compute Engine, GKE]
+    Q2 -->|Yes — global HTTP load balancing| GCLB[Cloud Load Balancing — global HTTP(S) LB]
+    Q2 -->|No — non-HTTP or TCP/UDP global| GCGLB[Global TCP/UDP LB or Cloud VPN/Interconnect]
+
+    Q1 -->|Regional — single region| Q3{HTTP/S or TCP/UDP?}
+    Q3 -->|HTTP/S| RCLB[Regional HTTP(S) Load Balancer]
+    Q3 -->|TCP/UDP| RCLB2[Regional TCP/UDP Load Balancer]
+    Q3 -->|Internal only| ICLB[Internal HTTP(S) LB or Network LB]
+
+    Q1 -->|DNS resolution| Q4{Public or private?}
+    Q4 -->|Public — internet-facing| CDNS[Cloud DNS — managed public DNS]
+    Q4 -->|Private — VPC-internal| CPDNS[Cloud DNS private zones / Cloud NAT for outbound]
+
+    Q1 -->|Connectivity to on-prem| Q5{Bandwidth and SLA needs?}
+    Q5 -->|High bandwidth, SLA-backed| DC[Cloud Interconnect — dedicated connection]
+    Q5 -->|Moderate, over internet| CVPN[Cloud VPN — IPSec over internet]
+    Q5 -->|Outbound internet from private instances| CNAT[Cloud NAT — managed NAT for private subnets]
+
+    GCLB --> End[Configure backends, health checks, SSL]
+    GCDN --> End
+    GCGLB --> End
+    RCLB --> End
+    RCLB2 --> End
+    ICLB --> End
+    CDNS --> End
+   CPDNS --> End
+    DC --> End
+    CVPN --> End
+    CNAT --> End

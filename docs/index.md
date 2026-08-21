@@ -35,21 +35,40 @@ See the [Azure Exam Track Index](azure/files/exams/exams.md) for full coverage b
 
 Organised by domain. Each section covers service selection and architectural trade-offs.
 
-| Domain | Content |
-|--------|---------|
-| [Compute](aws/files/compute/compute.md) | EC2, Lambda, ECS, EKS, Elastic Beanstalk |
-| [Networking](aws/files/networking/networking.md) | VPC, Route 53, CloudFront, ELB, API Gateway |
-| [Storage](aws/files/storage/storage.md) | S3, EBS, EFS, Glacier, Storage Gateway |
-| [Identity & Access](aws/files/identity/identity.md) | IAM, Organizations, SSO, Cognito |
-| [Security](aws/files/security/security.md) | GuardDuty, Security Hub, WAF, Shield, KMS |
-| [Database](aws/files/database/database.md) | RDS, Aurora, DynamoDB, ElastiCache, Redshift |
-| [Monitoring & Observability](aws/files/monitoring/monitoring.md) | CloudWatch, CloudTrail, X-Ray, Config |
-| [Messaging & Integration](aws/files/messaging/messaging.md) | SQS, SNS, EventBridge, Step Functions |
-| [Governance](aws/files/governance/governance.md) | Organizations, SCPs, Control Tower, Budgets |
-| [High Availability & DR](aws/files/ha-dr/ha-dr.md) | Multi-AZ, Multi-Region, AWS Backup, Route 53 |
-| [Well-Architected Framework](aws/files/waf/waf.md) | Six pillars, trade-off navigator |
+|| Domain | Content |
+||--------|---------|
+|| [Compute](aws/files/compute/compute.md) | EC2, Lambda, ECS, EKS, Elastic Beanstalk |
+|| [Networking](aws/files/networking/networking.md) | VPC, Route 53, CloudFront, ELB, API Gateway |
+|| [Storage](aws/files/storage/storage.md) | S3, EBS, EFS, Glacier, Storage Gateway |
+|| [Identity & Access](aws/files/identity/identity.md) | IAM, Organizations, SSO, Cognito |
+|| [Security](aws/files/security/security.md) | GuardDuty, Security Hub, WAF, Shield, KMS |
+|| [Database](aws/files/database/database.md) | RDS, Aurora, DynamoDB, ElastiCache, Redshift |
+|| [Monitoring & Observability](aws/files/monitoring/monitoring.md) | CloudWatch, CloudTrail, X-Ray, Config |
+|| [Messaging & Integration](aws/files/messaging/messaging.md) | SQS, SNS, EventBridge, Step Functions |
+|| [Governance](aws/files/governance/governance.md) | Organizations, SCPs, Control Tower, Budgets |
+|| [High Availability & DR](aws/files/ha-dr/ha-dr.md) | Multi-AZ, Multi-Region, AWS Backup, Route 53 |
+|| [Well-Architected Framework](aws/files/waf/waf.md) | Six pillars, trade-off navigator |
 
 See the [AWS Exam Track Index](aws/files/exams/exams.md) for full coverage by certification.
+
+### Google Cloud
+
+Organised by domain. Each section covers service selection and architectural trade-offs.
+
+|| Domain | Content |
+||--------|---------|
+|| [Compute](google/files/compute/compute.md) | Compute Engine, GKE, Cloud Run, Cloud Functions, App Engine |
+|| [Networking](google/files/networking/networking.md) | VPC, Cloud Load Balancing, Cloud CDN, Cloud DNS, Cloud NAT, Cloud Armor |
+|| [Storage](google/files/storage/storage.md) | Cloud Storage, Persistent Disk, Filestore, Bigtable, Spanner, Firestore, BigQuery |
+|| [Identity & Access](google/files/identity/identity.md) | Cloud IAM, Cloud Identity, Workload Identity, Service Accounts, IAP |
+|| [Security](google/files/security/security.md) | SCC, Secret Manager, Cloud KMS, Binary Authorization, VPC Service Controls, Cloud Armor |
+|| [Monitoring & Observability](google/files/monitoring/monitoring.md) | Cloud Monitoring, Cloud Logging, Cloud Trace, Cloud Profiler, Cloud Debugger |
+|| [Messaging & Integration](google/files/messaging/messaging.md) | Pub/Sub, Eventarc, Workflows, Cloud Tasks, API Gateway |
+|| [Governance](google/files/governance/governance.md) | Organization Policy, Resource Manager, Cloud Asset Inventory, Billing Budgets, Policy Troubleshooter |
+|| [High Availability & DR](google/files/ha-dr/ha-dr.md) | Regional vs multi-regional, Cloud DNS failover, Cloud Load Balancing global failover, Backup for GCE, Spanner replication |
+|| [Well-Architected Framework](google/files/waf/waf.md) | Six pillars, trade-off navigator |
+
+See the [Google Cloud Exam Track Index](google/files/exams/exams.md) for full coverage by certification.
 
 ---
 

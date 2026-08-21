@@ -89,3 +89,16 @@ nav:
         - Governance: azure/files/governance/governance.md
         - Messaging & Integration: azure/files/messaging/messaging.md
         - Well-Architected Framework: azure/files/waf/waf.md
+    - Google Cloud:
+        - Abbreviations: google/files/abbreviations/abbreviations.md
+        - Exam Coverage: google/files/exams/exams.md
+        - Compute: google/files/compute/compute.md
+        - Networking: google/files/networking/networking.md
+        - Storage: google/files/storage/storage.md
+        - Identity & Access: google/files/identity/identity.md
+        - Security: google/files/security/security.md
+        - Monitoring & Observability: google/files/monitoring/monitoring.md
+        - Messaging & Integration: google/files/messaging/messaging.md
+        - Governance: google/files/governance/governance.md
+        - High Availability & DR: google/files/ha-dr/ha-dr.md
+        - Well-Architected Framework: google/files/waf/waf.md
