@@ -90,6 +90,8 @@ def _expand_snippet(block_src: str, base_dir: Path) -> str | None:
         return None
     rel_path = m.group(1)
     abs_path = (base_dir / rel_path).resolve()
+    if not abs_path.is_relative_to(base_dir.resolve()):
+        raise RuntimeError(f"Snippet path escapes base directory: {abs_path}")
     try:
         return abs_path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
@@ -115,6 +117,8 @@ def _expand_top_level_snippets(content: str, base: Path) -> str:
     def _replace(m: re.Match) -> str:
         rel = m.group(1)
         abs_path = (base / rel).resolve()
+        if not abs_path.is_relative_to(base.resolve()):
+            return m.group(0)  # reject path traversal outside base
         try:
             return abs_path.read_text(encoding="utf-8")
         except OSError:

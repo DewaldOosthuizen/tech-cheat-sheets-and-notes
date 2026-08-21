@@ -555,6 +555,24 @@ class TestExpandTopLevelSnippetsOSError:
         assert result == directive
 
 
+class TestExpandSnippetRejectsTraversal:
+    """Covers issue #223: _expand_snippet rejects path-traversal directives."""
+
+    def test_rejects_traversal(self, tmp_path):
+        block = '--8<-- "../../../../etc/passwd"'
+        with pytest.raises(RuntimeError, match="escapes base directory"):
+            validate_mermaid._expand_snippet(block, tmp_path)
+
+
+class TestExpandTopLevelSnippetsRejectsTraversal:
+    """Covers issue #223: _expand_top_level_snippets leaves traversal directives unexpanded."""
+
+    def test_rejects_traversal(self, tmp_path):
+        directive = '--8<-- "../../../../etc/passwd"'
+        result = validate_mermaid._expand_top_level_snippets(directive, tmp_path)
+        assert result == directive
+
+
 class TestExtractMermaidBlocksNoExpand:
     """Covers line 158: early return when expand_snippets=False."""
 
