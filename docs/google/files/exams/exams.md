@@ -1,6 +1,6 @@
 # Exam Track Index
 
-|| Section | Cloud Digital Leader | Associate Cloud Engineer | Professional Cloud Architect | Professional Data Engineer | Professional DevOps Engineer |
+| Section | Cloud Digital Leader | Associate Cloud Engineer | Professional Cloud Architect | Professional Data Engineer | Professional DevOps Engineer |
 | --- | --- | --- | --- | --- | --- |
 | [Abbreviations](../abbreviations/abbreviations.md) | — | — | — | — | — |
 | [Compute](../compute/compute.md) | Partial | Full | Full | — | Full |
