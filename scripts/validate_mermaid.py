@@ -22,6 +22,19 @@ Exit codes
     or lies outside the repository root.
 2 — ``mmdc`` is not installed or not on PATH.  Install it with:
         npm install -g @mermaid-js/mermaid-cli
+
+Environment variables
+--------------------
+``PUPPETEER_CONFIG_FILE``
+    Path to a Puppeteer configuration JSON file.  When set and the file exists,
+    ``validate_block()`` passes ``--puppeteerConfigFile`` to ``mmdc``.
+    Defaults to ``<tmpdir>/puppeteer-config.json`` when unset.
+
+``MMDC_TIMEOUT_SECONDS``
+    Maximum wall-clock time (seconds) that ``validate_block()`` will wait for
+    an ``mmdc`` invocation before raising ``subprocess.TimeoutExpired``.
+    Defaults to ``60`` when unset.  CI environments that need more time can
+    export a higher value, e.g. ``export MMDC_TIMEOUT_SECONDS=300``.
 """
 
 import argparse
@@ -167,7 +180,9 @@ def extract_mermaid_blocks(
     return expanded
 
 
-def validate_block(index, diagram_src):
+def validate_block(index, diagram_src, timeout: int | None = None):
+    if timeout is None:
+        timeout = int(os.environ.get("MMDC_TIMEOUT_SECONDS", "60"))
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".mmd", delete=False, encoding="utf-8"
     ) as tmp:
@@ -182,7 +197,7 @@ def validate_block(index, diagram_src):
             cmd,
             capture_output=True,
             text=True,
-            timeout=60,
+            timeout=timeout,
         )
         if result.returncode == 0:
             if not out_path.exists() or out_path.stat().st_size < 100:
@@ -193,7 +208,7 @@ def validate_block(index, diagram_src):
             return True, result.stderr
         return False, result.stderr
     except subprocess.TimeoutExpired:
-        return (False, "mmdc timed out after 60 s")
+        return (False, f"mmdc timed out after {timeout} s")
     except FileNotFoundError:
         # Guard against race-condition where mmdc is removed mid-run after the which() check
         return (False, "mmdc binary not found on PATH")

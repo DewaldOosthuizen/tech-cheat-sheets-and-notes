@@ -139,9 +139,12 @@ Validate all Mermaid diagrams (snippet refs in cheat sheets + standalone `.mmd` 
 make mermaid-check
 ```
 
-The validator expands `--8<-- "..."` snippet references before passing the
-diagram source to `mmdc`, so broken snippet paths are caught here as well as
-by `make docs-build`.
+`validate_mermaid.py` respects two environment variables:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PUPPETEER_CONFIG_FILE` | `<tmp>/puppeteer-config.json` | Path to a Puppeteer config file passed to `mmdc --puppeteerConfigFile` |
+| `MMDC_TIMEOUT_SECONDS` | `60` | Timeout in seconds passed to `subprocess.run()` when invoking `mmdc`. Set higher on slow CI runners where headless Chromium stalls. |
 
 `validate_mermaid.py` exit codes:
 

@@ -51,6 +51,27 @@ class TestValidateBlockTimeout:
         assert result[0] is False
         assert result[1] == "mmdc timed out after 60 s"
 
+    def test_validate_block_respects_mmdc_timeout_seconds_env_var(self):
+        import subprocess
+
+        timeout_exc = subprocess.TimeoutExpired(cmd="mmdc", timeout=120)
+        with patch("validate_mermaid.subprocess.run", side_effect=timeout_exc):
+            result = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n", timeout=120)
+        assert result[0] is False
+        assert result[1] == "mmdc timed out after 120 s"
+
+    def test_validate_block_uses_env_var_when_no_timeout_argument(self):
+        import subprocess
+
+        timeout_exc = subprocess.TimeoutExpired(cmd="mmdc", timeout=120)
+        with (
+            patch.dict("validate_mermaid.os.environ", {"MMDC_TIMEOUT_SECONDS": "120"}),
+            patch("validate_mermaid.subprocess.run", side_effect=timeout_exc),
+        ):
+            result = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert result[0] is False
+        assert result[1] == "mmdc timed out after 120 s"
+
 
 class TestMainFileNotFound:
     """Tests for file-existence guard in run()."""
