@@ -1,44 +1,72 @@
-"""Tests for issue #271: FEATURE: Add Programming section and add Java.
+"""Tests for issue #271 (original: Add Programming section and Java) and
+issue #273 (enhancement: split Java into domain pages).
 
 Verifies that:
-  - docs/programming/files/java/java.md exists with # JAVA heading and the
-    required sub-sections (Language Basics & Keywords, Core OOP Concepts,
-    Lambda & Functional Interfaces, String Manipulation, JDBC, JPA, Lombok).
-  - mkdocs.yml has a new top-level "Programming" nav group, alphabetically
-    ordered before "Cloud Service Providers", with a "Java" entry pointing to
-    programming/files/java/java.md.
-  - README.md's "Current Content" table has a Programming/Java row.
+  - docs/programming/ has the domain-page structure (language-fundamentals,
+    oop, functional-programming, persistence, collections) plus abbreviations
+    and exam coverage pages.
+  - mkdocs.yml has a "Programming" nav group with the 7 domain entries,
+    alphabetically ordered before "Cloud Service Providers".
+  - README.md's "Current Content" table has a Programming row.
 """
 
 from __future__ import annotations
+
+from pathlib import Path
 
 import pytest
 import yaml
 from conftest import REPO_ROOT
 
-JAVA_MD = REPO_ROOT / "docs" / "programming" / "files" / "java" / "java.md"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 README_MD = REPO_ROOT / "README.md"
 
-REQUIRED_SECTIONS = [
-    "## Language Basics & Keywords",
-    "## Core OOP Concepts",
-    "## Lambda & Functional Interfaces",
-    "## String Manipulation",
-    "## JDBC",
-    "## JPA",
-    "## Lombok",
-]
+# Path fragments
+_PROG = Path("docs") / "programming"
+_FILES = _PROG / "files"
+_LF = _FILES / "language-fundamentals" / "language-fundamentals.md"
+_OOP = _FILES / "oop" / "oop.md"
+_FP = _FILES / "functional-programming" / "functional-programming.md"
+_PERS = _FILES / "persistence" / "persistence.md"
+_COL = _FILES / "collections" / "collections.md"
 
+DOMAIN_FILES = {
+    "language-fundamentals": _LF,
+    "oop": _OOP,
+    "functional-programming": _FP,
+    "persistence": _PERS,
+    "collections": _COL,
+}
 
-@pytest.fixture(scope="module")
-def java_text():
-    return JAVA_MD.read_text(encoding="utf-8")
+REQUIRED_SECTIONS_PER_FILE = {
+    "language-fundamentals": [
+        "## Language Basics & Keywords",
+        "## String Manipulation",
+    ],
+    "oop": [
+        "## Core OOP Concepts",
+    ],
+    "functional-programming": [
+        "## Lambda & Functional Interfaces",
+    ],
+    "persistence": [
+        "## JDBC",
+        "## JPA",
+    ],
+    "collections": [],
+}
+
+REQUIRED_HEADINGS = {
+    "language-fundamentals": "# LANGUAGE FUNDAMENTALS",
+    "oop": "# OOP",
+    "functional-programming": "# FUNCTIONAL PROGRAMMING",
+    "persistence": "# PERSISTENCE",
+    "collections": "# COLLECTIONS",
+}
 
 
 @pytest.fixture(scope="module")
 def mkdocs_config():
-    # mkdocs.yml uses !!python/name: tags that yaml.safe_load cannot handle.
     loader_class = yaml.SafeLoader
 
     def _python_name_constructor(loader, tag_suffix, node):
@@ -56,25 +84,35 @@ def readme_text():
     return README_MD.read_text(encoding="utf-8")
 
 
-class TestJavaFileExists:
-    def test_file_exists(self):
-        assert JAVA_MD.exists(), f"{JAVA_MD} does not exist — create it with # JAVA heading"
+@pytest.fixture(scope="module")
+def domain_texts():
+    return {k: v.read_text(encoding="utf-8") for k, v in DOMAIN_FILES.items()}
 
 
-class TestJavaHeading:
-    def test_heading_present(self, java_text):
-        assert "# JAVA" in java_text
+class TestDomainFilesExist:
+    @pytest.mark.parametrize("key", DOMAIN_FILES.keys())
+    def test_file_exists(self, key):
+        assert DOMAIN_FILES[key].exists(), f"{DOMAIN_FILES[key]} does not exist"
 
 
-class TestJavaRequiredSections:
-    @pytest.mark.parametrize("section", REQUIRED_SECTIONS)
-    def test_section_present(self, java_text, section):
-        assert section in java_text, f"Expected section '{section}' not found in java.md"
+class TestDomainHeadings:
+    @pytest.mark.parametrize("key", DOMAIN_FILES.keys())
+    def test_heading_present(self, domain_texts, key):
+        expected = REQUIRED_HEADINGS[key]
+        assert expected in domain_texts[key], f"Expected heading '{expected}' not found in {key}"
 
 
-class TestJavaMentionsLTS:
-    def test_mentions_java_21(self, java_text):
-        assert "Java 21" in java_text
+class TestDomainSections:
+    @pytest.mark.parametrize("key,sections", REQUIRED_SECTIONS_PER_FILE.items())
+    def test_sections_present(self, domain_texts, key, sections):
+        for section in sections:
+            assert section in domain_texts[key], f"Expected section '{section}' not found in {key}"
+
+
+class TestJava21Mentioned:
+    def test_mentions_java_21(self, domain_texts):
+        combined = "\n".join(domain_texts.values())
+        assert "Java 21" in combined, "Java 21 should be mentioned somewhere in the domain files"
 
 
 class TestMkdocsProgrammingNav:
@@ -91,35 +129,58 @@ class TestMkdocsProgrammingNav:
             "(alphabetical top-level ordering)"
         )
 
-    def test_java_entry_present_under_programming(self, mkdocs_config):
+    def test_domain_entries_present_under_programming(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         assert programming_section is not None, "Programming nav section missing"
         entry_keys = [next(iter(e.keys())) for e in programming_section]
-        assert "Java" in entry_keys
+        expected_entries = [
+            "Abbreviations",
+            "Exam Coverage",
+            "Language Fundamentals",
+            "OOP",
+            "Functional Programming",
+            "Persistence",
+            "Collections",
+        ]
+        for expected in expected_entries:
+            assert expected in entry_keys, f"Expected nav entry '{expected}' not found"
 
-    def test_java_entry_points_to_correct_file(self, mkdocs_config):
+    def test_domain_entry_points_to_correct_files(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
-        java_entry = next(
-            (e["Java"] for e in programming_section if "Java" in e),
-            None,
-        )
-        assert java_entry == "programming/files/java/java.md"
+        expected_paths = {
+            "Abbreviations": "programming/files/abbreviations/abbreviations.md",
+            "Exam Coverage": "programming/files/exams/exams.md",
+            "Language Fundamentals": "programming/files/language-fundamentals/"
+            "language-fundamentals.md",
+            "OOP": "programming/files/oop/oop.md",
+            "Functional Programming": "programming/files/functional-programming/"
+            "functional-programming.md",
+            "Persistence": "programming/files/persistence/persistence.md",
+            "Collections": "programming/files/collections/collections.md",
+        }
+        for entry in programming_section:
+            key = next(iter(entry.keys()))
+            expected_path = expected_paths.get(key)
+            if expected_path:
+                assert entry[key] == expected_path, (
+                    f"Nav entry '{key}' points to '{entry[key]}', expected '{expected_path}'"
+                )
 
 
 class TestReadmeCurrentContent:
-    def test_java_row_present(self, readme_text):
+    def test_programming_row_present(self, readme_text):
         lines = readme_text.splitlines()
         data_rows = [
             ln
             for ln in lines
             if ln.strip().startswith("|") and "---" not in ln and "Topic" not in ln
         ]
-        assert any("Java" in row or "Programming" in row for row in data_rows), (
-            "Expected a Programming/Java row in README.md's Current Content table"
+        assert any("Programming" in row for row in data_rows), (
+            "Expected a Programming row in README.md's Current Content table"
         )
