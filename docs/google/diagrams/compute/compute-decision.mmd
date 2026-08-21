@@ -9,7 +9,7 @@ flowchart TD
     Q1 -->|No| Q3{Is it code, or a container?}
     Q3 -->|Code / function| Q4{Duration and concurrency profile?}
     Q4 -->|Short-lived, event-driven| CF[Cloud Functions — single request functions]
-    Q4 -->|Longer-running, streaming| CF2[Cloud Functions (2nd gen) or Cloud Run]
+    Q4 -->|Longer-running, streaming| CF2[Cloud Functions 2nd gen or Cloud Run]
     Q4 -->|Microservice, custom runtime| CR[Cloud Run]
 
     Q3 -->|Container| Q5{Scale-to-zero needed?}

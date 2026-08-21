@@ -103,12 +103,33 @@ is rebuilt automatically whenever `pyproject.toml` changes.
 Install the pre-commit hooks (one-time setup per clone):
 
 ```bash
+# Option A — lightweight hooks (ruff + markdownlint only, fast):
 .venv/bin/pip install pre-commit
 .venv/bin/pre-commit install
+
+# Option B — full CI gate (runs `make ci` on every commit, slower but stricter):
+cp .git/hooks/pre-commit.sample .git/hooks/pre-commit   # not needed — we ship our own
+chmod +x .git/hooks/pre-commit
 ```
 
-The hooks run automatically on `git commit` and enforce the same ruff and
-markdownlint checks that CI applies on push.
+Option A installs the [pre-commit](https://pre-commit.com/) framework hooks
+defined in `.pre-commit-config.yaml` (if present).  Those hooks run ruff and
+markdownlint only and complete in seconds.
+
+Option B installs the local `pre-commit` hook shipped in this repository
+(`.git/hooks/pre-commit`).  That hook runs the **full** `make ci` pipeline —
+markdownlint, Mermaid validation, ruff, pytest, and strict MkDocs build — and
+blocks the commit if any step fails.  Use it when you want to guarantee that
+every commit would pass CI before you push.
+
+You can install both Option A and Option B at the same time; `pre-commit` runs
+first, then the local hook runs `make ci`.  If you only want one, pick the
+level of strictness that matches your working style and delete the other.
+
+The local hook is intentionally not installed automatically by `make install`
+because `.git/hooks/` is not tracked in version control and developers may
+prefer different gate strictness.  See the hook source at
+`.git/hooks/pre-commit` for the full list of checks it runs.
 
 ---
 
