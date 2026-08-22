@@ -613,6 +613,46 @@ class TestValidateBlockNonZeroReturnCode:
         assert "syntax error" in err
 
 
+class TestValidateBlockStderrEmptyStdoutPresent:
+    """Covers line 213 when mmdc exits non-zero with empty stderr but stdout has content."""
+
+    def test_returns_stdout_when_stderr_is_empty(self):
+        import subprocess
+
+        mock_result = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="parse error: unexpected token", stderr=""
+        )
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", return_value=mock_result),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is False
+        assert err == "parse error: unexpected token"
+
+    def test_stderr_empty_stdout_present_is_printed_by_run(self, capsys):
+        import subprocess
+
+        mock_result = subprocess.CompletedProcess(
+            args=[], returncode=1, stdout="syntax error", stderr=""
+        )
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", return_value=mock_result),
+            patch(
+                "validate_mermaid.extract_mermaid_blocks",
+                return_value=["graph TD\n  A --> B\n"],
+            ),
+            patch("validate_mermaid.Path.is_file", return_value=True),
+        ):
+            mock_cfg.exists.return_value = False
+            validate_mermaid.run(["docs/test.md"])
+        captured = capsys.readouterr()
+        assert "syntax error" in captured.out
+        assert "Diagram 1: FAIL" in captured.out
+
+
 class TestValidateMmdFile:
     """Covers lines 207-228: _validate_mmd_file."""
 
