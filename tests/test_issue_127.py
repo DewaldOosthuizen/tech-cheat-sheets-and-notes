@@ -1,10 +1,8 @@
-"""Tests for issue #127 — FEATURE: Add CONTRIBUTING.md entry for Mermaid diagram authoring conventions."""
+"""Tests for issue #127 — FEATURE: Add CONTRIBUTING.md entry for Mermaid
+diagram authoring conventions."""
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import pytest
 from conftest import REPO_ROOT
 
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"

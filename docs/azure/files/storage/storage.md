@@ -285,7 +285,7 @@ sas_token = generate_blob_sas(
     account_name=ACCOUNT_NAME,
     container_name="mycontainer",
     blob_name="report.pdf",
-    account_key=ACCOUNT_KEY,          # omit and pass user_delegation_key for User Delegation SAS
+    account_key=ACCOUNT_KEY,  # omit and pass user_delegation_key for User Delegation SAS
     permission=BlobSasPermissions(read=True),
     expiry=datetime.now(timezone.utc) + timedelta(hours=1),
 )
