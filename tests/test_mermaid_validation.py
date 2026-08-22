@@ -640,7 +640,10 @@ class TestValidateBlockStderrEmptyStdoutPresent:
         with (
             patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
             patch("validate_mermaid.subprocess.run", return_value=mock_result),
-            patch("validate_mermaid.extract_mermaid_blocks", return_value=["graph TD\n  A --> B\n"]),
+            patch(
+                "validate_mermaid.extract_mermaid_blocks",
+                return_value=["graph TD\n  A --> B\n"],
+            ),
             patch("validate_mermaid.Path.is_file", return_value=True),
         ):
             mock_cfg.exists.return_value = False
