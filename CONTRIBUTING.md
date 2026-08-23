@@ -23,6 +23,7 @@ clean, reviewable contributions to this repository.
     - [Python Scripts](#python-scripts)
     - [Section Snippet Files](#section-snippet-files)
     - [Diagram Files](#diagram-files)
+    - [Mermaid Diagrams](#mermaid-diagrams)
   - [10. Deprecation warnings](#10-deprecation-warnings)
   - [11. Dependabot update strategy](#11-dependabot-update-strategy)
 
@@ -334,7 +335,37 @@ Rules:
   `ha-dr`, `governance`, `messaging`, `waf`.
 - To reuse a diagram in a second cheat sheet, reference the same `.mmd` file from
   the shared section snippet. The `.mmd` source is the single source of truth.
-- Run `make mermaid-check` after adding or editing any `.mmd` file.
+- Run `make mermaid-check` after adding or editing any `.mmd` file`.
+
+### Mermaid Diagrams
+
+#### Directive selection
+
+Choose the Mermaid directive based on the diagram's purpose:
+
+| Purpose                    | Directive       |
+|----------------------------|-----------------|
+| Decision flows (if/else)   | `flowchart TD`  |
+| Hierarchy / ecosystem maps | `graph TD`      |
+| Connectivity / network     | `graph LR`      |
+
+#### Heading convention
+
+When a diagram illustrates a decision flow, place the heading `### Decision Flow`
+immediately after the relevant table. This keeps the diagram visually anchored to
+the decision it supports.
+
+#### Local validation
+
+Before opening a PR, validate your diagram locally:
+
+```bash
+python3 scripts/validate_mermaid.py docs/AZ-305_CheatSheet.md
+```
+
+This runs the same `mmdc` rendering check that `make mermaid-check` uses, but
+targets a single file. Use it when you want fast feedback on one diagram without
+waiting for the full Mermaid check to run across all files.
 
 ---
 
