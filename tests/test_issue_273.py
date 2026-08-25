@@ -50,6 +50,7 @@ EXPECTED_NAV_ENTRIES = [
     "Functional Programming",
     "Persistence",
     "Collections",
+    "Database Design",
 ]
 
 REQUIRED_HEADINGS = {

@@ -70,3 +70,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 > **Exam tip:** JPQL queries operate on entity object graphs, not table/column names directly —
 > `SELECT u FROM User u` refers to the `User` entity class, not the `users` table.
+
+See also: [Database Design](../database-design/database-design.md) — keys, constraints, normalisation,
+cardinality, indexes, and schema evolution.

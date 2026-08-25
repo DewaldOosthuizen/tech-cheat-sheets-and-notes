@@ -1,0 +1,30 @@
+erDiagram
+    CUSTOMERS ||--o{ ORDERS : places
+    PRODUCTS ||--o{ ORDER_LINES : "includes"
+    ORDERS ||--o{ ORDER_LINES : "contains"
+    CUSTOMERS {
+        int customer_id PK
+        string email UK
+        string name
+        timestamp created_at
+    }
+    PRODUCTS {
+        int product_id PK
+        string sku UK
+        string name
+        decimal price
+        int stock_qty
+    }
+    ORDERS {
+        int order_id PK
+        int customer_id FK
+        timestamp ordered_at
+        string status
+    }
+    ORDER_LINES {
+        int order_line_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+    }

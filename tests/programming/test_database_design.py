@@ -15,16 +15,19 @@ import pytest
 import yaml
 from conftest import REPO_ROOT
 
-DB_DESIGN_MD = REPO_ROOT / "docs" / "programming" / "files" / "database-design" / "database-design.md"
+_PROG = REPO_ROOT / "docs" / "programming"
+DB_DESIGN_MD = _PROG / "files" / "database-design" / "database-design.md"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
-PERSISTENCE_MD = REPO_ROOT / "docs" / "programming" / "files" / "persistence" / "persistence.md"
+PERSISTENCE_MD = _PROG / "files" / "persistence" / "persistence.md"
 AWS_DB_MD = REPO_ROOT / "docs" / "aws" / "files" / "database" / "database.md"
-AZURE_STORAGE_MD = REPO_ROOT / "docs" / "azure" / "files" / "storage" / "storage.md"
+_AZURE_DIR = REPO_ROOT / "docs" / "azure" / "files" / "storage"
+AZURE_STORAGE_MD = _AZURE_DIR / "storage.md"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 MAKEFILE = REPO_ROOT / "Makefile"
 
-DIAGRAM_NORMALISED = REPO_ROOT / "docs" / "programming" / "diagrams" / "database-design" / "normalised-order-example.mmd"
-DIAGRAM_MIGRATION = REPO_ROOT / "docs" / "programming" / "diagrams" / "database-design" / "migration-decision-flow.mmd"
+_DIAG_DB = _PROG / "diagrams" / "database-design"
+DIAGRAM_NORMALISED = _DIAG_DB / "normalised-order-example.mmd"
+DIAGRAM_MIGRATION = _DIAG_DB / "migration-decision-flow.mmd"
 
 # Required section headings (case-insensitive substring match)
 REQUIRED_SECTIONS = [
@@ -37,9 +40,13 @@ REQUIRED_SECTIONS = [
 ]
 
 # Correct cross-link paths
-CORRECT_PERSISTENCE_PATH = "../files/database-design/database-design.md"
+CORRECT_PERSISTENCE_PATH = "../database-design/database-design.md"
 CORRECT_AWS_PATH = "../../../programming/files/database-design/database-design.md"
 CORRECT_AZURE_PATH = "../../../programming/files/database-design/database-design.md"
+
+# Snippet reference paths (relative to docs/ base_path in mkdocs.yml)
+SNIPPET_NORMALISED = "programming/diagrams/database-design/normalised-order-example.mmd"
+SNIPPET_MIGRATION = "programming/diagrams/database-design/migration-decision-flow.mmd"
 
 
 @pytest.fixture(scope="module")
@@ -120,27 +127,18 @@ class TestDatabaseDesignNav:
 
     def test_nav_entry_present(self, mkdocs_config):
         programming_section = next(
-            (
-                item["Programming"]
-                for item in mkdocs_config["nav"]
-                if "Programming" in item
-            ),
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         assert programming_section is not None, "Programming section not found in mkdocs.yml nav"
         entry_keys: list[str] = [next(iter(e.keys())) for e in programming_section]
         assert "Database Design" in entry_keys, (
-            f"Database Design entry not found in Programming nav. "
-            f"Entries: {entry_keys}"
+            f"Database Design entry not found in Programming nav. Entries: {entry_keys}"
         )
 
     def test_nav_entry_points_to_correct_file(self, mkdocs_config):
         programming_section = next(
-            (
-                item["Programming"]
-                for item in mkdocs_config["nav"]
-                if "Programming" in item
-            ),
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         db_entry = next(
@@ -170,9 +168,7 @@ class TestDatabaseDesignContent:
         )
 
     def test_has_constraints_section(self, db_design_text):
-        assert "Constraints" in db_design_text, (
-            "Page must contain a 'Constraints' section heading"
-        )
+        assert "Constraints" in db_design_text, "Page must contain a 'Constraints' section heading"
 
     def test_has_cardinality_section(self, db_design_text):
         assert "Cardinality" in db_design_text or "Relationship Cardinality" in db_design_text, (
@@ -190,13 +186,19 @@ class TestDatabaseDesignContent:
         )
 
     def test_has_at_least_two_mmd_references(self, db_design_text):
+        """Page must reference at least two .mmd diagram files via --8<-- directives."""
         mmd_refs = [
-            line
-            for line in db_design_text.splitlines()
-            if "--8<--" in line and ".mmd" in line
+            line for line in db_design_text.splitlines() if "--8<--" in line and ".mmd" in line
         ]
         assert len(mmd_refs) >= 2, (
             f"Expected at least 2 --8<-- references to .mmd files, found {len(mmd_refs)}"
+        )
+        # Verify the two specific required diagram files are referenced
+        has_normalised = "normalised-order-example.mmd" in db_design_text
+        has_migration = "migration-decision-flow.mmd" in db_design_text
+        assert has_normalised and has_migration, (
+            "Expected references to both normalised-order-example.mmd "
+            "and migration-decision-flow.mmd"
         )
 
 

@@ -1,0 +1,14 @@
+flowchart TD
+    Start["New schema change required"] --> Breaking{"Breaks existing readers/writers?"}
+    Breaking -->|No| ExpandFirst["Expand: add new columns/tables, write to both, backfill in background"]
+    Breaking -->|Yes| ContractFirst{"Can old and new coexist?"}
+    ContractFirst -->|Yes| ExpandContract["Expand: dual-write, backfill, switch reads, then contract"]
+    ContractFirst -->|No| LockStep["Lock-step: deploy new app version with migration together, accept downtime"]
+    ExpandFirst --> VerifyReads["Verify new columns populated and read correctly"]
+    ExpandContract --> VerifyReads
+    LockStep --> VerifyReads
+    VerifyReads --> Cleanup{"Old schema unused?"}
+    Cleanup -->|Yes| Contract["Contract: drop old columns/tables in next migration"]
+    Cleanup -->|No| Document["Document coexistence window and revisit"]
+    Contract --> End["Migration complete"]
+    Document --> End

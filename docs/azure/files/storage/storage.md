@@ -84,6 +84,10 @@
 
 ## Database Storage Options
 
+Schema design guidance — normalisation, keys, constraints, cardinality, indexing, and
+safe schema evolution — is covered in [Database Design](../../../programming/files/database-design/database-design.md);
+this section focuses on Azure service selection.
+
 | Service | Type | Best For | Key Feature |
 | --- | --- | --- | --- |
 | **Azure SQL Database** | Relational PaaS | Cloud-native OLTP | Serverless, elastic pool, hyperscale up to 100 TB |

@@ -16,6 +16,10 @@
 > cloud-native relational workloads. Redshift is exclusively OLAP — not a
 > transactional database.
 
+Schema design and migration are complementary to managed-service selection — see
+[Database Design](../../../programming/files/database-design/database-design.md) in the Programming section
+for normalisation, keys, constraints, cardinality, indexing, and expand/contract migrations.
+
 ## Database Decision Flow
 
 ```mermaid

@@ -27,7 +27,7 @@ Organised by domain. Each section covers service selection and architectural tra
 | [High Availability & DR](azure/files/ha-dr/ha-dr.md) | ASR, Azure Backup, Availability Zones |
 | [Governance](azure/files/governance/governance.md) | Policy, Blueprints, Management Groups, Cost |
 | [Messaging & Integration](azure/files/messaging/messaging.md) | Service Bus, Event Grid, Logic Apps, Functions |
-| [Well-Architected Framework](azure/files/waf/waf.md) | Five pillars, trade-off navigato
+| [Well-Architected Framework](azure/files/waf/waf.md) | Five pillars, trade-off navigator |
 
 See the [Azure Exam Track Index](azure/files/exams/exams.md) for full coverage by certification.
 
@@ -35,19 +35,19 @@ See the [Azure Exam Track Index](azure/files/exams/exams.md) for full coverage b
 
 Organised by domain. Each section covers service selection and architectural trade-offs.
 
-|| Domain | Content |
-||--------|---------|
-|| [Compute](aws/files/compute/compute.md) | EC2, Lambda, ECS, EKS, Elastic Beanstalk |
-|| [Networking](aws/files/networking/networking.md) | VPC, Route 53, CloudFront, ELB, API Gateway |
-|| [Storage](aws/files/storage/storage.md) | S3, EBS, EFS, Glacier, Storage Gateway |
-|| [Identity & Access](aws/files/identity/identity.md) | IAM, Organizations, SSO, Cognito |
-|| [Security](aws/files/security/security.md) | GuardDuty, Security Hub, WAF, Shield, KMS |
-|| [Database](aws/files/database/database.md) | RDS, Aurora, DynamoDB, ElastiCache, Redshift |
-|| [Monitoring & Observability](aws/files/monitoring/monitoring.md) | CloudWatch, CloudTrail, X-Ray, Config |
-|| [Messaging & Integration](aws/files/messaging/messaging.md) | SQS, SNS, EventBridge, Step Functions |
-|| [Governance](aws/files/governance/governance.md) | Organizations, SCPs, Control Tower, Budgets |
-|| [High Availability & DR](aws/files/ha-dr/ha-dr.md) | Multi-AZ, Multi-Region, AWS Backup, Route 53 |
-|| [Well-Architected Framework](aws/files/waf/waf.md) | Six pillars, trade-off navigator |
+| Domain | Content |
+|--------|---------|
+| [Compute](aws/files/compute/compute.md) | EC2, Lambda, ECS, EKS, Elastic Beanstalk |
+| [Networking](aws/files/networking/networking.md) | VPC, Route 53, CloudFront, ELB, API Gateway |
+| [Storage](aws/files/storage/storage.md) | S3, EBS, EFS, Glacier, Storage Gateway |
+| [Identity & Access](aws/files/identity/identity.md) | IAM, Organizations, SSO, Cognito |
+| [Security](aws/files/security/security.md) | GuardDuty, Security Hub, WAF, Shield, KMS |
+| [Database](aws/files/database/database.md) | RDS, Aurora, DynamoDB, ElastiCache, Redshift |
+| [Monitoring & Observability](aws/files/monitoring/monitoring.md) | CloudWatch, CloudTrail, X-Ray, Config |
+| [Messaging & Integration](aws/files/messaging/messaging.md) | SQS, SNS, EventBridge, Step Functions |
+| [Governance](aws/files/governance/governance.md) | Organizations, SCPs, Control Tower, Budgets |
+| [High Availability & DR](aws/files/ha-dr/ha-dr.md) | Multi-AZ, Multi-Region, AWS Backup, Route 53 |
+| [Well-Architected Framework](aws/files/waf/waf.md) | Six pillars, trade-off navigator |
 
 See the [AWS Exam Track Index](aws/files/exams/exams.md) for full coverage by certification.
 
@@ -55,20 +55,35 @@ See the [AWS Exam Track Index](aws/files/exams/exams.md) for full coverage by ce
 
 Organised by domain. Each section covers service selection and architectural trade-offs.
 
-|| Domain | Content |
-||--------|---------|
-|| [Compute](google/files/compute/compute.md) | Compute Engine, GKE, Cloud Run, Cloud Functions, App Engine |
-|| [Networking](google/files/networking/networking.md) | VPC, Cloud Load Balancing, Cloud CDN, Cloud DNS, Cloud NAT, Cloud Armor |
-|| [Storage](google/files/storage/storage.md) | Cloud Storage, Persistent Disk, Filestore, Bigtable, Spanner, Firestore, BigQuery |
-|| [Identity & Access](google/files/identity/identity.md) | Cloud IAM, Cloud Identity, Workload Identity, Service Accounts, IAP |
-|| [Security](google/files/security/security.md) | SCC, Secret Manager, Cloud KMS, Binary Authorization, VPC Service Controls, Cloud Armor |
-|| [Monitoring & Observability](google/files/monitoring/monitoring.md) | Cloud Monitoring, Cloud Logging, Cloud Trace, Cloud Profiler, Cloud Debugger |
-|| [Messaging & Integration](google/files/messaging/messaging.md) | Pub/Sub, Eventarc, Workflows, Cloud Tasks, API Gateway |
-|| [Governance](google/files/governance/governance.md) | Organization Policy, Resource Manager, Cloud Asset Inventory, Billing Budgets, Policy Troubleshooter |
-|| [High Availability & DR](google/files/ha-dr/ha-dr.md) | Regional vs multi-regional, Cloud DNS failover, Cloud Load Balancing global failover, Backup for GCE, Spanner replication |
-|| [Well-Architected Framework](google/files/waf/waf.md) | Six pillars, trade-off navigator |
+| Domain | Content |
+|--------|---------|
+| [Compute](google/files/compute/compute.md) | Compute Engine, GKE, Cloud Run, Cloud Functions, App Engine |
+| [Networking](google/files/networking/networking.md) | VPC, Cloud Load Balancing, Cloud CDN, Cloud DNS, Cloud NAT, Cloud Armor |
+| [Storage](google/files/storage/storage.md) | Cloud Storage, Persistent Disk, Filestore, Bigtable, Spanner, Firestore, BigQuery |
+| [Identity & Access](google/files/identity/identity.md) | Cloud IAM, Cloud Identity, Workload Identity, Service Accounts, IAP |
+| [Security](google/files/security/security.md) | SCC, Secret Manager, Cloud KMS, Binary Authorization, VPC Service Controls, Cloud Armor |
+| [Monitoring & Observability](google/files/monitoring/monitoring.md) | Cloud Monitoring, Cloud Logging, Cloud Trace, Cloud Profiler, Cloud Debugger |
+| [Messaging & Integration](google/files/messaging/messaging.md) | Pub/Sub, Eventarc, Workflows, Cloud Tasks, API Gateway |
+| [Governance](google/files/governance/governance.md) | Organization Policy, Resource Manager, Cloud Asset Inventory, Billing Budgets, Policy Troubleshooter |
+| [High Availability & DR](google/files/ha-dr/ha-dr.md) | Regional vs multi-regional, Cloud DNS failover, Cloud Load Balancing global failover, Backup for GCE, Spanner replication |
+| [Well-Architected Framework](google/files/waf/waf.md) | Six pillars, trade-off navigator |
 
 See the [Google Cloud Exam Track Index](google/files/exams/exams.md) for full coverage by certification.
+
+### Programming
+
+Organised by topic. Each page covers language-level concepts and cross-cutting practices.
+
+| Topic | Content |
+|-------|---------|
+| [Abbreviations](programming/files/abbreviations/abbreviations.md) | Java and ecosystem acronyms |
+| [Exam Coverage](programming/files/exams/exams.md) | Java certification exam track |
+| [Language Fundamentals](programming/files/language-fundamentals/language-fundamentals.md) | Java syntax, types, and core language features |
+| [OOP](programming/files/oop/oop.md) | Classes, interfaces, inheritance, polymorphism |
+| [Functional Programming](programming/files/functional-programming/functional-programming.md) | Lambdas, streams, and functional interfaces |
+| [Persistence](programming/files/persistence/persistence.md) | JDBC, JPA, and ORM trade-offs |
+| [Collections](programming/files/collections/collections.md) | Collections framework and selection guide |
+| [Database Design](programming/files/database-design/database-design.md) | Normalisation, keys, constraints, cardinality, indexes, and schema evolution |
 
 ---
 
