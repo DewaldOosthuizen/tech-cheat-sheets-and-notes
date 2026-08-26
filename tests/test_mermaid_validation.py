@@ -1,10 +1,16 @@
 """Tests for issue #42 - error handling and exit-code reporting in validate_mermaid.py."""
 
+import re
 import shutil
 from unittest.mock import patch
 
 import pytest
 import validate_mermaid
+
+from conftest import REPO_ROOT
+
+MAKEFILE = REPO_ROOT / "Makefile"
+LINT_YML = REPO_ROOT / ".github" / "workflows" / "lint.yml"
 
 
 class TestMmdcNotFound:
@@ -729,3 +735,105 @@ class TestMainEntryPoint:
             mock_parse.return_value.md_files = []
             validate_mermaid.main()
         assert exc_info.value.code == 0
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for issue #291 — Google Cloud and Programming must be
+# included in Mermaid validation discovery (Makefile + CI workflow).
+# ---------------------------------------------------------------------------
+
+
+class TestDiscoveryIncludesGoogleCloud:
+    """Asserts that docs/google/ Markdown and .mmd files are in the validated set."""
+
+    def test_makefile_mmd_find_covers_google_diagrams(self):
+        content = MAKEFILE.read_text()
+        m = re.search(r"MMD_FILES_VALIDATE\s*:=\s*\$\(shell find ([^)]*?) -name '\*\.mmd'", content)
+        assert m, "Could not locate MMD_FILES_VALIDATE definition in Makefile"
+        find_paths = m.group(1)
+        assert "docs/google/diagrams" in find_paths, (
+            f"Google Cloud diagrams directory missing from MMD_FILES_VALIDATE: {find_paths}"
+        )
+
+    def test_makefile_md_find_covers_all_docs(self):
+        """MD_FILES_VALIDATE must search all of docs/ (not just provider subdirs)."""
+        content = MAKEFILE.read_text()
+        m = re.search(
+            r"MD_FILES_VALIDATE\s*:=\s*\$\(shell find (\S+) -name '\*\.md'",
+            content,
+        )
+        assert m, "Could not locate MD_FILES_VALIDATE definition in Makefile"
+        find_target = m.group(1)
+        assert find_target == "docs", (
+            f"MD_FILES_VALIDATE must find from 'docs' root, got: {find_target}"
+        )
+
+    def test_ci_mermaid_check_covers_google_files(self):
+        block = self._ci_step_block()
+        assert "docs/google" in block, (
+            "CI 'Validate Mermaid diagrams' step missing docs/google discovery"
+        )
+
+    def test_ci_mermaid_check_covers_google_diagrams(self):
+        block = self._ci_step_block()
+        assert "docs/google/diagrams" in block, (
+            "CI 'Validate Mermaid diagrams' step missing docs/google/diagrams .mmd discovery"
+        )
+
+    def _ci_step_block(self) -> str:
+        content = LINT_YML.read_text()
+        m = re.search(
+            r"Validate Mermaid diagrams.*?(?=\n\s*- name:|\Z)",
+            content,
+            re.S,
+        )
+        assert m, "Could not locate 'Validate Mermaid diagrams' step in lint.yml"
+        return m.group(0)
+
+
+class TestDiscoveryIncludesProgramming:
+    """Asserts that docs/programming/ Markdown and .mmd files are in the validated set."""
+
+    def test_makefile_mmd_find_covers_programming_diagrams(self):
+        content = MAKEFILE.read_text()
+        m = re.search(r"MMD_FILES_VALIDATE\s*:=\s*\$\(shell find ([^)]*?) -name '\*\.mmd'", content)
+        assert m, "Could not locate MMD_FILES_VALIDATE definition in Makefile"
+        find_paths = m.group(1)
+        assert "docs/programming" in find_paths, (
+            f"Programming diagrams directory missing from MMD_FILES_VALIDATE: {find_paths}"
+        )
+
+    def test_makefile_md_find_covers_all_docs(self):
+        """MD_FILES_VALIDATE must search all of docs/ (not just provider subdirs)."""
+        content = MAKEFILE.read_text()
+        m = re.search(
+            r"MD_FILES_VALIDATE\s*:=\s*\$\(shell find (\S+) -name '\*\.md'",
+            content,
+        )
+        assert m, "Could not locate MD_FILES_VALIDATE definition in Makefile"
+        find_target = m.group(1)
+        assert find_target == "docs", (
+            f"MD_FILES_VALIDATE must find from 'docs' root, got: {find_target}"
+        )
+
+    def test_ci_mermaid_check_covers_programming_files(self):
+        block = self._ci_step_block()
+        assert "docs/programming" in block, (
+            "CI 'Validate Mermaid diagrams' step missing docs/programming discovery"
+        )
+
+    def test_ci_mermaid_check_covers_programming_diagrams(self):
+        block = self._ci_step_block()
+        assert "docs/programming" in block, (
+            "CI 'Validate Mermaid diagrams' step missing docs/programming .mmd discovery"
+        )
+
+    def _ci_step_block(self) -> str:
+        content = LINT_YML.read_text()
+        m = re.search(
+            r"Validate Mermaid diagrams.*?(?=\n\s*- name:|\Z)",
+            content,
+            re.S,
+        )
+        assert m, "Could not locate 'Validate Mermaid diagrams' step in lint.yml"
+        return m.group(0)
