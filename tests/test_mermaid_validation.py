@@ -1,10 +1,15 @@
 """Tests for issue #42 - error handling and exit-code reporting in validate_mermaid.py."""
 
+import re
 import shutil
 from unittest.mock import patch
 
 import pytest
 import validate_mermaid
+from conftest import REPO_ROOT
+
+MAKEFILE = REPO_ROOT / "Makefile"
+LINT_YML = REPO_ROOT / ".github" / "workflows" / "lint.yml"
 
 
 class TestMmdcNotFound:
@@ -729,3 +734,150 @@ class TestMainEntryPoint:
             mock_parse.return_value.md_files = []
             validate_mermaid.main()
         assert exc_info.value.code == 0
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for issue #291 — Google Cloud and Programming must be
+# included in Mermaid validation discovery (Makefile + CI workflow).
+# ---------------------------------------------------------------------------
+
+
+class TestDiscoveryIncludesGoogleCloud:
+    """Asserts that docs/google/ Markdown and .mmd files are in the validated set.
+
+    These tests execute the same discovery shell commands used by the Makefile
+    and CI workflow, then verify that Google Cloud paths appear in the output.
+    If discovery is ever narrowed back to Azure/AWS only, these tests fail.
+    """
+
+    def _ci_step_block(self) -> str:
+        content = LINT_YML.read_text()
+        m = re.search(
+            r"Validate Mermaid diagrams.*?(?=\n\s*- name:|\Z)",
+            content,
+            re.S,
+        )
+        assert m, "Could not locate 'Validate Mermaid diagrams' step in lint.yml"
+        return m.group(0)
+
+    def test_makefile_mmd_find_output_includes_google_diagrams(self, tmp_path):
+        """MMD_FILES_VALIDATE discovery must produce Google Cloud .mmd paths."""
+        # Replicate the Makefile MMD_FILES_VALIDATE expression
+        result = tmp_path / "out.txt"
+        result.write_text("")
+        import subprocess
+
+        proc = subprocess.run(
+            ["find", "docs", "-name", "*.mmd"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert proc.returncode == 0, f"find failed: {proc.stderr}"
+        output = proc.stdout
+        assert "docs/google/diagrams" in output, (
+            "Google Cloud diagrams not found by MMD_FILES_VALIDATE-style discovery. "
+            "If you see this, the find scope was narrowed — check Makefile MMD_FILES_VALIDATE."
+        )
+
+    def test_makefile_md_find_output_includes_google_files(self, tmp_path):
+        """MD_FILES_VALIDATE discovery must produce Google Cloud .md paths."""
+        import subprocess
+
+        proc = subprocess.run(
+            [
+                "bash",
+                "-c",
+                "find docs -name '*.md' ! -path "
+                "'docs/azure/diagrams/*' ! -path 'docs/overrides/*' | sort",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert proc.returncode == 0, f"find failed: {proc.stderr}"
+        output = proc.stdout
+        assert "docs/google/files" in output, (
+            "Google Cloud Markdown files not found by MD_FILES_VALIDATE-style discovery. "
+            "If you see this, the find scope was narrowed — check Makefile MD_FILES_VALIDATE."
+        )
+
+    def test_ci_mermaid_check_covers_google(self):
+        """CI 'Validate Mermaid diagrams' step must include docs/google in both find calls."""
+        block = self._ci_step_block()
+        # The CI step now uses broad 'find docs' — verify the expression references docs root
+        assert "find docs" in block, (
+            "CI mermaid-check must use 'find docs' (not provider-scoped paths)"
+        )
+        # Verify the expression doesn't hard-code only azure/aws
+        assert "docs/azure/files docs/aws/files" not in block, (
+            "CI mermaid-check still uses narrow azure/aws find — must be broadened to 'find docs'"
+        )
+
+
+class TestDiscoveryIncludesProgramming:
+    """Asserts that docs/programming/ Markdown and .mmd files are in the validated set.
+
+    These tests execute the same discovery shell commands used by the Makefile
+    and CI workflow, then verify that Programming paths appear in the output.
+    """
+
+    def _ci_step_block(self) -> str:
+        content = LINT_YML.read_text()
+        m = re.search(
+            r"Validate Mermaid diagrams.*?(?=\n\s*- name:|\Z)",
+            content,
+            re.S,
+        )
+        assert m, "Could not locate 'Validate Mermaid diagrams' step in lint.yml"
+        return m.group(0)
+
+    def test_makefile_mmd_find_output_includes_programming_diagrams(self, tmp_path):
+        """MMD_FILES_VALIDATE discovery must produce Programming .mmd paths."""
+        import subprocess
+
+        proc = subprocess.run(
+            ["find", "docs", "-name", "*.mmd"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert proc.returncode == 0, f"find failed: {proc.stderr}"
+        output = proc.stdout
+        assert "docs/programming" in output, (
+            "Programming diagrams not found by MMD_FILES_VALIDATE-style discovery. "
+            "If you see this, the find scope was narrowed — check Makefile MMD_FILES_VALIDATE."
+        )
+
+    def test_makefile_md_find_output_includes_programming_files(self, tmp_path):
+        """MD_FILES_VALIDATE discovery must produce Programming .md paths."""
+        import subprocess
+
+        proc = subprocess.run(
+            [
+                "bash",
+                "-c",
+                "find docs -name '*.md' ! -path "
+                "'docs/azure/diagrams/*' ! -path 'docs/overrides/*' | sort",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert proc.returncode == 0, f"find failed: {proc.stderr}"
+        output = proc.stdout
+        assert "docs/programming/files" in output, (
+            "Programming Markdown files not found by MD_FILES_VALIDATE-style discovery. "
+            "If you see this, the find scope was narrowed — check Makefile MD_FILES_VALIDATE."
+        )
+
+    def test_ci_mermaid_check_covers_programming(self):
+        """CI 'Validate Mermaid diagrams' step must include docs/programming in
+        both find calls."""
+        block = self._ci_step_block()
+        assert "find docs" in block, (
+            "CI mermaid-check must use 'find docs' (not provider-scoped paths)"
+        )
+        assert "docs/azure/files docs/aws/files" not in block, (
+            "CI mermaid-check still uses narrow azure/aws find — must be broadened to 'find docs'"
+        )

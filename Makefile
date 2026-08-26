@@ -42,7 +42,7 @@ MD_FILES_VALIDATE := $(shell find docs -name '*.md' \
   ! -path 'docs/azure/diagrams/*' \
   ! -path 'docs/overrides/*')
 # All standalone .mmd diagram files
-MMD_FILES_VALIDATE := $(shell find docs/azure/diagrams docs/aws/diagrams -name '*.mmd' 2>/dev/null)
+MMD_FILES_VALIDATE := $(shell find docs -name '*.mmd' 2>/dev/null)
 
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install \
