@@ -15,6 +15,8 @@ Verifies that:
 
 from __future__ import annotations
 
+import shutil
+
 import pytest
 import validate_mermaid
 from conftest import REPO_ROOT
@@ -185,6 +187,7 @@ class TestPostgresqlInlineMermaid:
             f"Expected at least 2 inline ```mermaid blocks, found {len(blocks)}"
         )
 
+    @pytest.mark.skipif(shutil.which("mmdc") is None, reason="mmdc not installed")
     def test_index_selection_diagram_valid(self):
         text = PG_MD.read_text(encoding="utf-8")
         blocks = validate_mermaid._extract_from_text(text)
@@ -199,6 +202,7 @@ class TestPostgresqlInlineMermaid:
         ok, msg = validate_mermaid.validate_block(1, index_diagram)
         assert ok, f"Index selection diagram is invalid Mermaid: {msg}"
 
+    @pytest.mark.skipif(shutil.which("mmdc") is None, reason="mmdc not installed")
     def test_slow_query_diagram_valid(self):
         text = PG_MD.read_text(encoding="utf-8")
         blocks = validate_mermaid._extract_from_text(text)
