@@ -49,6 +49,7 @@ EXPECTED_NAV_ENTRIES = [
     "OOP",
     "Functional Programming",
     "Persistence",
+    "Spring Boot",
     "Collections",
 ]
 

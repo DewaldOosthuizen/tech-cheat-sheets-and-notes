@@ -6,4 +6,5 @@
 | [OOP](../oop/oop.md) | Full | Full | Full | Full |
 | [Functional Programming](../functional-programming/functional-programming.md) | Partial | Full | Full | Full |
 | [Persistence](../persistence/persistence.md) | Partial | Partial | Partial | Partial |
+| [Spring Boot](../spring-boot/spring-boot.md) | N/A | N/A | N/A | N/A |
 | [Collections](../collections/collections.md) | Full | Full | Full | Full |

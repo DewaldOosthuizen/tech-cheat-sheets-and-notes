@@ -1,0 +1,14 @@
+flowchart TD
+    A[Building a Spring Boot service?] --> B{Is the workload request/response with moderate concurrency?}
+    B -- Yes --> C[Spring MVC -- servlet stack, blocking I/O, mature ecosystem]
+    B -- No --> D{Is it high-concurrency streaming with backpressure?}
+    D -- Yes --> E[Spring WebFlux -- reactive, non-blocking, suited for streaming scenarios]
+    D -- No --> F{Is it scheduled or recurring tasks?}
+    F -- Yes --> G[Scheduled methods or Spring Batch]
+    F -- No --> H{Is it event or message-driven?}
+    H -- Yes --> I[ApplicationEventPublisher / message listener -- RabbitMQ, Kafka, JMS]
+    H -- No --> J{Re-evaluate -- hybrid or custom processing model}
+    C --> K[Use RestController / Controller with GetMapping, PostMapping, etc.]
+    E --> L[Use RestController with reactive return types -- Mono, Flux]
+    G --> M[Enable with EnableScheduling or EnableBatchProcessing]
+    I --> N[Configure message listener containers and JmsListener / KafkaListener]

@@ -65,6 +65,7 @@ nav:
     - OOP: programming/files/oop/oop.md
     - Functional Programming: programming/files/functional-programming/functional-programming.md
     - Persistence: programming/files/persistence/persistence.md
+    - Spring Boot: programming/files/spring-boot/spring-boot.md
     - Collections: programming/files/collections/collections.md
   - Cloud Service Providers:
     - AWS:
