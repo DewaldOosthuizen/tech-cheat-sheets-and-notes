@@ -48,6 +48,14 @@ Java's collection framework provides three foundational interfaces: `List` (orde
 - **Rejects null keys and null values** unlike `HashMap`.
 - Suitable for high-concurrency key-value workloads where read-heavy access patterns dominate and update contention must be minimised.
 
+### ConcurrentSkipListMap
+
+- Concurrent variant of `TreeMap`: elements are sorted by natural order or a provided `Comparator`, backed by a skip list for concurrent access.
+- Iterators are **weakly consistent** — they reflect the state of the map at or since the iterator's creation; they do not throw `ConcurrentModificationException` but may or may not see concurrent updates.
+- **Rejects null keys and null values** unlike `TreeMap` (which accepts null keys only if the comparator permits them).
+- Suitable when you need a thread-safe, sorted key-value map — e.g. range queries over concurrently updated keys, or when insertion order is not enough and sorting must be maintained under concurrent writes.
+- Slightly higher memory overhead than `ConcurrentHashMap` due to the skip-list structure, but offers O(log n) expected performance for insert, remove, and search.
+
 ### CopyOnWriteArrayList
 
 - On every mutating operation (add, set, remove, etc.), the entire underlying array is copied and replaced.
@@ -100,8 +108,9 @@ Java 9+ provides `List.of`, `Set.of`, `Map.of`, and `Map.ofEntries` for creating
 | `LinkedBlockingQueue` | N/A | N/A | **No** |
 | `PriorityBlockingQueue` | N/A | N/A | **No** |
 | `DelayQueue` | N/A | N/A | **No** |
-| `SynchronousQueue` | N/A | N/A | N/A (no storage) |
-| `List.of` / `Set.of` / `Map.of` | N/A | **No** (`Map.of`) | **No** |
+|| `SynchronousQueue` | N/A | N/A | N/A (no storage) |
+|| `ConcurrentSkipListMap` | **No** | **No** | N/A |
+|| `List.of` / `Set.of` / `Map.of` | N/A | **No** (`Map.of`) | **No** |
 
 ## Workload Assumptions — Linked vs Array-Based
 

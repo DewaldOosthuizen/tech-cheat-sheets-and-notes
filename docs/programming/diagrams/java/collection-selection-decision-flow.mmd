@@ -26,7 +26,9 @@ flowchart TD
     L -- Yes, ordering without sorting,<br/>no indexed access needed --> U[PriorityQueue<br/>Heap-ordered, no stable sorting<br/>no indexed access]
 
     %% ── Concurrent: key-value ──
-    D -- Key-value pairs --> V[ConcurrentHashMap<br/>Segmented locking, weakly consistent<br/>iterators, rejects null keys and values]
+    D -- Key-value pairs --> D1{Concurrent needs?}
+    D1 -- General concurrent<br/>key-value --> V[ConcurrentHashMap<br/>Segmented locking, weakly consistent<br/>iterators, rejects null keys and values]
+    D1 -- Sorted concurrent<br/>keys required --> U1[ConcurrentSkipListMap<br/>Concurrent variant of TreeMap,<br/>sorted by natural order or comparator,<br/>weakly consistent iterators, rejects nulls]
 
     %% ── Concurrent: queue / blocking ──
     D -- Queue, blocking<br/>producer/consumer --> W{Producer/consumer<br/>blocking needed?}
