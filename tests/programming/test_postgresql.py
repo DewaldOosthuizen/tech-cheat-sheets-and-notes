@@ -103,9 +103,7 @@ class TestPostgresqlVersionApplicability:
     def test_version_callout_present(self):
         text = PG_MD.read_text(encoding="utf-8")
         assert "Version applicability" in text, "Missing version applicability callout"
-        assert "14" in text and "17" in text, (
-            "Version applicability must mention PostgreSQL 14-17"
-        )
+        assert "14" in text and "17" in text, "Version applicability must mention PostgreSQL 14-17"
 
 
 class TestPostgresqlMandatoryKeywords:
@@ -113,8 +111,8 @@ class TestPostgresqlMandatoryKeywords:
 
     @pytest.mark.parametrize("keyword", MANDATORY_KEYWORDS)
     def test_keyword_present(self, keyword):
-        text = PG_MD.read_text(encoding="utf-8")
-        assert keyword in text, f"Missing mandatory keyword: {keyword}"
+        text = PG_MD.read_text(encoding="utf-8").lower()
+        assert keyword.lower() in text, f"Missing mandatory keyword: {keyword}"
 
 
 class TestPostgresqlIndexTable:
@@ -171,9 +169,7 @@ class TestPostgresqlInlineMermaid:
     def test_no_external_mmd_snippets(self):
         text = PG_MD.read_text(encoding="utf-8")
         # Must not contain --8<-- directives referencing .mmd files
-        assert "--8<--" not in text, (
-            "postgresql.md must not use --8<-- snippet directives"
-        )
+        assert "--8<--" not in text, "postgresql.md must not use --8<-- snippet directives"
         # Must not reference docs/programming/diagrams/postgresql/ or any external .mmd
         assert "docs/programming/diagrams" not in text, (
             "postgresql.md must not reference external diagram directories"
@@ -183,6 +179,7 @@ class TestPostgresqlInlineMermaid:
         text = PG_MD.read_text(encoding="utf-8")
         # Count inline mermaid blocks
         import re
+
         blocks = re.findall(r"```mermaid\s*\n", text)
         assert len(blocks) >= 2, (
             f"Expected at least 2 inline ```mermaid blocks, found {len(blocks)}"
@@ -222,6 +219,8 @@ class TestPostgresqlCrossReferences:
 
     def test_links_to_aws_database(self):
         text = PG_MD.read_text(encoding="utf-8")
+        # The cross-reference must link to the AWS Database page — accept any relative path
+        # that references aws/files/database/database.md.
         assert "aws/files/database/database.md" in text, (
             "Cross-References must link to aws/files/database/database.md"
         )

@@ -50,6 +50,7 @@ EXPECTED_NAV_ENTRIES = [
     "Functional Programming",
     "Persistence",
     "Collections",
+    "PostgreSQL Operations & Performance",
 ]
 
 REQUIRED_HEADINGS = {

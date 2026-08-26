@@ -70,3 +70,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 > **Exam tip:** JPQL queries operate on entity object graphs, not table/column names directly —
 > `SELECT u FROM User u` refers to the `User` entity class, not the `users` table.
+>
+> See the [PostgreSQL Operations & Performance](postgresql.md) reference for indexing,
+> query plans, VACUUM, locking, backup, replication, and connection pooling beyond the
+> JDBC connection URL shown above.

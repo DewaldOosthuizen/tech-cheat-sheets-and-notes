@@ -66,6 +66,7 @@ nav:
     - Functional Programming: programming/files/functional-programming/functional-programming.md
     - Persistence: programming/files/persistence/persistence.md
     - Collections: programming/files/collections/collections.md
+    - PostgreSQL Operations & Performance: programming/files/persistence/postgresql.md
   - Cloud Service Providers:
     - AWS:
         - Abbreviations: aws/files/abbreviations/abbreviations.md

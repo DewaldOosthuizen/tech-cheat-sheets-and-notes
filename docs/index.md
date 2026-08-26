@@ -72,6 +72,24 @@ See the [Google Cloud Exam Track Index](google/files/exams/exams.md) for full co
 
 ---
 
+### Programming
+
+Organised by domain. Each section covers language features, persistence patterns,
+and operational reference material.
+
+| Domain | Content |
+|--------|---------|
+| [Abbreviations](programming/files/abbreviations/abbreviations.md) | Programming abbreviations and acronyms |
+| [Exam Coverage](programming/files/exams/exams.md) | Programming exam topic coverage |
+| [Language Fundamentals](programming/files/language-fundamentals/language-fundamentals.md) | Java language basics, keywords, and primitives |
+| [OOP](programming/files/oop/oop.md) | Core OOP concepts: encapsulation, inheritance, polymorphism |
+| [Functional Programming](programming/files/functional-programming/functional-programming.md) | Lambda expressions, functional interfaces, streams |
+| [Persistence](programming/files/persistence/persistence.md) | JDBC, JPA, ORM trade-offs |
+| [Collections](programming/files/collections/collections.md) | Java Collections Framework |
+| [PostgreSQL Operations & Performance](programming/files/persistence/postgresql.md) | Indexing, EXPLAIN, VACUUM, locking, backup, replication, pooling |
+
+---
+
 ## How to Use These Sheets
 
 The cheat sheets are not meant to be read cover-to-cover. Jump to the section relevant to what

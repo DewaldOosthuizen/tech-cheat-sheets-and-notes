@@ -184,6 +184,11 @@ Both PostgreSQL and MySQL Flexible Server share the same three compute tiers.
 > **Exam tip:** Burstable tier does not support high-availability (zone-redundant standby)
 > or read replicas — choose General Purpose or Memory Optimized when the requirement
 > mentions HA, read replicas, or geo-redundancy.
+>
+> For PostgreSQL operational reference — indexing, EXPLAIN, VACUUM, locking, backup/PITR,
+> replication, and connection pooling — see the [PostgreSQL Operations & Performance](../../../programming/files/persistence/postgresql.md)
+> page. The compute tiers above cover Azure hosting options; this reference covers the
+> database engine itself.
 
 ### Azure Synapse Analytics Pool Types
 

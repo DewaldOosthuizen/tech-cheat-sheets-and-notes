@@ -34,3 +34,7 @@
 > **Exam tip:** Multi-AZ is for HA and automatic failover, not for read
 > scaling. Read replicas are for read scaling — they can be promoted for DR
 > but require manual action.
+>
+> Operating PostgreSQL itself — indexing, query plans, VACUUM, locking, backup, and
+> replication — is covered in the [PostgreSQL Operations & Performance](../../../programming/files/persistence/postgresql.md)
+> reference, independent of which managed service hosts the instance.
