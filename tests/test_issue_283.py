@@ -1,4 +1,5 @@
-"""Tests for issue #283: FEATURE: Add a Spring Boot architecture and production practices cheat sheet.
+"""Tests for issue #283: FEATURE: Add a Spring Boot architecture and
+production practices cheat sheet.
 
 Verifies that:
   - mkdocs.yml Programming nav contains a Spring Boot entry pointing to
@@ -12,8 +13,6 @@ Verifies that:
 """
 
 from __future__ import annotations
-
-from pathlib import Path
 
 import pytest
 import yaml
@@ -107,7 +106,7 @@ class TestMkdocsSpringBootNav:
                     "'programming/files/spring-boot/spring-boot.md'"
                 )
                 return
-        assert False, "Spring Boot entry not found in nav"
+        raise AssertionError("Spring Boot entry not found in nav")
 
     def test_spring_boot_between_persistence_and_collections(self, mkdocs_config):
         programming_section = next(
@@ -119,8 +118,7 @@ class TestMkdocsSpringBootNav:
         spring_boot_idx = entry_keys.index("Spring Boot")
         collections_idx = entry_keys.index("Collections")
         assert persistence_idx < spring_boot_idx < collections_idx, (
-            f"Spring Boot must sit between Persistence and Collections; "
-            f"order is {entry_keys}"
+            f"Spring Boot must sit between Persistence and Collections; order is {entry_keys}"
         )
 
     def test_all_nav_entries_in_order(self, mkdocs_config):
@@ -151,35 +149,30 @@ class TestSpringBootDomainFile:
         )
 
     def test_mermaid_flowchart_present(self, spring_boot_text):
-        assert "```mermaid" in spring_boot_text, (
-            "Expected a mermaid code fence in spring-boot.md"
-        )
-        assert "flowchart TD" in spring_boot_text, (
-            "Expected at least one 'flowchart TD' Mermaid block in spring-boot.md"
+        from conftest import expand_snippets
+
+        expanded = expand_snippets(spring_boot_text)
+        assert "```mermaid" in spring_boot_text, "Expected a mermaid code fence in spring-boot.md"
+        assert "flowchart TD" in expanded, (
+            "Expected at least one 'flowchart TD' Mermaid block in spring-boot.md "
+            "after snippet expansion"
         )
 
 
 class TestIndexProgrammingSummary:
     def test_programming_summary_table_present(self, index_text):
-        assert "## Programming" in index_text, (
-            "Expected '## Programming' section in docs/index.md"
-        )
+        assert "## Programming" in index_text, "Expected '## Programming' section in docs/index.md"
 
     def test_spring_boot_row_in_summary(self, index_text):
-        assert "Spring Boot" in index_text, (
-            "Expected Spring Boot row in Programming summary table"
-        )
+        assert "Spring Boot" in index_text, "Expected Spring Boot row in Programming summary table"
         assert "programming/files/spring-boot/spring-boot.md" in index_text, (
-            "Expected Spring Boot link to programming/files/spring-boot/spring-boot.md "
-            "in index.md"
+            "Expected Spring Boot link to programming/files/spring-boot/spring-boot.md in index.md"
         )
 
 
 class TestExamsSpringBootRow:
     def test_spring_boot_row_present(self, exams_text):
-        assert "Spring Boot" in exams_text, (
-            "Expected Spring Boot row in exams.md exam track index"
-        )
+        assert "Spring Boot" in exams_text, "Expected Spring Boot row in exams.md exam track index"
 
     def test_spring_boot_na_coverage(self, exams_text):
         assert "| [Spring Boot]" in exams_text, (
@@ -189,12 +182,13 @@ class TestExamsSpringBootRow:
         for line in lines:
             if line.strip().startswith("| [Spring Boot]"):
                 cells = [c.strip() for c in line.split("|")]
-                # After the leading | and before the trailing |, the exam columns
-                # should all be N/A
-                exam_cells = [c for c in cells[1:-1] if c]
+                # cells[0] is empty (leading |), cells[1] is the section link,
+                # cells[2:-1] are the four exam columns, cells[-1] is empty
+                # (trailing |)
+                exam_cells = cells[2:-1]
                 for cell in exam_cells:
                     assert cell == "N/A", (
                         f"Expected N/A coverage cells for Spring Boot, got '{cell}'"
                     )
                 return
-        assert False, "Spring Boot row not found in exams.md"
+        raise AssertionError("Spring Boot row not found in exams.md")

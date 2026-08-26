@@ -72,6 +72,23 @@ See the [Google Cloud Exam Track Index](google/files/exams/exams.md) for full co
 
 ---
 
+## Programming
+
+Quick-reference sheets for Java language fundamentals and the Spring Boot framework.
+
+|| Domain | Content |
+||--------|---------|
+|| [Abbreviations](programming/files/abbreviations/abbreviations.md) | Java and Spring Boot acronyms |
+|| [Exam Coverage](programming/files/exams/exams.md) | Java certification exam mapping by topic |
+|| [Language Fundamentals](programming/files/language-fundamentals/language-fundamentals.md) | Syntax, keywords, types, strings |
+|| [OOP](programming/files/oop/oop.md) | Encapsulation, inheritance, polymorphism, abstraction |
+|| [Functional Programming](programming/files/functional-programming/functional-programming.md) | Lambdas, streams, functional interfaces |
+|| [Persistence](programming/files/persistence/persistence.md) | JDBC, JPA, ORM trade-offs |
+|| [Spring Boot](programming/files/spring-boot/spring-boot.md) | Auto-configuration, starters, DI, actuator, profiles, observability, native images |
+|| [Collections](programming/files/collections/collections.md) | List, Set, Map, concurrent collections |
+
+---
+
 ## How to Use These Sheets
 
 The cheat sheets are not meant to be read cover-to-cover. Jump to the section relevant to what
