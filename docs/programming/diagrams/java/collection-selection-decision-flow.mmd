@@ -1,15 +1,42 @@
 flowchart TD
-    A[Need a collection] --> B{Key-value pairs?}
-    B -- Yes --> C{Need insertion order?}
-    C -- Yes --> D[LinkedHashMap]
-    C -- No, need sorted keys --> E[TreeMap]
-    C -- No --> F[HashMap]
-    B -- No --> G{Duplicates allowed?}
-    G -- No --> H{Need sorted order?}
-    H -- Yes --> I[TreeSet]
-    H -- No, need insertion order --> J[LinkedHashSet]
-    H -- No --> K[HashSet]
-    G -- Yes --> L{Frequent index access?}
-    L -- Yes --> M[ArrayList]
-    L -- No, frequent insert/remove at ends --> N[ArrayDeque]
-    L -- No, frequent insert/remove in middle --> O[LinkedList]
+    A[Need a collection] --> C{Access pattern?}
+    C -- Single-threaded only --> B{Key-value pairs?}
+    C -- Externally synchronised<br/>(e.g. wrapper) --> B
+    C -- Concurrent access --> D{Concurrent needs?}
+
+    %% ── Non-concurrent: key-value ──
+    B -- Yes --> E{Key type is enum?}
+    E -- Yes --> F[EnumMap<br/>Array-backed high performance<br/>for enum keys]
+    E -- No --> G{Insertion order or sorted keys?}
+    G -- Yes, insertion order --> H[LinkedHashMap]
+    G -- Yes, sorted keys --> I[TreeMap]
+    G -- No --> J[HashMap<br/>Allows null keys and values]
+    B -- Immutable snapshot needed --> K[List.of / Set.of / Map.of<br/>Null-rejecting and unmodifiable<br/>small-collection optimisation]
+
+    %% ── Non-concurrent: no key-value ──
+    B -- No --> L{Duplicates allowed?}
+    L -- No --> M{Need sorted order?}
+    M -- Yes --> N[TreeSet]
+    M -- No, need insertion order --> O[LinkedHashSet]
+    M -- No --> P[HashSet]
+    L -- Yes --> Q{Frequent index access?}
+    Q -- Yes --> R[ArrayList]
+    Q -- No, frequent insert/remove at<br/>ends, double-ended queue needed --> S[ArrayDeque<br/>Implements Deque, rejects null elements]
+    Q -- No, frequent insert/remove in<br/>middle --> T[LinkedList<br/>Higher per-element memory overhead<br/>than ArrayList]
+    L -- Yes, ordering without sorting,<br/>no indexed access needed --> U[PriorityQueue<br/>Heap-ordered, no stable sorting<br/>no indexed access]
+
+    %% ── Concurrent: key-value ──
+    D -- Key-value pairs --> D1{Concurrent needs?}
+    D1 -- General concurrent<br/>key-value --> V[ConcurrentHashMap<br/>Segmented locking, weakly consistent<br/>iterators, rejects null keys and values]
+    D1 -- Sorted concurrent<br/>keys required --> U1[ConcurrentSkipListMap<br/>Concurrent variant of TreeMap,<br/>sorted by natural order or comparator,<br/>weakly consistent iterators, rejects nulls]
+
+    %% ── Concurrent: queue / blocking ──
+    D -- Queue, blocking<br/>producer/consumer --> W{Producer/consumer<br/>blocking needed?}
+    W -- Yes, blocking queue --> X[BlockingQueue subtypes:<br/>ArrayBlockingQueue - bounded / array<br/>LinkedBlockingQueue - optional bound / linked<br/>PriorityBlockingQueue - unbounded / heap<br/>DelayQueue - delayed elements<br/>SynchronousQueue - handoff / no capacity]
+    W -- No, lock-free FIFO --> Y[ConcurrentLinkedQueue<br/>Lock-free, non-blocking FIFO<br/>Rejects null elements]
+
+    %% ── Concurrent: list, read-heavy ──
+    D -- List, read-heavy<br/>write-rare --> Z[CopyOnWriteArrayList<br/>Snapshot iterators, high read / low write<br/>Memory cost on mutation]
+
+    %% ── Defensive-copy note ──
+    A -.->|Defensive copies, unmodifiable<br/>wrappers, immutable factories avoid<br/>accidental mutation of shared references| GA[Defensive copy /<br/>unmodifiable wrapper /<br/>immutable factory]
