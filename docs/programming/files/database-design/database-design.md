@@ -536,7 +536,7 @@ flowchart TD
     Document --> End
 ```
 
-The diagram above is in [`normalised-order-example.mmd`](programming/diagrams/database-design/normalised-order-example.mmd) and [`migration-decision-flow.mmd`](programming/diagrams/database-design/migration-decision-flow.mmd).
+The diagram above is in [`normalised-order-example.mmd`](../../diagrams/database-design/normalised-order-example.mmd) and [`migration-decision-flow.mmd`](../../diagrams/database-design/migration-decision-flow.mmd).
 
 ### Application Version and Database Version Coupling
 
