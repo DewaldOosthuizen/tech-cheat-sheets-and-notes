@@ -3,8 +3,9 @@
 Verifies that:
   - docs/programming/ has a multi-page structure matching cloud-provider convention:
     Abbreviations, Exam Coverage, Language Fundamentals, OOP, Functional Programming,
-    Persistence, Collections.
-  - mkdocs.yml Programming nav has the 7 alphabetically-ordered entries.
+    Persistence, Collections, Spring Boot.
+  - mkdocs.yml Programming nav has a "Java" subgroup with the 8 alphabetically-ordered entries
+    plus a "Python (Coming soon)" placeholder.
   - The new domain files exist with expected headings.
   - The old java.md is removed.
 """
@@ -42,7 +43,8 @@ DOMAIN_FILES = {
 
 OLD_JAVA_MD = _FILES / "java" / "java.md"
 
-EXPECTED_NAV_ENTRIES = [
+EXPECTED_JAVA_NAV_ENTRIES = [
+    "Index",
     "Abbreviations",
     "Exam Coverage",
     "Language Fundamentals",
@@ -52,6 +54,7 @@ EXPECTED_NAV_ENTRIES = [
     "Spring Boot",
     "Collections",
 ]
+
 
 REQUIRED_HEADINGS = {
     "abbreviations": "# ABBREVIATIONS",
@@ -66,6 +69,7 @@ REQUIRED_HEADINGS = {
 REQUIRED_SECTIONS_LANG_FUND = [
     "## Language Basics & Keywords",
     "## String Manipulation",
+    "## Java 21 LTS — New in this Release",
 ]
 
 REQUIRED_SECTIONS_OOP = [
@@ -163,32 +167,39 @@ class TestMkdocsProgrammingNav:
             "(alphabetical top-level ordering)"
         )
 
-    def test_all_nav_entries_present(self, mkdocs_config):
+    def test_java_subgroup_present(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         assert programming_section is not None, "Programming nav section missing"
-        entry_keys: list[str] = [next(iter(e.keys())) for e in programming_section]
-        for expected in EXPECTED_NAV_ENTRIES:
-            assert expected in entry_keys, f"Expected nav entry '{expected}' not found"
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None, "Java subgroup not found under Programming"
+        java_section = java_entry["Java"]
+        assert isinstance(java_section, list), "Java nav entry should be a list of sub-entries"
+        entry_keys = [next(iter(e.keys())) for e in java_section]
+        assert entry_keys == EXPECTED_JAVA_NAV_ENTRIES, (
+            f"Java nav entries not in approved order: {entry_keys}"
+        )
 
-    def test_nav_entries_ordered(self, mkdocs_config):
+    def test_python_coming_soon_present(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
-        entry_keys: list[str] = [next(iter(e.keys())) for e in programming_section]
-        assert entry_keys == EXPECTED_NAV_ENTRIES, (
-            f"Programming nav entries not in approved order: {entry_keys}"
-        )
+        entry_keys = [next(iter(e.keys())) for e in programming_section]
+        assert "Python (Coming soon)" in entry_keys, "Python (Coming soon) entry not found"
 
-    def test_no_java_single_entry(self, mkdocs_config):
+    def test_java_subgroup_is_list_not_string(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
-        entry_keys: list[str] = [next(iter(e.keys())) for e in programming_section]
-        assert "Java" not in entry_keys, (
-            "Old single 'Java' entry should not exist — replaced by 7 domain pages"
+        assert programming_section is not None, "Programming nav section missing"
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None and "Java" in java_entry, (
+            "Java entry should exist under Programming"
+        )
+        assert isinstance(java_entry["Java"], list), (
+            "Java should be a subgroup (list), not a flat nav entry (string)"
         )

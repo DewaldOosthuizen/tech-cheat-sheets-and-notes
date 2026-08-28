@@ -2,8 +2,8 @@
 production practices cheat sheet.
 
 Verifies that:
-  - mkdocs.yml Programming nav contains a Spring Boot entry pointing to
-    programming/files/spring-boot/spring-boot.md, placed between Persistence
+  - mkdocs.yml Programming nav contains a "Java" subgroup with a Spring Boot entry
+    pointing to programming/files/spring-boot/spring-boot.md, placed between Persistence
     and Collections.
   - docs/index.md contains a Programming summary table with a Spring Boot row.
   - docs/programming/files/exams/exams.md contains a Spring Boot row with N/A
@@ -23,7 +23,8 @@ INDEX_MD = REPO_ROOT / "docs" / "index.md"
 EXAMS_MD = REPO_ROOT / "docs" / "programming" / "files" / "exams" / "exams.md"
 SPRING_BOOT_MD = REPO_ROOT / "docs" / "programming" / "files" / "spring-boot" / "spring-boot.md"
 
-EXPECTED_NAV_ORDER = [
+EXPECTED_JAVA_NAV_ORDER = [
+    "Index",
     "Abbreviations",
     "Exam Coverage",
     "Language Fundamentals",
@@ -84,21 +85,26 @@ def exams_text():
 
 
 class TestMkdocsSpringBootNav:
-    def test_spring_boot_entry_present(self, mkdocs_config):
+    def _get_java_section(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         assert programming_section is not None, "Programming nav section missing"
-        entry_keys = [next(iter(e.keys())) for e in programming_section]
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None, "Java subgroup not found under Programming"
+        java_section = java_entry["Java"]
+        assert isinstance(java_section, list), "Java nav entry should be a list of sub-entries"
+        return java_section
+
+    def test_spring_boot_entry_present(self, mkdocs_config):
+        java_section = self._get_java_section(mkdocs_config)
+        entry_keys = [next(iter(e.keys())) for e in java_section]
         assert "Spring Boot" in entry_keys, "Spring Boot nav entry not found"
 
     def test_spring_boot_nav_path(self, mkdocs_config):
-        programming_section = next(
-            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
-            None,
-        )
-        for entry in programming_section:
+        java_section = self._get_java_section(mkdocs_config)
+        for entry in java_section:
             if "Spring Boot" in entry:
                 path = entry["Spring Boot"]
                 assert path == "programming/files/spring-boot/spring-boot.md", (
@@ -109,11 +115,8 @@ class TestMkdocsSpringBootNav:
         raise AssertionError("Spring Boot entry not found in nav")
 
     def test_spring_boot_between_persistence_and_collections(self, mkdocs_config):
-        programming_section = next(
-            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
-            None,
-        )
-        entry_keys = [next(iter(e.keys())) for e in programming_section]
+        java_section = self._get_java_section(mkdocs_config)
+        entry_keys = [next(iter(e.keys())) for e in java_section]
         persistence_idx = entry_keys.index("Persistence")
         spring_boot_idx = entry_keys.index("Spring Boot")
         collections_idx = entry_keys.index("Collections")
@@ -121,14 +124,11 @@ class TestMkdocsSpringBootNav:
             f"Spring Boot must sit between Persistence and Collections; order is {entry_keys}"
         )
 
-    def test_all_nav_entries_in_order(self, mkdocs_config):
-        programming_section = next(
-            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
-            None,
-        )
-        entry_keys = [next(iter(e.keys())) for e in programming_section]
-        assert entry_keys == EXPECTED_NAV_ORDER, (
-            f"Programming nav entries not in approved order: {entry_keys}"
+    def test_all_java_nav_entries_in_order(self, mkdocs_config):
+        java_section = self._get_java_section(mkdocs_config)
+        entry_keys = [next(iter(e.keys())) for e in java_section]
+        assert entry_keys == EXPECTED_JAVA_NAV_ORDER, (
+            f"Java nav entries not in approved order: {entry_keys}"
         )
 
 

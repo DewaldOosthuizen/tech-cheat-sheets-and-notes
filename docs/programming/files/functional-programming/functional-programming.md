@@ -2,23 +2,23 @@
 
 ## Lambda & Functional Interfaces
 
-| Interface | Method | Use Case |
-| --- | --- | --- |
-| `Function<T, R>` | `R apply(T t)` | Transform an input into an output |
-| `Predicate<T>` | `boolean test(T t)` | Boolean-valued condition, e.g. filtering |
-| `Consumer<T>` | `void accept(T t)` | Perform an action, no return value |
-| `Supplier<T>` | `T get()` | Provide/produce a value, no input |
-| `BiFunction<T, U, R>` | `R apply(T t, U u)` | Transform two inputs into an output |
-| `UnaryOperator<T>` | `T apply(T t)` | `Function<T, T>` specialisation |
+|| Interface | Method | Use Case |
+|| --- | --- | --- |
+|| `Function<T, R>` | `R apply(T t)` | Transform an input into an output |
+|| `Predicate<T>` | `boolean test(T t)` | Boolean-valued condition, e.g. filtering |
+|| `Consumer<T>` | `void accept(T t)` | Perform an action, no return value |
+|| `Supplier<T>` | `T get()` | Provide/produce a value, no input |
+|| `BiFunction<T, U, R>` | `R apply(T t, U u)` | Transform two inputs into an output |
+|| `UnaryOperator<T>` | `T apply(T t)` | `Function<T, T>` specialisation |
 
 ### Method References
 
-| Form | Example | Equivalent Lambda |
-| --- | --- | --- |
-| Static method | `Integer::parseInt` | `s -> Integer.parseInt(s)` |
-| Instance method (particular object) | `list::add` | `x -> list.add(x)` |
-| Instance method (arbitrary object of a type) | `String::toUpperCase` | `s -> s.toUpperCase()` |
-| Constructor | `ArrayList::new` | `() -> new ArrayList<>()` |
+|| Form | Example | Equivalent Lambda |
+|| --- | --- | --- |
+|| Static method | `Integer::parseInt` | `s -> Integer.parseInt(s)` |
+|| Instance method (particular object) | `list::add` | `x -> list.add(x)` |
+|| Instance method (arbitrary object of a type) | `String::toUpperCase` | `s -> s.toUpperCase()` |
+|| Constructor | `ArrayList::new` | `() -> new ArrayList<>()` |
 
 ### Streams Basics
 
@@ -34,3 +34,15 @@ List<String> longNames = names.stream()
 
 > **Exam tip:** Streams are lazily evaluated — intermediate operations (`filter`, `map`) only
 > execute once a terminal operation (`collect`, `toList`, `forEach`, `reduce`) is invoked.
+
+## Java 21 note
+
+Pattern matching for `switch` and record patterns — both final in Java 21 — are functional-programming-adjacent
+features that belong in the Java 21 conversation. See the [Java 21 LTS — New in this Release](
+../language-fundamentals/language-fundamentals.md#java-21-lts-new-in-this-release) section in
+Language Fundamentals for worked examples of both, including nested record decomposition and guarded
+switch patterns with dominance/totality considerations.
+
+`toList()` is final since Java 16 and is therefore stable for production use. It returns an
+unmodifiable list; prefer `collect(Collectors.toCollection(ArrayList::new))` when a mutable
+result is required.

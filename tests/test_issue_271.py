@@ -5,8 +5,8 @@ Verifies that:
   - docs/programming/ has the domain-page structure (language-fundamentals,
     oop, functional-programming, persistence, collections) plus abbreviations
     and exam coverage pages.
-  - mkdocs.yml has a "Programming" nav group with the 7 domain entries,
-    alphabetically ordered before "Cloud Service Providers".
+  - mkdocs.yml has a "Programming" nav group with a "Java" subgroup containing
+    the 7 domain entries, alphabetically ordered before "Cloud Service Providers".
   - README.md's "Current Content" table has a Programming row.
 """
 
@@ -42,6 +42,7 @@ REQUIRED_SECTIONS_PER_FILE = {
     "language-fundamentals": [
         "## Language Basics & Keywords",
         "## String Manipulation",
+        "## Java 21 LTS — New in this Release",
     ],
     "oop": [
         "## Core OOP Concepts",
@@ -129,13 +130,17 @@ class TestMkdocsProgrammingNav:
             "(alphabetical top-level ordering)"
         )
 
-    def test_domain_entries_present_under_programming(self, mkdocs_config):
+    def test_java_subgroup_present(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         assert programming_section is not None, "Programming nav section missing"
-        entry_keys = [next(iter(e.keys())) for e in programming_section]
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None, "Java subgroup not found under Programming"
+        java_section = java_entry["Java"]
+        assert isinstance(java_section, list), "Java nav entry should be a list of sub-entries"
+        entry_keys = [next(iter(e.keys())) for e in java_section]
         expected_entries = [
             "Abbreviations",
             "Exam Coverage",
@@ -143,28 +148,46 @@ class TestMkdocsProgrammingNav:
             "OOP",
             "Functional Programming",
             "Persistence",
+            "Spring Boot",
             "Collections",
         ]
         for expected in expected_entries:
-            assert expected in entry_keys, f"Expected nav entry '{expected}' not found"
+            assert expected in entry_keys, (
+                f"Expected nav entry '{expected}' not found in Java subgroup"
+            )
+
+    def test_python_coming_soon_present(self, mkdocs_config):
+        programming_section = next(
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
+            None,
+        )
+        assert programming_section is not None, "Programming nav section missing"
+        entry_keys = [next(iter(e.keys())) for e in programming_section]
+        assert "Python (Coming soon)" in entry_keys, "Python (Coming soon) entry not found"
 
     def test_domain_entry_points_to_correct_files(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
+        assert programming_section is not None, "Programming nav section missing"
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None, "Java subgroup not found"
+        java_section = java_entry["Java"]
         expected_paths = {
             "Abbreviations": "programming/files/abbreviations/abbreviations.md",
             "Exam Coverage": "programming/files/exams/exams.md",
-            "Language Fundamentals": "programming/files/language-fundamentals/"
-            "language-fundamentals.md",
+            "Language Fundamentals": (
+                "programming/files/language-fundamentals/language-fundamentals.md"
+            ),
             "OOP": "programming/files/oop/oop.md",
-            "Functional Programming": "programming/files/functional-programming/"
-            "functional-programming.md",
+            "Functional Programming": (
+                "programming/files/functional-programming/functional-programming.md"
+            ),
             "Persistence": "programming/files/persistence/persistence.md",
             "Collections": "programming/files/collections/collections.md",
         }
-        for entry in programming_section:
+        for entry in java_section:
             key = next(iter(entry.keys()))
             expected_path = expected_paths.get(key)
             if expected_path:
