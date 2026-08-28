@@ -10,8 +10,6 @@ Verifies that:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from conftest import REPO_ROOT
 
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"

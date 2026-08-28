@@ -20,7 +20,9 @@ from conftest import REPO_ROOT
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 EXAMS_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "exams" / "exams.md"
-SPRING_BOOT_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "spring-boot" / "spring-boot.md"
+SPRING_BOOT_MD = (
+    REPO_ROOT / "docs" / "programming" / "java" / "files" / "spring-boot" / "spring-boot.md"
+)
 
 REQUIRED_HEADINGS = [
     "# SPRING BOOT",
@@ -161,7 +163,7 @@ class TestIndexProgrammingSummary:
     def test_spring_boot_row_in_summary(self, index_text):
         assert "Spring Boot" in index_text, "Expected Spring Boot row in Programming summary table"
         assert "programming/java/files/spring-boot/spring-boot.md" in index_text, (
-            "Expected Spring Boot link to programming/java/files/spring-boot/spring-boot.md in index.md"
+            "Expected Spring Boot link to spring-boot.md in index.md"
         )
 
 

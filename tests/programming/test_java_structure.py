@@ -9,6 +9,7 @@ Verifies that:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 import yaml
@@ -112,7 +113,7 @@ class TestJavaDomainFiles:
 class TestMkdocsProgrammingNav:
     """Verify mkdocs.yml Programming nav structure."""
 
-    EXPECTED_JAVA_NAV_ENTRIES = [
+    EXPECTED_JAVA_NAV_ENTRIES: ClassVar[list[str]] = [
         "Abbreviations",
         "Exam Coverage",
         "Language Fundamentals",
@@ -123,12 +124,16 @@ class TestMkdocsProgrammingNav:
         "Collections",
     ]
 
-    EXPECTED_PATHS = {
+    EXPECTED_PATHS: ClassVar[dict[str, str]] = {
         "Abbreviations": "programming/java/files/abbreviations/abbreviations.md",
         "Exam Coverage": "programming/java/files/exams/exams.md",
-        "Language Fundamentals": "programming/java/files/language-fundamentals/language-fundamentals.md",
+        "Language Fundamentals": (
+            "programming/java/files/language-fundamentals/language-fundamentals.md"
+        ),
         "OOP": "programming/java/files/oop/oop.md",
-        "Functional Programming": "programming/java/files/functional-programming/functional-programming.md",
+        "Functional Programming": (
+            "programming/java/files/functional-programming/functional-programming.md"
+        ),
         "Persistence": "programming/java/files/persistence/persistence.md",
         "Spring Boot": "programming/java/files/spring-boot/spring-boot.md",
         "Collections": "programming/java/files/collections/collections.md",
@@ -165,7 +170,9 @@ class TestMkdocsProgrammingNav:
         )
         assert programming_section is not None, "Programming nav section missing"
         java_entry = next((e for e in programming_section if "Java" in e), None)
-        assert java_entry is not None and "Java" in java_entry, "Java entry should exist under Programming"
+        assert java_entry is not None and "Java" in java_entry, (
+            "Java entry should exist under Programming"
+        )
         assert isinstance(java_entry["Java"], list), (
             "Java should be a subgroup (list), not a flat nav entry (string)"
         )
