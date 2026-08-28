@@ -1,7 +1,7 @@
 """Tests for issue #273: FEATURE: Enhance Java section.
 
 Verifies that:
-  - docs/programming/ has a multi-page structure matching cloud-provider convention:
+  - docs/programming/java/files/ has a multi-page structure matching cloud-provider convention:
     Abbreviations, Exam Coverage, Language Fundamentals, OOP, Functional Programming,
     Persistence, Collections, Spring Boot.
   - mkdocs.yml Programming nav has a "Java" subgroup with the 8 alphabetically-ordered entries
@@ -20,16 +20,15 @@ from conftest import REPO_ROOT
 
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 
-# Path fragments
-_PROG = Path("docs") / "programming"
-_FILES = _PROG / "files"
-_ABB = _FILES / "abbreviations" / "abbreviations.md"
-_EXM = _FILES / "exams" / "exams.md"
-_LF = _FILES / "language-fundamentals" / "language-fundamentals.md"
-_OOP = _FILES / "oop" / "oop.md"
-_FP = _FILES / "functional-programming" / "functional-programming.md"
-_PERS = _FILES / "persistence" / "persistence.md"
-_COL = _FILES / "collections" / "collections.md"
+# Path fragments — Java domain files now live under docs/programming/java/files/
+_PROG = Path("docs") / "programming" / "java" / "files"
+_ABB = _PROG / "abbreviations" / "abbreviations.md"
+_EXM = _PROG / "exams" / "exams.md"
+_LF = _PROG / "language-fundamentals" / "language-fundamentals.md"
+_OOP = _PROG / "oop" / "oop.md"
+_FP = _PROG / "functional-programming" / "functional-programming.md"
+_PERS = _PROG / "persistence" / "persistence.md"
+_COL = _PROG / "collections" / "collections.md"
 
 DOMAIN_FILES = {
     "abbreviations": _ABB,
@@ -41,10 +40,9 @@ DOMAIN_FILES = {
     "collections": _COL,
 }
 
-OLD_JAVA_MD = _FILES / "java" / "java.md"
+OLD_JAVA_MD = Path("docs") / "programming" / "java" / "files" / "java" / "java.md"
 
 EXPECTED_JAVA_NAV_ENTRIES = [
-    "Index",
     "Abbreviations",
     "Exam Coverage",
     "Language Fundamentals",

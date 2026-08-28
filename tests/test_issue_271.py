@@ -2,7 +2,7 @@
 issue #273 (enhancement: split Java into domain pages).
 
 Verifies that:
-  - docs/programming/ has the domain-page structure (language-fundamentals,
+  - docs/programming/java/files/ has the domain-page structure (language-fundamentals,
     oop, functional-programming, persistence, collections) plus abbreviations
     and exam coverage pages.
   - mkdocs.yml has a "Programming" nav group with a "Java" subgroup containing
@@ -21,21 +21,15 @@ from conftest import REPO_ROOT
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 README_MD = REPO_ROOT / "README.md"
 
-# Path fragments
-_PROG = Path("docs") / "programming"
-_FILES = _PROG / "files"
-_LF = _FILES / "language-fundamentals" / "language-fundamentals.md"
-_OOP = _FILES / "oop" / "oop.md"
-_FP = _FILES / "functional-programming" / "functional-programming.md"
-_PERS = _FILES / "persistence" / "persistence.md"
-_COL = _FILES / "collections" / "collections.md"
+# Path fragments — Java domain files now live under docs/programming/java/files/
+_PROG = Path("docs") / "programming" / "java" / "files"
 
 DOMAIN_FILES = {
-    "language-fundamentals": _LF,
-    "oop": _OOP,
-    "functional-programming": _FP,
-    "persistence": _PERS,
-    "collections": _COL,
+    "language-fundamentals": _PROG / "language-fundamentals" / "language-fundamentals.md",
+    "oop": _PROG / "oop" / "oop.md",
+    "functional-programming": _PROG / "functional-programming" / "functional-programming.md",
+    "persistence": _PROG / "persistence" / "persistence.md",
+    "collections": _PROG / "collections" / "collections.md",
 }
 
 REQUIRED_SECTIONS_PER_FILE = {
@@ -175,17 +169,18 @@ class TestMkdocsProgrammingNav:
         assert java_entry is not None, "Java subgroup not found"
         java_section = java_entry["Java"]
         expected_paths = {
-            "Abbreviations": "programming/files/abbreviations/abbreviations.md",
-            "Exam Coverage": "programming/files/exams/exams.md",
+            "Abbreviations": "programming/java/files/abbreviations/abbreviations.md",
+            "Exam Coverage": "programming/java/files/exams/exams.md",
             "Language Fundamentals": (
-                "programming/files/language-fundamentals/language-fundamentals.md"
+                "programming/java/files/language-fundamentals/language-fundamentals.md"
             ),
-            "OOP": "programming/files/oop/oop.md",
+            "OOP": "programming/java/files/oop/oop.md",
             "Functional Programming": (
-                "programming/files/functional-programming/functional-programming.md"
+                "programming/java/files/functional-programming/functional-programming.md"
             ),
-            "Persistence": "programming/files/persistence/persistence.md",
-            "Collections": "programming/files/collections/collections.md",
+            "Persistence": "programming/java/files/persistence/persistence.md",
+            "Spring Boot": "programming/java/files/spring-boot/spring-boot.md",
+            "Collections": "programming/java/files/collections/collections.md",
         }
         for entry in java_section:
             key = next(iter(entry.keys()))

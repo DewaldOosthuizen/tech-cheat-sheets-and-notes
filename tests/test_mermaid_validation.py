@@ -866,7 +866,7 @@ class TestDiscoveryIncludesProgramming:
         )
         assert proc.returncode == 0, f"find failed: {proc.stderr}"
         output = proc.stdout
-        assert "docs/programming/files" in output, (
+        assert "docs/programming/java/files" in output, (
             "Programming Markdown files not found by MD_FILES_VALIDATE-style discovery. "
             "If you see this, the find scope was narrowed — check Makefile MD_FILES_VALIDATE."
         )

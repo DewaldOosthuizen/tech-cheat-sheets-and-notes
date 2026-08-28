@@ -535,7 +535,7 @@ ecosystem needs.
 ## Decision Flow
 
 ```mermaid
---8<-- "programming/diagrams/spring-boot/processing-model-selection.mmd"
+--8<-- "programming/java/diagrams/spring-boot/processing-model-selection.mmd"
 ```
 
 ## Native Images

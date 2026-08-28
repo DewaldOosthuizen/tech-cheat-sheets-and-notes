@@ -3,7 +3,7 @@
 Quick-reference cheat sheet for Java, targeting the latest LTS release (**Java 21**).
 
 ```mermaid
---8<-- "programming/diagrams/java/collection-selection-decision-flow.mmd"
+--8<-- "programming/java/diagrams/java/collection-selection-decision-flow.mmd"
 ```
 
 ## Core Concepts

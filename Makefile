@@ -52,7 +52,7 @@ MMD_FILES_VALIDATE := $(shell find docs -name '*.mmd' 2>/dev/null)
         python-audit \
         python-test python-test-311 python-test-312 python-test-313 python-test-all \
 		ensure-lychee link-check \
-        docs-serve docs-build \
+        start docs-build \
         ci ci-full \
         clean
 
@@ -209,7 +209,7 @@ link-check: ensure-lychee
 # from the cheat-sheet Markdown files via PyMdown Snippets directives.
 # MkDocs+Material renders Mermaid in-browser; no pre-compilation is required.
 
-docs-serve: venv
+start: venv
 	@echo "--- docs-serve (http://127.0.0.1:8000) ---"
 	$(VENV_BIN)/mkdocs serve --dev-addr 127.0.0.1:8000
 

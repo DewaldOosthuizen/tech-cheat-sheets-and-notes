@@ -13,15 +13,16 @@ import pytest
 from conftest import REPO_ROOT
 
 # Paths
-_DIAG = (
+_DIFF = (
     REPO_ROOT
     / "docs"
     / "programming"
+    / "java"
     / "diagrams"
     / "java"
     / "collection-selection-decision-flow.mmd"
 )
-_COLLECTIONS = REPO_ROOT / "docs" / "programming" / "files" / "collections" / "collections.md"
+_COLLECTIONS = REPO_ROOT / "docs" / "programming" / "java" / "files" / "collections" / "collections.md"
 
 
 # ── Diagram node verification ────────────────────────────────────────────────
@@ -58,9 +59,9 @@ EXPECTED_DIAGRAM_NODES = [
 
 
 @pytest.mark.parametrize("node", EXPECTED_DIAGRAM_NODES)
-def test_diagram_contains_expected_node(node: str) -> None:
+def test_diag_contains_expected_node(node: str) -> None:
     """Verify that the decision-flow diagram contains each expected node label."""
-    content = _DIAG.read_text(encoding="utf-8")
+    content = _DIFF.read_text(encoding="utf-8")
     assert node in content, f"Diagram missing expected node: {node}"
 
 

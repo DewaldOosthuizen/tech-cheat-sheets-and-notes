@@ -3,12 +3,12 @@ production practices cheat sheet.
 
 Verifies that:
   - mkdocs.yml Programming nav contains a "Java" subgroup with a Spring Boot entry
-    pointing to programming/files/spring-boot/spring-boot.md, placed between Persistence
+    pointing to programming/java/files/spring-boot/spring-boot.md, placed between Persistence
     and Collections.
   - docs/index.md contains a Programming summary table with a Spring Boot row.
-  - docs/programming/files/exams/exams.md contains a Spring Boot row with N/A
+  - docs/programming/java/files/exams/exams.md contains a Spring Boot row with N/A
     coverage cells.
-  - docs/programming/files/spring-boot/spring-boot.md exists with the required
+  - docs/programming/java/files/spring-boot/spring-boot.md exists with the required
     heading, sections, and at least one flowchart TD Mermaid block.
 """
 
@@ -20,11 +20,10 @@ from conftest import REPO_ROOT
 
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
-EXAMS_MD = REPO_ROOT / "docs" / "programming" / "files" / "exams" / "exams.md"
-SPRING_BOOT_MD = REPO_ROOT / "docs" / "programming" / "files" / "spring-boot" / "spring-boot.md"
+EXAMS_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "exams" / "exams.md"
+SPRING_BOOT_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "spring-boot" / "spring-boot.md"
 
 EXPECTED_JAVA_NAV_ORDER = [
-    "Index",
     "Abbreviations",
     "Exam Coverage",
     "Language Fundamentals",
@@ -107,9 +106,9 @@ class TestMkdocsSpringBootNav:
         for entry in java_section:
             if "Spring Boot" in entry:
                 path = entry["Spring Boot"]
-                assert path == "programming/files/spring-boot/spring-boot.md", (
+                assert path == "programming/java/files/spring-boot/spring-boot.md", (
                     f"Spring Boot nav entry points to '{path}', expected "
-                    "'programming/files/spring-boot/spring-boot.md'"
+                    "'programming/java/files/spring-boot/spring-boot.md'"
                 )
                 return
         raise AssertionError("Spring Boot entry not found in nav")
@@ -165,8 +164,8 @@ class TestIndexProgrammingSummary:
 
     def test_spring_boot_row_in_summary(self, index_text):
         assert "Spring Boot" in index_text, "Expected Spring Boot row in Programming summary table"
-        assert "programming/files/spring-boot/spring-boot.md" in index_text, (
-            "Expected Spring Boot link to programming/files/spring-boot/spring-boot.md in index.md"
+        assert "programming/java/files/spring-boot/spring-boot.md" in index_text, (
+            "Expected Spring Boot link to programming/java/files/spring-boot/spring-boot.md in index.md"
         )
 
 

@@ -60,15 +60,14 @@ nav:
   # Always alphabetically order top-level sections for easier navigation and maintenance.
   - Programming:
     - Java:
-      - Index: programming/java/README.md
-      - Abbreviations: programming/files/abbreviations/abbreviations.md
-      - Exam Coverage: programming/files/exams/exams.md
-      - Language Fundamentals: programming/files/language-fundamentals/language-fundamentals.md
-      - OOP: programming/files/oop/oop.md
-      - Functional Programming: programming/files/functional-programming/functional-programming.md
-      - Persistence: programming/files/persistence/persistence.md
-      - Spring Boot: programming/files/spring-boot/spring-boot.md
-      - Collections: programming/files/collections/collections.md
+      - Abbreviations: programming/java/files/abbreviations/abbreviations.md
+      - Exam Coverage: programming/java/files/exams/exams.md
+      - Language Fundamentals: programming/java/files/language-fundamentals/language-fundamentals.md
+      - OOP: programming/java/files/oop/oop.md
+      - Functional Programming: programming/java/files/functional-programming/functional-programming.md
+      - Persistence: programming/java/files/persistence/persistence.md
+      - Spring Boot: programming/java/files/spring-boot/spring-boot.md
+      - Collections: programming/java/files/collections/collections.md
     - Python (Coming soon): programming/python/README.md
   - Cloud Service Providers:
     - AWS:

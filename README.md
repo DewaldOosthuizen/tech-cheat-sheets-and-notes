@@ -68,7 +68,7 @@ make install
 Serve it locally with hot-reload:
 
 ```bash
-make docs-serve   # opens http://127.0.0.1:8000
+make start   # opens http://127.0.0.1:8000
 ```
 
 Build a static copy:
