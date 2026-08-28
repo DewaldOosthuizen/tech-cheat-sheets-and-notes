@@ -91,16 +91,12 @@ class TestJavaDomainFiles:
     @pytest.mark.parametrize("key", DOMAIN_FILES.keys())
     def test_heading_present(self, domain_texts, key):
         expected = REQUIRED_HEADINGS[key]
-        assert expected in domain_texts[key], (
-            f"Expected heading '{expected}' not found in {key}"
-        )
+        assert expected in domain_texts[key], f"Expected heading '{expected}' not found in {key}"
 
     @pytest.mark.parametrize("key, sections", REQUIRED_SECTIONS_PER_FILE.items())
     def test_sections_present(self, domain_texts, key, sections):
         for section in sections:
-            assert section in domain_texts[key], (
-                f"Expected section '{section}' not found in {key}"
-            )
+            assert section in domain_texts[key], f"Expected section '{section}' not found in {key}"
 
     def test_java21_mentioned(self, domain_texts):
         combined = "\n".join(domain_texts.values())
