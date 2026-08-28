@@ -1,15 +1,24 @@
-"""Tests for issue #127 — FEATURE: Add CONTRIBUTING.md entry for Mermaid
-diagram authoring conventions."""
+"""Tests for CONTRIBUTING.md Mermaid Diagrams subsection (issue #127).
+
+Verifies that:
+  - CONTRIBUTING.md §9 contains a "### Mermaid Diagrams" subsection
+  - The directive-selection table is present with all three rows
+  - Heading convention and placement guidance are documented
+  - Local validation command is documented
+  - TOC has a Mermaid Diagrams entry
+"""
 
 from __future__ import annotations
+
+from pathlib import Path
 
 from conftest import REPO_ROOT
 
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 
 
-class TestContributingMermaidDiagramsSubsection:
-    """Verify the new Mermaid Diagrams subsection added to §9 of CONTRIBUTING.md."""
+class TestContributingMermaidDiagrams:
+    """Verify CONTRIBUTING.md §9 Mermaid Diagrams subsection."""
 
     def _contributing_text(self) -> str:
         return CONTRIBUTING.read_text(encoding="utf-8")

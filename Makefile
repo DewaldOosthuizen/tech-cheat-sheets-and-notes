@@ -47,7 +47,7 @@ MMD_FILES_VALIDATE := $(shell find docs -name '*.mmd' 2>/dev/null)
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install \
         markdownlint \
-	puppeteer-config npm-audit mermaid-check \
+		puppeteer-config npm-audit mermaid-check \
         python-lint python-lint-fix \
         python-audit \
         python-test python-test-311 python-test-312 python-test-313 python-test-all \

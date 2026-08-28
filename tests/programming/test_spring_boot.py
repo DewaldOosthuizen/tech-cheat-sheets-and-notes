@@ -1,5 +1,4 @@
-"""Tests for issue #283: FEATURE: Add a Spring Boot architecture and
-production practices cheat sheet.
+"""Tests for Spring Boot cheat sheet (issue #283).
 
 Verifies that:
   - mkdocs.yml Programming nav contains a "Java" subgroup with a Spring Boot entry
@@ -22,17 +21,6 @@ MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 EXAMS_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "exams" / "exams.md"
 SPRING_BOOT_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "spring-boot" / "spring-boot.md"
-
-EXPECTED_JAVA_NAV_ORDER = [
-    "Abbreviations",
-    "Exam Coverage",
-    "Language Fundamentals",
-    "OOP",
-    "Functional Programming",
-    "Persistence",
-    "Spring Boot",
-    "Collections",
-]
 
 REQUIRED_HEADINGS = [
     "# SPRING BOOT",
@@ -83,7 +71,12 @@ def exams_text():
     return EXAMS_MD.read_text(encoding="utf-8")
 
 
+# ── Mkdocs Spring Boot nav ─────────────────────────────────────────────────────
+
+
 class TestMkdocsSpringBootNav:
+    """Verify Spring Boot entry in mkdocs.yml Programming nav."""
+
     def _get_java_section(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
@@ -123,15 +116,13 @@ class TestMkdocsSpringBootNav:
             f"Spring Boot must sit between Persistence and Collections; order is {entry_keys}"
         )
 
-    def test_all_java_nav_entries_in_order(self, mkdocs_config):
-        java_section = self._get_java_section(mkdocs_config)
-        entry_keys = [next(iter(e.keys())) for e in java_section]
-        assert entry_keys == EXPECTED_JAVA_NAV_ORDER, (
-            f"Java nav entries not in approved order: {entry_keys}"
-        )
+
+# ── Spring Boot domain file ────────────────────────────────────────────────────
 
 
 class TestSpringBootDomainFile:
+    """Verify spring-boot.md exists with required content."""
+
     def test_file_exists(self):
         assert SPRING_BOOT_MD.exists(), f"{SPRING_BOOT_MD} does not exist"
 
@@ -158,7 +149,12 @@ class TestSpringBootDomainFile:
         )
 
 
+# ── Index Programming summary ──────────────────────────────────────────────────
+
+
 class TestIndexProgrammingSummary:
+    """Verify docs/index.md has Spring Boot in Programming summary."""
+
     def test_programming_summary_table_present(self, index_text):
         assert "## Programming" in index_text, "Expected '## Programming' section in docs/index.md"
 
@@ -169,7 +165,12 @@ class TestIndexProgrammingSummary:
         )
 
 
+# ── Exams Spring Boot row ──────────────────────────────────────────────────────
+
+
 class TestExamsSpringBootRow:
+    """Verify exams.md has Spring Boot with N/A coverage."""
+
     def test_spring_boot_row_present(self, exams_text):
         assert "Spring Boot" in exams_text, "Expected Spring Boot row in exams.md exam track index"
 

@@ -1,13 +1,9 @@
-"""Tests for issue #271 (original: Add Programming section and Java) and
-issue #273 (enhancement: split Java into domain pages).
+"""Tests for Programming/Java section structure (issues #271, #273).
 
 Verifies that:
-  - docs/programming/java/files/ has the domain-page structure (language-fundamentals,
-    oop, functional-programming, persistence, collections) plus abbreviations
-    and exam coverage pages.
-  - mkdocs.yml has a "Programming" nav group with a "Java" subgroup containing
-    the 7 domain entries, alphabetically ordered before "Cloud Service Providers".
-  - README.md's "Current Content" table has a Programming row.
+  - docs/programming/java/files/ has the domain-page structure
+  - mkdocs.yml has a "Programming" nav group with a "Java" subgroup
+  - README.md's "Current Content" table has a Programming row
 """
 
 from __future__ import annotations
@@ -21,7 +17,7 @@ from conftest import REPO_ROOT
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 README_MD = REPO_ROOT / "README.md"
 
-# Path fragments — Java domain files now live under docs/programming/java/files/
+# Path fragments — Java domain files
 _PROG = Path("docs") / "programming" / "java" / "files"
 
 DOMAIN_FILES = {
@@ -30,25 +26,8 @@ DOMAIN_FILES = {
     "functional-programming": _PROG / "functional-programming" / "functional-programming.md",
     "persistence": _PROG / "persistence" / "persistence.md",
     "collections": _PROG / "collections" / "collections.md",
-}
-
-REQUIRED_SECTIONS_PER_FILE = {
-    "language-fundamentals": [
-        "## Language Basics & Keywords",
-        "## String Manipulation",
-        "## Java 21 LTS — New in this Release",
-    ],
-    "oop": [
-        "## Core OOP Concepts",
-    ],
-    "functional-programming": [
-        "## Lambda & Functional Interfaces",
-    ],
-    "persistence": [
-        "## JDBC",
-        "## JPA",
-    ],
-    "collections": [],
+    "abbreviations": _PROG / "abbreviations" / "abbreviations.md",
+    "exams": _PROG / "exams" / "exams.md",
 }
 
 REQUIRED_HEADINGS = {
@@ -57,6 +36,20 @@ REQUIRED_HEADINGS = {
     "functional-programming": "# FUNCTIONAL PROGRAMMING",
     "persistence": "# PERSISTENCE",
     "collections": "# COLLECTIONS",
+    "abbreviations": "# ABBREVIATIONS",
+    "exams": "# Exam Track Index",
+}
+
+REQUIRED_SECTIONS_PER_FILE = {
+    "language-fundamentals": [
+        "## Language Basics & Keywords",
+        "## String Manipulation",
+        "## Java 21 LTS — New in this Release",
+    ],
+    "oop": ["## Core OOP Concepts"],
+    "functional-programming": ["## Lambda & Functional Interfaces"],
+    "persistence": ["## JDBC", "## JPA"],
+    "collections": [],
 }
 
 
@@ -84,33 +77,63 @@ def domain_texts():
     return {k: v.read_text(encoding="utf-8") for k, v in DOMAIN_FILES.items()}
 
 
-class TestDomainFilesExist:
+# ── Domain file existence and content ──────────────────────────────────────────
+
+
+class TestJavaDomainFiles:
+    """Verify Java domain files exist with correct headings and sections."""
+
     @pytest.mark.parametrize("key", DOMAIN_FILES.keys())
     def test_file_exists(self, key):
         assert DOMAIN_FILES[key].exists(), f"{DOMAIN_FILES[key]} does not exist"
 
-
-class TestDomainHeadings:
     @pytest.mark.parametrize("key", DOMAIN_FILES.keys())
     def test_heading_present(self, domain_texts, key):
         expected = REQUIRED_HEADINGS[key]
-        assert expected in domain_texts[key], f"Expected heading '{expected}' not found in {key}"
+        assert expected in domain_texts[key], (
+            f"Expected heading '{expected}' not found in {key}"
+        )
 
-
-class TestDomainSections:
-    @pytest.mark.parametrize("key,sections", REQUIRED_SECTIONS_PER_FILE.items())
+    @pytest.mark.parametrize("key, sections", REQUIRED_SECTIONS_PER_FILE.items())
     def test_sections_present(self, domain_texts, key, sections):
         for section in sections:
-            assert section in domain_texts[key], f"Expected section '{section}' not found in {key}"
+            assert section in domain_texts[key], (
+                f"Expected section '{section}' not found in {key}"
+            )
 
-
-class TestJava21Mentioned:
-    def test_mentions_java_21(self, domain_texts):
+    def test_java21_mentioned(self, domain_texts):
         combined = "\n".join(domain_texts.values())
         assert "Java 21" in combined, "Java 21 should be mentioned somewhere in the domain files"
 
 
+# ── Mkdocs Programming nav ─────────────────────────────────────────────────────
+
+
 class TestMkdocsProgrammingNav:
+    """Verify mkdocs.yml Programming nav structure."""
+
+    EXPECTED_JAVA_NAV_ENTRIES = [
+        "Abbreviations",
+        "Exam Coverage",
+        "Language Fundamentals",
+        "OOP",
+        "Functional Programming",
+        "Persistence",
+        "Spring Boot",
+        "Collections",
+    ]
+
+    EXPECTED_PATHS = {
+        "Abbreviations": "programming/java/files/abbreviations/abbreviations.md",
+        "Exam Coverage": "programming/java/files/exams/exams.md",
+        "Language Fundamentals": "programming/java/files/language-fundamentals/language-fundamentals.md",
+        "OOP": "programming/java/files/oop/oop.md",
+        "Functional Programming": "programming/java/files/functional-programming/functional-programming.md",
+        "Persistence": "programming/java/files/persistence/persistence.md",
+        "Spring Boot": "programming/java/files/spring-boot/spring-boot.md",
+        "Collections": "programming/java/files/collections/collections.md",
+    }
+
     def test_programming_group_present(self, mkdocs_config):
         keys = [next(iter(item.keys())) for item in mkdocs_config["nav"] if isinstance(item, dict)]
         assert "Programming" in keys, "Programming nav group not found"
@@ -134,21 +157,50 @@ class TestMkdocsProgrammingNav:
         assert java_entry is not None, "Java subgroup not found under Programming"
         java_section = java_entry["Java"]
         assert isinstance(java_section, list), "Java nav entry should be a list of sub-entries"
+
+    def test_java_subgroup_is_list_not_string(self, mkdocs_config):
+        programming_section = next(
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
+            None,
+        )
+        assert programming_section is not None, "Programming nav section missing"
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None and "Java" in java_entry, "Java entry should exist under Programming"
+        assert isinstance(java_entry["Java"], list), (
+            "Java should be a subgroup (list), not a flat nav entry (string)"
+        )
+
+    def test_all_java_nav_entries_in_order(self, mkdocs_config):
+        programming_section = next(
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
+            None,
+        )
+        assert programming_section is not None, "Programming nav section missing"
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None, "Java subgroup not found"
+        java_section = java_entry["Java"]
         entry_keys = [next(iter(e.keys())) for e in java_section]
-        expected_entries = [
-            "Abbreviations",
-            "Exam Coverage",
-            "Language Fundamentals",
-            "OOP",
-            "Functional Programming",
-            "Persistence",
-            "Spring Boot",
-            "Collections",
-        ]
-        for expected in expected_entries:
-            assert expected in entry_keys, (
-                f"Expected nav entry '{expected}' not found in Java subgroup"
-            )
+        assert entry_keys == self.EXPECTED_JAVA_NAV_ENTRIES, (
+            f"Java nav entries not in approved order: {entry_keys}"
+        )
+
+    def test_java_domain_entry_paths(self, mkdocs_config):
+        programming_section = next(
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
+            None,
+        )
+        assert programming_section is not None, "Programming nav section missing"
+        java_entry = next((e for e in programming_section if "Java" in e), None)
+        assert java_entry is not None, "Java subgroup not found"
+        java_section = java_entry["Java"]
+
+        for entry in java_section:
+            key = next(iter(entry.keys()))
+            expected_path = self.EXPECTED_PATHS.get(key)
+            if expected_path:
+                assert entry[key] == expected_path, (
+                    f"Nav entry '{key}' points to '{entry[key]}', expected '{expected_path}'"
+                )
 
     def test_python_coming_soon_present(self, mkdocs_config):
         programming_section = next(
@@ -159,39 +211,13 @@ class TestMkdocsProgrammingNav:
         entry_keys = [next(iter(e.keys())) for e in programming_section]
         assert "Python (Coming soon)" in entry_keys, "Python (Coming soon) entry not found"
 
-    def test_domain_entry_points_to_correct_files(self, mkdocs_config):
-        programming_section = next(
-            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
-            None,
-        )
-        assert programming_section is not None, "Programming nav section missing"
-        java_entry = next((e for e in programming_section if "Java" in e), None)
-        assert java_entry is not None, "Java subgroup not found"
-        java_section = java_entry["Java"]
-        expected_paths = {
-            "Abbreviations": "programming/java/files/abbreviations/abbreviations.md",
-            "Exam Coverage": "programming/java/files/exams/exams.md",
-            "Language Fundamentals": (
-                "programming/java/files/language-fundamentals/language-fundamentals.md"
-            ),
-            "OOP": "programming/java/files/oop/oop.md",
-            "Functional Programming": (
-                "programming/java/files/functional-programming/functional-programming.md"
-            ),
-            "Persistence": "programming/java/files/persistence/persistence.md",
-            "Spring Boot": "programming/java/files/spring-boot/spring-boot.md",
-            "Collections": "programming/java/files/collections/collections.md",
-        }
-        for entry in java_section:
-            key = next(iter(entry.keys()))
-            expected_path = expected_paths.get(key)
-            if expected_path:
-                assert entry[key] == expected_path, (
-                    f"Nav entry '{key}' points to '{entry[key]}', expected '{expected_path}'"
-                )
+
+# ── README current content ─────────────────────────────────────────────────────
 
 
-class TestReadmeCurrentContent:
+class TestReadmeProgrammingRow:
+    """Verify README.md has Programming in Current Content table."""
+
     def test_programming_row_present(self, readme_text):
         lines = readme_text.splitlines()
         data_rows = [

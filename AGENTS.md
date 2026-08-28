@@ -43,7 +43,8 @@ scripts/
 tests/
   conftest.py
   test_validate_mermaid.py
-  test_issue_*.py           — regression tests per issue
+  test_<domain>_<topic>.py   — domain-organized tests (e.g. test_java_structure.py, test_aws_exam_coverage.py)
+  tests/<domain>/            — domain-specific test packages (e.g. tests/azure/, tests/aws/, tests/programming/)
 mkdocs.yml                  — MkDocs Material configuration
 pyproject.toml              — Python deps, ruff, pytest, coverage config
 Makefile                    — all local CI targets
@@ -170,6 +171,21 @@ Directive by purpose:
 | Decision flows (if/else)   | flowchart TD    |
 | Hierarchy / ecosystem maps | graph TD        |
 | Connectivity / network     | graph LR        |
+
+---
+
+## Test File Naming
+
+Tests must be organized by domain/topic, not by issue number:
+
+- **Domain tests**: `tests/<domain>/test_<topic>.py` (e.g. `tests/aws/test_exam_coverage.py`)
+- **Topic tests**: `tests/test_<domain>_<topic>.py` (e.g. `test_java_structure.py`)
+- **Infrastructure tests**: `tests/test_<infrastructure>.py` (e.g. `test_validate_mermaid.py`)
+
+**Do NOT use issue-number naming** like `test_issue_283.py`. Issue numbers are transient
+metadata that becomes stale; test files should describe WHAT is being tested, not WHY it
+was added. When a feature is implemented, the test lives with the domain it validates,
+not as a standalone issue reference.
 
 ---
 

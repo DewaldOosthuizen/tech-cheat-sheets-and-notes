@@ -1,15 +1,12 @@
-"""Tests for issue #224: Wire up MMD_FILES_VALIDATE in Makefile and extend
-CI mermaid-check job to cover AWS diagrams.
+"""Tests for Makefile and CI Mermaid coverage (issue #224).
 
 Verifies that:
-  - Makefile's MMD_FILES_VALIDATE find covers both docs/azure/diagrams and
-    docs/aws/diagrams
-  - Makefile's mermaid-check target forwards $(MMD_FILES_VALIDATE) to
-    scripts/validate_mermaid.py alongside $(MD_FILES_VALIDATE)
-  - .github/workflows/lint.yml "Validate Mermaid diagrams" step's find
-    invocations cover both docs/azure/{files,diagrams} and
-    docs/aws/{files,diagrams}
+  - Makefile's MMD_FILES_VALIDATE find covers all of docs/
+  - Makefile's mermaid-check target forwards $(MMD_FILES_VALIDATE)
+  - CI lint.yml "Validate Mermaid diagrams" step uses broad 'find docs' discovery
 """
+
+from __future__ import annotations
 
 import re
 
@@ -19,23 +16,19 @@ MAKEFILE = REPO_ROOT / "Makefile"
 LINT_YML = REPO_ROOT / ".github" / "workflows" / "lint.yml"
 
 
-class TestMakefileMmdFilesValidate:
-    """MMD_FILES_VALIDATE must cover all docs/ diagrams, and be wired in."""
+class TestMakefileMermaidCoverage:
+    """MMD_FILES_VALIDATE must cover all docs/, and be wired in."""
 
-    def test_mmd_files_validate_covers_all_docs(self):
+    def test_mmd_files_validate_covers_all_docs(self) -> None:
         content = MAKEFILE.read_text()
         m = re.search(r"MMD_FILES_VALIDATE\s*:=\s*\$\(shell find ([^)]*?)-name '\*\.mmd'", content)
         assert m, "Could not locate MMD_FILES_VALIDATE definition in Makefile"
-        find_paths = m.group(1)
-        # After issue #291, MMD_FILES_VALIDATE searches all of docs/, not just
-        # provider-scoped directories.
-        # The regex captures up to the closing paren; strip trailing whitespace.
-        find_paths = find_paths.strip()
+        find_paths = m.group(1).strip()
         assert find_paths == "docs", (
             f"MMD_FILES_VALIDATE must search all of docs/, got: {find_paths!r}"
         )
 
-    def test_mermaid_check_forwards_mmd_files_validate(self):
+    def test_mermaid_check_forwards_mmd_files_validate(self) -> None:
         content = MAKEFILE.read_text()
         m = re.search(r"mermaid-check:.*?validate_mermaid\.py ([^\n]*)", content, re.S)
         assert m, "Could not locate validate_mermaid.py invocation in mermaid-check target"
@@ -44,7 +37,7 @@ class TestMakefileMmdFilesValidate:
         assert "$(MMD_FILES_VALIDATE)" in invocation_args
 
 
-class TestCiMermaidCheckAwsCoverage:
+class TestCiMermaidCoverage:
     """CI 'Validate Mermaid diagrams' step must use broad 'find docs' discovery."""
 
     def _step_block(self) -> str:
@@ -57,9 +50,8 @@ class TestCiMermaidCheckAwsCoverage:
         assert m, "Could not locate 'Validate Mermaid diagrams' step in lint.yml"
         return m.group(0)
 
-    def test_md_find_covers_all_docs(self):
+    def test_md_find_covers_all_docs(self) -> None:
         block = self._step_block()
-        # After issue #291, the CI step uses 'find docs' (not provider-scoped paths).
         assert "find docs" in block, (
             "CI mermaid-check must use 'find docs' (not provider-scoped paths)"
         )
@@ -67,9 +59,8 @@ class TestCiMermaidCheckAwsCoverage:
             "CI mermaid-check still uses narrow azure/aws find — must be broadened to 'find docs'"
         )
 
-    def test_mmd_find_covers_all_docs(self):
+    def test_mmd_find_covers_all_docs(self) -> None:
         block = self._step_block()
-        # After issue #291, the CI step uses 'find docs -name *.mmd'.
         assert "find docs -name '*.mmd'" in block, (
             "CI mermaid-check must use 'find docs -name *.mmd' (not provider-scoped paths)"
         )
