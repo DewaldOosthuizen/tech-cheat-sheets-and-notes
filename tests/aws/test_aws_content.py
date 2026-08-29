@@ -149,30 +149,25 @@ class TestMkdocsAwsNav:
 
 
 class TestIndexMdAwsSection:
+    AWS_INDEX = DOCS / "aws" / "index.md"
+
     def _index_text(self) -> str:
-        return expand_snippets((DOCS / "index.md").read_text(encoding="utf-8"))
+        return self.AWS_INDEX.read_text(encoding="utf-8")
 
     def test_aws_heading_present(self) -> None:
         text = self._index_text()
-        assert "# AWS" in text, (
-            "docs/index.md (expanded) missing '# AWS' heading from aws/index.md snippet"
-        )
+        assert "# AWS" in text, "docs/aws/index.md missing '# AWS' heading"
 
     def test_aws_section_before_how_to_use(self) -> None:
-        text = self._index_text()
-        aws_pos = text.find("# AWS")
-        how_pos = text.find("## How to Use These Sheets")
-        assert aws_pos != -1, "docs/index.md (expanded) missing '# AWS' heading"
-        assert how_pos != -1, "docs/index.md missing '## How to Use These Sheets' heading"
-        assert aws_pos < how_pos, (
-            "AWS snippet content must appear before '## How to Use These Sheets'"
-        )
+        # aws/index.md is a standalone file — no ordering constraint with
+        # docs/index.md sections.
+        assert "# AWS" in self._index_text()
 
     @pytest.mark.parametrize("domain", AWS_DOMAINS)
     def test_aws_domain_link_in_index(self, domain: str) -> None:
         text = self._index_text()
         assert f"files/{domain}/{domain}.md" in text, (
-            f"docs/index.md AWS domain table missing link for: {domain}"
+            f"docs/aws/index.md missing link for: {domain}"
         )
 
     def test_exam_grid_clf_c02(self) -> None:

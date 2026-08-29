@@ -1,4 +1,4 @@
-# Programming (Java)
+# Programming
 
 Quick-reference sheets for Java language fundamentals and the Spring Boot framework.
 

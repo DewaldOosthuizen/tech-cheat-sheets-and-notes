@@ -11,23 +11,21 @@ Content is comparison-oriented: tables, decision flowcharts, and Mermaid diagram
 
 ## Cloud Service Providers
 
---8<-- "azure/index.md"
+| Provider | Domain Index |
+|----------|--------------|
+| [Microsoft Azure](azure/index.md) | organised by domain |
+| [Amazon Web Services](aws/index.md) | organised by domain |
+| [Google Cloud](google/index.md) | organised by domain |
 
-See the [Azure Exam Track Index](azure/files/exams/exams.md) for full coverage by certification.
-
---8<-- "aws/index.md"
-
-See the [AWS Exam Track Index](aws/files/exams/exams.md) for full coverage by certification.
-
---8<-- "google/index.md"
-
-See the [Google Cloud Exam Track Index](google/files/exams/exams.md) for full coverage by certification.
+See the [Azure Exam Track Index](azure/index.md), [AWS Exam Track Index](aws/index.md) and [Google Cloud Exam Track Index](google/index.md) for full certification coverage.
 
 ---
 
 ## Programming
 
---8<-- "programming/java/index.md"
+| Topic | Index |
+|-------|-------|
+| [Java](programming/java/index.md) | language fundamentals, Spring Boot, persistence |
 
 ---
 

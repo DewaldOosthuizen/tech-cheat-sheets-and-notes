@@ -140,7 +140,7 @@ python-lint-fix: venv
 # Mirrors: Audit Python dependencies step in the python-lint CI job.
 python-audit: venv
 	@echo "--- python-audit ---"
-	$(VENV_BIN)/pip-audit
+	$(VENV_BIN)/pip-audit --skip-editable
 
 # ── Python test ───────────────────────────────────────────────────────────────
 # Default: uses the venv created from $(PYTHON) (python3 unless overridden).
@@ -271,7 +271,7 @@ check-docs-deps:
 	 exit 1)
 
 # ── Full CI pipeline ──────────────────────────────────────────────────────────
-ci: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test docs-build, link-check
+ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test docs-build link-check
 	@echo ""
 	@echo "=== CI passed ==="
 

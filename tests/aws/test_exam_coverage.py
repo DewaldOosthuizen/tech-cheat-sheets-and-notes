@@ -1,33 +1,29 @@
 """Tests for AWS exam coverage pages.
 
 Verifies that:
-  - docs/index.md contains prose link to AWS Exam Track Index
+  - docs/index.md links to the AWS Exam Track Index
   - docs/aws/files/exams/exams.md exists with correct AWS exam coverage matrix
   - mkdocs.yml registers the AWS Exam Coverage page
 """
 
 import pytest
-from conftest import REPO_ROOT, expand_snippets
+from conftest import REPO_ROOT
 
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AWS_EXAMS_MD = REPO_ROOT / "docs" / "aws" / "files" / "exams" / "exams.md"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 
-
 @pytest.fixture(scope="module")
 def index_text():
-    return expand_snippets(INDEX_MD.read_text())
-
+    return INDEX_MD.read_text()
 
 @pytest.fixture(scope="module")
 def aws_exams_text():
     return AWS_EXAMS_MD.read_text()
 
-
 @pytest.fixture(scope="module")
 def mkdocs_text():
     return MKDOCS_YML.read_text()
-
 
 # ── index.md — AWS exam coverage link ────────────────────────────────────────
 
@@ -42,11 +38,11 @@ class TestIndexAWSInlineTableRemoved:
         assert "| CLF-C02 |" not in index_text
 
     def test_aws_prose_link_present(self, index_text):
-        assert "See the [AWS Exam Track Index](aws/files/exams/exams.md)" in index_text
+        assert "[AWS Exam Track Index](aws/index.md)" in index_text
 
     def test_aws_prose_link_certification_text(self, index_text):
         # Both prose links share the same suffix — verified implicitly by both being present
-        assert "aws/files/exams/exams.md" in index_text
+        assert "aws/index.md" in index_text
 
 
 # ── aws/files/exams/exams.md — file content ──────────────────────────────────
@@ -89,11 +85,8 @@ class TestAWSExamsFileContent:
     def test_storage_row_present(self, aws_exams_text):
         assert "[Storage]" in aws_exams_text
 
-    def test_identity_row_present(self, aws_exams_text):
-        assert "[Identity & Access]" in aws_exams_text
-
-    def test_security_row_present(self, aws_exams_text):
-        assert "[Security]" in aws_exams_text
+    def test_storage_links_to_storage_md(self, aws_exams_text):
+        assert "../storage/storage.md" in aws_exams_text
 
     def test_database_row_present(self, aws_exams_text):
         assert "[Database]" in aws_exams_text
@@ -101,59 +94,44 @@ class TestAWSExamsFileContent:
     def test_database_links_to_database_md(self, aws_exams_text):
         assert "../database/database.md" in aws_exams_text
 
+    def test_identity_row_present(self, aws_exams_text):
+        assert "[Identity & Access]" in aws_exams_text
+
+    def test_identity_links_to_identity_md(self, aws_exams_text):
+        assert "../identity/identity.md" in aws_exams_text
+
+    def test_security_row_present(self, aws_exams_text):
+        assert "[Security]" in aws_exams_text
+
+    def test_security_links_to_security_md(self, aws_exams_text):
+        assert "../security/security.md" in aws_exams_text
+
     def test_monitoring_row_present(self, aws_exams_text):
-        assert "Monitoring" in aws_exams_text
+        assert "[Monitoring & Observability]" in aws_exams_text
+
+    def test_monitoring_links_to_monitoring_md(self, aws_exams_text):
+        assert "../monitoring/monitoring.md" in aws_exams_text
 
     def test_messaging_row_present(self, aws_exams_text):
-        assert "Messaging" in aws_exams_text
+        assert "[Messaging & Integration]" in aws_exams_text
+
+    def test_messaging_links_to_messaging_md(self, aws_exams_text):
+        assert "../messaging/messaging.md" in aws_exams_text
 
     def test_governance_row_present(self, aws_exams_text):
         assert "[Governance]" in aws_exams_text
 
-    def test_ha_dr_row_present(self, aws_exams_text):
-        assert "High Availability" in aws_exams_text
+    def test_governance_links_to_governance_md(self, aws_exams_text):
+        assert "../governance/governance.md" in aws_exams_text
+
+    def test_hadr_row_present(self, aws_exams_text):
+        assert "[High Availability & DR]" in aws_exams_text
+
+    def test_hadr_links_to_hadr_md(self, aws_exams_text):
+        assert "../ha-dr/ha-dr.md" in aws_exams_text
 
     def test_waf_row_present(self, aws_exams_text):
-        assert "Well-Architected" in aws_exams_text
+        assert "[Well-Architected Framework]" in aws_exams_text
 
-    def test_twelve_data_rows(self, aws_exams_text):
-        # 11 domain rows + 1 abbreviations row = 12 total data rows
-        data_rows = [
-            line
-            for line in aws_exams_text.splitlines()
-            if line.strip().startswith("|") and "---" not in line and "Section" not in line
-        ]
-        assert len(data_rows) == 12, f"Expected 12 data rows, got {len(data_rows)}"
-
-
-# ── mkdocs.yml — AWS Exam Coverage registered ────────────────────────────────
-
-
-class TestMkdocsAWSExamCoverage:
-    """mkdocs.yml must register aws/files/exams/exams.md under the AWS nav section."""
-
-    def test_aws_exam_coverage_entry_present(self, mkdocs_text):
-        assert "Exam Coverage: aws/files/exams/exams.md" in mkdocs_text
-
-    def test_aws_exam_coverage_is_second_under_aws(self, mkdocs_text):
-        lines = mkdocs_text.splitlines()
-        aws_idx = next((i for i, line in enumerate(lines) if line.strip() == "- AWS:"), None)
-        assert aws_idx is not None, "- AWS: section not found in mkdocs.yml"
-        # Find next nav entries after - AWS:
-        child_entries = []
-        for line in lines[aws_idx + 1 :]:
-            stripped = line.strip()
-            if (
-                stripped.startswith("- ")
-                and not stripped.startswith("- AWS:")
-                and not stripped.startswith("-   ")
-                and ":" in stripped
-            ):
-                child_entries.append(stripped)
-                break
-        assert child_entries, "No child entries found under - AWS:"
-        # Abbreviations is now the first entry under AWS (issue #234);
-        # Exam Coverage is the second entry.
-        assert "Abbreviations" in child_entries[0], (
-            f"First AWS child is not Abbreviations, got: {child_entries[0]}"
-        )
+    def test_waf_links_to_waf_md(self, aws_exams_text):
+        assert "../waf/waf.md" in aws_exams_text

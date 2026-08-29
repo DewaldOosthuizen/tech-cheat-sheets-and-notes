@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import pytest
 import yaml
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, expand_snippets
 
+DOCS = REPO_ROOT / "docs"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 EXAMS_MD = REPO_ROOT / "docs" / "programming" / "java" / "files" / "exams" / "exams.md"
@@ -65,9 +66,7 @@ def spring_boot_text():
 
 @pytest.fixture(scope="module")
 def index_text():
-    from conftest import expand_snippets
-
-    return expand_snippets(INDEX_MD.read_text(encoding="utf-8"))
+    return (DOCS / "programming" / "java" / "index.md").read_text(encoding="utf-8")
 
 
 @pytest.fixture(scope="module")
@@ -157,10 +156,13 @@ class TestSpringBootDomainFile:
 
 
 class TestIndexProgrammingSummary:
-    """Verify docs/index.md has Spring Boot in Programming summary."""
+    """Verify docs/programming/java/index.md has Spring Boot in Programming summary."""
 
     def test_programming_summary_table_present(self, index_text):
-        assert "## Programming" in index_text, "Expected '## Programming' section in docs/index.md"
+        # docs/programming/java/index.md uses # Programming (H1), not ## Programming (H2)
+        assert "# Programming" in index_text, (
+            "Expected '# Programming' heading in docs/programming/java/index.md"
+        )
 
     def test_spring_boot_row_in_summary(self, index_text):
         assert "Spring Boot" in index_text, "Expected Spring Boot row in Programming summary table"

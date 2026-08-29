@@ -13,6 +13,8 @@ from __future__ import annotations
 import pytest
 from conftest import REPO_ROOT, expand_snippets
 
+DOCS = REPO_ROOT / "docs"
+
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 README_MD = REPO_ROOT / "README.md"
@@ -169,14 +171,20 @@ class TestMkdocsAzureDatabaseEntry:
 
 
 class TestIndexAzureDatabaseRow:
-    """docs/index.md must list the Azure Database row."""
+    """docs/azure/index.md must list the Azure Database row."""
 
     def test_database_row_present(self, index_text):
-        # After snippet expansion, the provider index content appears with
-        # paths relative to its own directory (files/...), not
-        # azure/files/...
-        assert "files/database/database.md" in index_text
-        assert "Azure SQL Database" in index_text
+        # index_text now refers to docs/index.md (which links to provider
+        # index files, not embeds them). Azure Database row lives in
+        # docs/azure/index.md.
+        from conftest import expand_snippets
+
+        azure_text = (DOCS / "azure" / "index.md").read_text(encoding="utf-8")
+        expanded = expand_snippets(azure_text)
+        assert "files/database/database.md" in expanded, (
+            "docs/azure/index.md missing Azure Database row"
+        )
+        assert "Azure SQL Database" in expanded
 
 
 # ── README.md — Azure Database row ───────────────────────────────────────────────
