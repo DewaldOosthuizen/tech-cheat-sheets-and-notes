@@ -16,6 +16,8 @@
 #   make link-check        Dead-link check (requires lychee on PATH)
 #   make docs-serve        Serve the MkDocs site locally (hot-reload)
 #   make docs-build        Build the static MkDocs site into site/
+#   make update-docs-reqs  Regenerate requirements-docs.txt from uv.lock
+#   make check-docs-deps   Verify requirements-docs.txt matches uv.lock
 #   make ci                Full pipeline — no link-check (makes live HTTP calls)
 #   make ci-full           Full pipeline including link-check
 #   make clean             Remove .venv, node_modules, site/, and build artefacts
@@ -53,6 +55,7 @@ MMD_FILES_VALIDATE := $(shell find docs -name '*.mmd' 2>/dev/null)
         python-test python-test-311 python-test-312 python-test-313 python-test-all \
 		ensure-lychee link-check \
         start docs-build \
+        update-docs-reqs check-docs-deps \
         ci ci-full \
         clean
 
@@ -74,6 +77,8 @@ help:
 	@echo "  make link-check        Dead-link check (auto-installs local lychee binary)"
 	@echo "  make docs-serve        Serve MkDocs site locally at http://127.0.0.1:8000"
 	@echo "  make docs-build        Build static MkDocs site into site/"
+	@echo "  make update-docs-reqs  Regenerate requirements-docs.txt from uv.lock"
+	@echo "  make check-docs-deps   Verify requirements-docs.txt matches uv.lock"
 	@echo "  make ci                Full pipeline — markdownlint, mermaid-check, lint, audit, test, docs-build"
 	@echo "  make ci-full           Full pipeline including link-check"
 	@echo "  make clean             Remove .venv, node_modules, site/, build artefacts"
@@ -216,6 +221,50 @@ start: venv
 docs-build: venv
 	@echo "--- docs-build ---"
 	$(VENV_BIN)/mkdocs build --strict
+
+# ── Documentation dependency management ───────────────────────────────────────
+# requirements-docs.txt is the single locked, hashed dependency file for
+# documentation builds. It is generated from uv.lock via `uv export` and is
+# the authoritative source consumed by CI (lint.yml docs-build job) and
+# Vercel (vercel.json buildCommand). Local `make venv` installs the full
+# `[dev]` extra which also includes the docs deps, so local and remote
+# builds resolve from the same locked set.
+#
+# To add or update a documentation dependency:
+#   1. Add or edit the package in pyproject.toml [project.optional-dependencies] docs
+#   2. Run `make update-docs-reqs` to regenerate requirements-docs.txt
+#   3. Run `make check-docs-deps` to verify the file is in sync
+
+update-docs-reqs:
+	@echo "--- update-docs-reqs ---"
+	@echo "# Minimal Python dependencies for building the MkDocs documentation site." > requirements-docs.txt
+	@echo "#" >> requirements-docs.txt
+	@echo "# This file is auto-generated from uv.lock via:" >> requirements-docs.txt
+	@echo "#   uv export --format requirements.txt --output-file requirements-docs.txt --extra docs --no-dev --no-header --python 3.12" >> requirements-docs.txt
+	@echo "#" >> requirements-docs.txt
+	@echo "# Do not edit manually. To add or update documentation dependencies, edit" >> requirements-docs.txt
+	@echo "# pyproject.toml [project.optional-dependencies] docs, then run" >> requirements-docs.txt
+	@echo "# \`make update-docs-reqs\` to regenerate this file." >> requirements-docs.txt
+	@echo "#" >> requirements-docs.txt
+	@echo "# All three build environments consume this file:" >> requirements-docs.txt
+	@echo "#   - Local:   \`make venv\` installs the full \`[dev]\` extra (includes docs deps)" >> requirements-docs.txt
+	@echo "#   - CI:      \`pip install -r requirements-docs.txt\` in the docs-build job" >> requirements-docs.txt
+	@echo "#   - Vercel:  \`python -m pip install -r requirements-docs.txt\` in vercel.json" >> requirements-docs.txt
+	@echo "#" >> requirements-docs.txt
+	@uv export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 >> requirements-docs.txt 2>/dev/null
+
+check-docs-deps:
+	@echo "--- check-docs-deps ---"
+	@uv export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 > /tmp/requirements-docs-generated.txt 2>/dev/null && \
+	(grep -v '^[[:space:]]*#' requirements-docs.txt | grep -v '^[[:space:]]*$$' > /tmp/docs-committed.txt && \
+	 grep -v '^[[:space:]]*#' /tmp/requirements-docs-generated.txt | grep -v '^[[:space:]]*$$' > /tmp/docs-generated.txt && \
+	 diff /tmp/docs-committed.txt /tmp/docs-generated.txt >/dev/null && \
+	 rm -f /tmp/requirements-docs-generated.txt /tmp/docs-committed.txt /tmp/docs-generated.txt && \
+	 echo "requirements-docs.txt matches uv export output") || \
+	(echo "MISMATCH: requirements-docs.txt differs from uv export output" >&2; \
+	 echo "Run: make update-docs-reqs" >&2; \
+	 rm -f /tmp/requirements-docs-generated.txt /tmp/docs-committed.txt /tmp/docs-generated.txt; \
+	 exit 1)
 
 # ── Full CI pipeline ──────────────────────────────────────────────────────────
 ci: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test docs-build
