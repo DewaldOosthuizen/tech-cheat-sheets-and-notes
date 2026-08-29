@@ -39,17 +39,17 @@
 > **Source metadata:** Replication scope and durability claims reflect Google Cloud documentation as of the verification date below. Durability figures and consistency guarantees for multi-region storage can be configuration- and region-dependent — confirm against current vendor documentation for production SLAs.
 >
 > **Last verified:** 2026-08-29  
-> **Primary sources:** [Google Cloud storage documentation](https://cloud.google.com/storage/docs), [Cloud Storage replication](https://cloud.google.com/storage/docs/replication)
+> **Primary sources:** [Google Cloud storage documentation](https://cloud.google.com/storage/docs), [Cloud Storage replication](https://cloud.google.com/storage/docs/overview)
 
 ## Database, NoSQL, and Analytics Services
 
-Google Cloud database services have their own dedicated page. For service selection across relational, document, wide-column, cache, and analytics workloads, see the [Google Cloud Database page](/google/files/database/database.md).
+Google Cloud database services have their own dedicated page. For service selection across relational, document, wide-column, cache, and analytics workloads, see the [Google Cloud Database page](../database/database.md).
 
 Key distinctions at a glance:
 
 - **Cloud Storage** is object storage — use it for unstructured data, backups, data lakes, and static hosting. It is not a database.
 - **Persistent Disk** is block storage — attach it to Compute Engine VMs for boot and data disks.
 - **Filestore** is NFS file storage — use it for shared file access across multiple VMs.
-- **Cloud SQL, AlloyDB, Spanner, Bigtable, Firestore, Memorystore, and BigQuery** are database and analytics services. See the [Database page](/google/files/database/database.md) for comparison and decision criteria.
+- **Cloud SQL, AlloyDB, Spanner, Bigtable, Firestore, Memorystore, and BigQuery** are database and analytics services. See the [Database page](../database/database.md) for comparison and decision criteria.
 
-The [Google Cloud Database page](/google/files/database/database.md) contains comparison tables and decision criteria for Cloud SQL, AlloyDB, Spanner, Firestore, Bigtable, Memorystore, and BigQuery.
+The [Google Cloud Database page](../database/database.md) contains comparison tables and decision criteria for Cloud SQL, AlloyDB, Spanner, Firestore, Bigtable, Memorystore, and BigQuery.

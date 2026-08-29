@@ -65,7 +65,9 @@ def spring_boot_text():
 
 @pytest.fixture(scope="module")
 def index_text():
-    return INDEX_MD.read_text(encoding="utf-8")
+    from conftest import expand_snippets
+
+    return expand_snippets(INDEX_MD.read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
@@ -158,10 +160,14 @@ class TestIndexProgrammingSummary:
     """Verify docs/index.md has Spring Boot in Programming summary."""
 
     def test_programming_summary_table_present(self, index_text):
-        assert "## Programming" in index_text, "Expected '## Programming' section in docs/index.md"
+        assert "## Programming" in index_text, (
+            "Expected '## Programming' section in docs/index.md"
+        )
 
     def test_spring_boot_row_in_summary(self, index_text):
-        assert "Spring Boot" in index_text, "Expected Spring Boot row in Programming summary table"
+        assert "Spring Boot" in index_text, (
+            "Expected Spring Boot row in Programming summary table"
+        )
         assert "programming/java/files/spring-boot/spring-boot.md" in index_text, (
             "Expected Spring Boot link to spring-boot.md in index.md"
         )

@@ -7,7 +7,7 @@ Verifies that:
 """
 
 import pytest
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, expand_snippets
 
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AWS_EXAMS_MD = REPO_ROOT / "docs" / "aws" / "files" / "exams" / "exams.md"
@@ -16,7 +16,7 @@ MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 
 @pytest.fixture(scope="module")
 def index_text():
-    return INDEX_MD.read_text()
+    return expand_snippets(INDEX_MD.read_text())
 
 
 @pytest.fixture(scope="module")
@@ -141,7 +141,7 @@ class TestMkdocsAWSExamCoverage:
         assert aws_idx is not None, "- AWS: section not found in mkdocs.yml"
         # Find next nav entries after - AWS:
         child_entries = []
-        for line in lines[aws_idx + 1 :]:
+        for line in lines[aws_idx + 1:]:
             stripped = line.strip()
             if (
                 stripped.startswith("- ")

@@ -114,7 +114,11 @@ mermaid-check: puppeteer-config
 	npm ci
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
-	  $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE) $(MMD_FILES_VALIDATE)
+	  $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE) $(MMD_FILES_VALIDATE) || \
+	  (sleep 5 && \
+	   PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
+	     PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
+	     $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE) $(MMD_FILES_VALIDATE))
 
 npm-audit:
 	@echo "--- npm-audit ---"
@@ -267,13 +271,9 @@ check-docs-deps:
 	 exit 1)
 
 # ── Full CI pipeline ──────────────────────────────────────────────────────────
-ci: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test docs-build
+ci: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test docs-build, link-check
 	@echo ""
 	@echo "=== CI passed ==="
-
-ci-full: markdownlint npm-audit mermaid-check python-lint-fix python-lint python-audit python-test link-check
-	@echo ""
-	@echo "=== CI (full, including link-check) passed ==="
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 clean:

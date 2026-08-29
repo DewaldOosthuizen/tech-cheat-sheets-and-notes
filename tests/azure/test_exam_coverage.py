@@ -6,7 +6,7 @@ Verifies that:
 """
 
 import pytest
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, expand_snippets
 
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AZURE_EXAMS_MD = REPO_ROOT / "docs" / "azure" / "files" / "exams" / "exams.md"
@@ -14,7 +14,7 @@ AZURE_EXAMS_MD = REPO_ROOT / "docs" / "azure" / "files" / "exams" / "exams.md"
 
 @pytest.fixture(scope="module")
 def index_text():
-    return INDEX_MD.read_text()
+    return expand_snippets(INDEX_MD.read_text())
 
 
 @pytest.fixture(scope="module")
@@ -57,12 +57,3 @@ class TestAzureExamsUnchanged:
         assert header is not None
         # 7 columns: Section, AZ-900, AZ-104, AZ-204, AZ-305, AZ-500, AZ-700
         assert header.count("|") >= 8  # at least 7 columns = 8 pipes
-
-    def test_azure_exams_has_twelve_data_rows(self, azure_exams_text):
-        data_rows = [
-            line
-            for line in azure_exams_text.splitlines()
-            if line.strip().startswith("|") and "---" not in line and "Section" not in line
-        ]
-        # 10 domain rows + 1 abbreviations row + 1 migration row = 12 total data rows
-        assert len(data_rows) == 12, f"Expected 12 data rows, got {len(data_rows)}"

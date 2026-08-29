@@ -10,7 +10,7 @@ Covers all 4 sub-issues:
 from __future__ import annotations
 
 import pytest
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, expand_snippets
 
 DOCS = REPO_ROOT / "docs"
 
@@ -150,22 +150,24 @@ class TestMkdocsAwsNav:
 
 class TestIndexMdAwsSection:
     def _index_text(self) -> str:
-        return (DOCS / "index.md").read_text(encoding="utf-8")
+        return expand_snippets(
+            (DOCS / "index.md").read_text(encoding="utf-8")
+        )
 
     def test_aws_heading_present(self) -> None:
         text = self._index_text()
-        assert "## Amazon Web Services" in text, (
-            "docs/index.md missing '## Amazon Web Services' section"
+        assert "# AWS" in text, (
+            "docs/index.md (expanded) missing '# AWS' heading from aws/index.md snippet"
         )
 
     def test_aws_section_before_how_to_use(self) -> None:
         text = self._index_text()
-        aws_pos = text.find("## Amazon Web Services")
+        aws_pos = text.find("# AWS")
         how_pos = text.find("## How to Use These Sheets")
-        assert aws_pos != -1, "docs/index.md missing '## Amazon Web Services' heading"
+        assert aws_pos != -1, "docs/index.md (expanded) missing '# AWS' heading"
         assert how_pos != -1, "docs/index.md missing '## How to Use These Sheets' heading"
         assert aws_pos < how_pos, (
-            "'## Amazon Web Services' must appear before '## How to Use These Sheets'"
+            "AWS snippet content must appear before '## How to Use These Sheets'"
         )
 
     @pytest.mark.parametrize("domain", AWS_DOMAINS)

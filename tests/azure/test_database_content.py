@@ -11,7 +11,7 @@ Verifies that:
 from __future__ import annotations
 
 import pytest
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, expand_snippets
 
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
@@ -26,7 +26,7 @@ def mkdocs_text():
 
 @pytest.fixture(scope="module")
 def index_text():
-    return INDEX_MD.read_text()
+    return expand_snippets(INDEX_MD.read_text())
 
 
 @pytest.fixture(scope="module")
@@ -183,15 +183,16 @@ class TestIndexAzureDatabaseRow:
 
 
 class TestReadmeAzureDatabaseRow:
-    """README.md must list the Azure Database row."""
+    """docs/azure/index.md must list the Azure Database row."""
 
     def test_database_row_present(self, readme_text):
-        lines = readme_text.splitlines()
-        data_rows = [
-            ln
-            for ln in lines
-            if ln.strip().startswith("|") and "---" not in ln and "Topic" not in ln
-        ]
-        assert any("Database" in row and "SQL" in row for row in data_rows), (
-            "Expected an Azure Database row in README.md"
+        # The README no longer duplicates provider tables — Azure content
+        # lives in docs/azure/index.md which is referenced from the README.
+        assert "docs/azure/index.md" in readme_text, (
+            "Expected a link to docs/azure/index.md in README.md"
+        )
+        azure_index = (REPO_ROOT / "docs" / "azure" / "index.md").read_text()
+        assert "Database" in azure_index, "Expected a Database row in docs/azure/index.md"
+        assert "azure/files/database/database.md" in azure_index, (
+            "Expected azure/files/database/database.md link in docs/azure/index.md"
         )

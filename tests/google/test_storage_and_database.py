@@ -23,7 +23,9 @@ DATABASE_MD = REPO_ROOT / "docs" / "google" / "files" / "database" / "database.m
 
 @pytest.fixture(scope="module")
 def index_text():
-    return INDEX_MD.read_text()
+    from conftest import expand_snippets
+
+    return expand_snippets(INDEX_MD.read_text())
 
 
 @pytest.fixture(scope="module")
@@ -196,27 +198,37 @@ class TestMkdocsGoogleDatabaseEntry:
 
 
 class TestReadmeGoogleDatabaseRow:
-    """README.md must list the Google Database row."""
+    """docs/google/index.md must list the Google Database row."""
 
     def test_database_row_present(self, readme_text):
-        lines = readme_text.splitlines()
-        data_rows = [
-            ln
-            for ln in lines
-            if ln.strip().startswith("|") and "---" not in ln and "Topic" not in ln
-        ]
-        assert any("Database" in row and "Cloud SQL" in row for row in data_rows), (
-            "Expected a Google Cloud Database row in README.md's Current Content table"
+        # The README no longer duplicates provider tables — Google content
+        # lives in docs/google/index.md which is referenced from the README.
+        assert "docs/google/index.md" in readme_text, (
+            "Expected a link to docs/google/index.md in README.md"
         )
+        google_index = (REPO_ROOT / "docs" / "google" / "index.md").read_text()
+        assert "Database" in google_index, "Expected a Database row in docs/google/index.md"
+        assert "google/files/database/database.md" in google_index, (
+            "Expected google/files/database/database.md link in docs/google/index.md"
+        )
+        assert "Cloud SQL" in google_index, "Expected Cloud SQL in docs/google/index.md"
 
     def test_storage_row_not_duplicated(self, readme_text):
-        lines = readme_text.splitlines()
-        data_rows = [
-            ln
-            for ln in lines
-            if ln.strip().startswith("|") and "---" not in ln and "Topic" not in ln
+        assert "docs/google/index.md" in readme_text, (
+            "Expected a link to docs/google/index.md in README.md"
+        )
+        google_index = (REPO_ROOT / "docs" / "google" / "index.md").read_text()
+        google_storage_rows = [
+            ln for ln in google_index.splitlines()
+            if "Storage" in ln and "Cloud Storage" in ln
         ]
-        google_storage_rows = [r for r in data_rows if "Storage" in r and "Cloud Storage" in r]
-        google_db_rows = [r for r in data_rows if "Database" in r and "Cloud SQL" in r]
-        assert len(google_storage_rows) == 1, "Expected exactly one Google Storage row in README.md"
-        assert len(google_db_rows) == 1, "Expected exactly one Google Database row in README.md"
+        google_db_rows = [
+            ln for ln in google_index.splitlines()
+            if "Database" in ln and "Cloud SQL" in ln
+        ]
+        assert len(google_storage_rows) == 1, (
+            "Expected exactly one Google Storage row in docs/google/index.md"
+        )
+        assert len(google_db_rows) == 1, (
+            "Expected exactly one Google Database row in docs/google/index.md"
+        )
