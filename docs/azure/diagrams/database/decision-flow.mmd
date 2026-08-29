@@ -1,0 +1,35 @@
+flowchart TD
+    START[What is the primary workload?] --> DM{Workload type?}
+
+    DM -->|Relational structured data| REL{Need full SQL Server instance features?}
+    DM -->|NoSQL or globally distributed| NOSQL{Access pattern?}
+    DM -->|Analytics OLAP or DW| AN{Analytics workload?}
+    DM -->|Full-text or vector search| SEARCH[Azure AI Search]
+    DM -->|IoT or edge-constrained device| EDGE[Azure SQL Edge]
+    DM -->|Caching or session state| CACHE[Azure Cache for Redis]
+
+    REL -->|Yes - SQL Agent, CLR, VNet, linked servers| CTRL{Need OS-level control?}
+    REL -->|No - cloud-native or open-source| NEW{Engine preference?}
+
+    CTRL -->|Yes| SQLVM[SQL Server on Azure VM]
+    CTRL -->|No| SQLMI[Azure SQL Managed Instance]
+
+    NEW -->|Microsoft SQL engine| SQLSIZE{DB exceeds 4 TB?}
+    NEW -->|PostgreSQL| PG[Azure DB for PostgreSQL Flexible Server]
+    NEW -->|MySQL or MariaDB| MYSQL[Azure DB for MySQL Flexible Server]
+
+    SQLSIZE -->|Yes| HYPER[Azure SQL Database Hyperscale]
+    SQLSIZE -->|No| SQLDB[Azure SQL Database]
+
+    NOSQL -->|Document or JSON| COSMOSDOC[Cosmos DB - Core SQL or MongoDB API]
+    NOSQL -->|Wide-column Cassandra-compatible| COSMOSCASS[Cosmos DB - Cassandra API]
+    NOSQL -->|Graph traversal| COSMOSGRAPH[Cosmos DB - Gremlin API]
+    NOSQL -->|Key-value| KV{Multi-region or high throughput?}
+
+    KV -->|Yes| COSMOSTBL[Cosmos DB - Table API]
+    KV -->|No| TBLS[Azure Table Storage]
+
+    AN -->|T-SQL DW predictable queries| SYNDW[Synapse Dedicated SQL Pool]
+    AN -->|Spark Delta Lake big data engineering| SYNSP[Synapse Spark Pool or Azure Databricks]
+    AN -->|Real-time telemetry logs time-series| ADX[Azure Data Explorer]
+    AN -->|Semantic layer BI tabular models| AAS[Azure Analysis Services]

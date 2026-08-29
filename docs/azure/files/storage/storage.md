@@ -11,6 +11,15 @@
 
 > **Exam tip:** Premium storage accounts support LRS and ZRS only — geo-redundancy
 > (GRS / GZRS) is not available. Standard GPv2 supports all six replication tiers.
+>
+> **Source metadata:** Storage account type names, supported replication tiers, and premium
+> storage constraints reflect Azure documentation as of the verification date below. Storage
+> account features, replication options, and premium tier constraints can change — always confirm
+> against current vendor documentation before making a production decision.
+>
+> **Last verified:** 2026-08-29
+> **Primary sources:** [Azure storage account documentation](https://learn.microsoft.com/azure/storage/common/storage-account-overview),
+> [Azure storage redundancy documentation](https://learn.microsoft.com/azure/storage/common/storage-redundancy)
 
 ## Blob Storage Access Tiers
 
@@ -24,6 +33,14 @@
 > **Exam tip:** Use Lifecycle Management policies to auto-transition blobs
 > through tiers. Archive blobs must be rehydrated to Hot or Cool before access;
 > plan for rehydration latency in recovery scenarios.
+>
+> **Source metadata:** Blob access tier names, minimum retention periods, and relative cost
+> characteristics reflect Azure documentation as of the verification date below. Access tier
+> pricing, minimum retention periods, and rehydration behavior can change — always confirm
+> against current vendor documentation before making a production decision.
+>
+> **Last verified:** 2026-08-29
+> **Primary sources:** [Azure Blob storage access tiers documentation](https://learn.microsoft.com/azure/storage/blobs/storage-blob-tier-overview)
 
 ```mermaid
 --8<-- "azure/diagrams/storage/blob-storage-access-tiers.mmd"
@@ -49,6 +66,17 @@
 > (or RA-GZRS) when you need both zone-level resilience in the primary region
 > and geo-redundancy — GZRS is strictly more resilient than RA-GRS for the
 > same read-availability requirement.
+>
+> **Source metadata:** Replication tier names, copy counts, durability figures, RPO, and
+> read SLA claims reflect Azure documentation as of the verification date below. Durability
+> figures are design targets, not guarantees; RPO for geo-replication is approximate and
+> can vary under some failure scenarios; read SLAs apply to the secondary endpoint only when
+> it is available and do not cover data loss. Always confirm against current vendor documentation
+> before relying on these figures for production SLA calculations.
+>
+> **Last verified:** 2026-08-29
+> **Primary sources:** [Azure storage redundancy documentation](https://learn.microsoft.com/azure/storage/common/storage-redundancy),
+> [Azure storage SLA documentation](https://learn.microsoft.com/azure/support/legal/sla/storage-v2)
 
 ## Azure Files vs Blob vs Disk vs NetApp
 
@@ -82,126 +110,7 @@
 > processing. Choose Synapse when a unified SQL + Spark analytics workspace is the
 > stronger requirement.
 
-## Database Storage Options
-
-| Service | Type | Best For | Key Feature |
-| --- | --- | --- | --- |
-| **Azure SQL Database** | Relational PaaS | Cloud-native OLTP | Serverless, elastic pool, hyperscale up to 100 TB |
-| **Azure SQL Managed Instance** | Relational PaaS | SQL Server lift-and-shift | Near 100% SQL Server compat, VNet inject, SQL Agent |
-| **SQL Server on Azure VM** | Relational IaaS | Full OS-level control, SQL Agent, CLR, linked servers | Customer manages OS and SQL patches; max flexibility |
-| **Cosmos DB** | NoSQL multi-model | Global distributed, low-latency | Multi-region writes, 5 APIs (SQL, MongoDB, Cassandra, Gremlin, Table) |
-| **Azure Database for PostgreSQL** | Relational PaaS | OSS PostgreSQL workloads | Flexible server, HA zone-redundant standby, read replicas |
-| **Azure Database for MySQL** | Relational PaaS | OSS MySQL / MariaDB workloads | Flexible server, geo-redundant backup |
-| **Azure Synapse Analytics** | Analytics DW | OLAP, big data | Serverless SQL Pool, Dedicated SQL Pool (DWU), Spark Pool |
-| **Azure Data Lake Storage Gen2** | Hierarchical Blob | Analytics at scale | POSIX ACL, Hierarchical Namespace, Spark-optimized |
-| **Azure Data Explorer (ADX)** | Time-series analytics | Real-time telemetry, logs, IoT | Kusto Query Language (KQL); ingestion from Event Hub / IoT Hub |
-| **Azure Analysis Services** | Semantic BI layer | Tabular models for Power BI / Excel | SSAS-compatible; vertical scaling; on-prem gateway support |
-| **Azure AI Search** | Full-text / vector search | Semantic and hybrid search over documents | AI enrichment pipeline, vector index, semantic ranker |
-| **Azure Cache for Redis** | In-memory caching | Session state, cache-aside, pub/sub | Sub-millisecond latency; supports RediSearch and active geo-replication (Enterprise tier) |
-| **Azure Table Storage** | NoSQL key-value | Simple schemaless data at very low cost | Part of Storage Account; no server to manage |
-| **Azure SQL Edge** | Relational IoT/edge | Constrained edge devices, OPC-UA streaming | ARM64 / x64 container; time-series streaming built-in; offline-first |
-
-### Azure Database Selection Decision Flow
-
-```mermaid
---8<-- "azure/diagrams/storage/database-selection-decision-flow.mmd"
-```
-
-> **Exam tip:** Start with the workload type signal — relational, NoSQL, analytics, search,
-> or edge. For relational workloads, the next signal is control level: OS-level access → SQL VM;
-> SQL Server feature parity (SQL Agent, CLR, VNet) → SQL MI; cloud-native new design → SQL DB.
-> For NoSQL, match the API to the data model: documents → Core SQL or MongoDB API, wide-column
-> → Cassandra API, graph → Gremlin API, key-value at scale → Table API. For analytics, if the
-> requirement says "query data in place" or "no ETL" → Synapse Serverless SQL Pool; for
-> predictable BI workloads with defined query patterns → Synapse Dedicated SQL Pool (DWU);
-> for real-time telemetry and time-series log analytics at scale → Azure Data Explorer (KQL).
->
-> **Exam tip:** Cosmos DB Serverless has a 1 TB per container hard cap — do not choose it
-> for large datasets. Choose Provisioned Throughput (Autoscale) for variable but bounded
-> workloads. Azure AI Search is not a transactional database — it is an indexing and retrieval
-> service sitting in front of a backing store (Blob, SQL, Cosmos DB). Azure SQL Edge runs
-> in a container on ARM/x64 edge hardware and supports T-SQL with built-in time-series
-> streaming — it is not a cloud service, it is an offline-first embedded engine.
-
-### Azure SQL Database Service Tiers
-
-Azure SQL Database supports two purchasing models with different tier sets.
-
-**DTU model** (bundled compute + storage + IO):
-
-| Tier | Max Storage | Use Case |
-| --- | --- | --- |
-| **Basic** | 2 GB | Dev/test, small low-traffic databases |
-| **Standard** | 1 TB | Web applications, departmental workloads |
-| **Premium** | 4 TB | Mission-critical OLTP, low latency, OLTP in-memory |
-
-**vCore model** (compute and storage billed independently):
-
-| Tier | Max Storage | Use Case | Key Feature |
-| --- | --- | --- | --- |
-| **General Purpose** | 4 TB | Standard production OLTP | Remote SSD storage; cost-balanced; supports Serverless auto-pause |
-| **Business Critical** | 4 TB | High I/O, in-memory OLTP, low latency | Local SSD; built-in Always On replicas; one free read replica |
-| **Hyperscale** | 100 TB | Very large databases | Distributed page server architecture; near-instant backup and restore |
-
-> **Exam tip:** Hyperscale is only available on Azure SQL Database (not SQL MI). Serverless
-> (auto-pause/auto-resume) is only available within the General Purpose vCore tier.
-> Business Critical includes a free read-scale replica — no extra licensing required.
-
-### Azure SQL Managed Instance Service Tiers
-
-SQL Managed Instance uses the vCore model only (DTU is not supported).
-
-| Tier | Max Storage | Use Case | Key Feature |
-| --- | --- | --- | --- |
-| **General Purpose** | 16 TB | Typical performance and standard I/O latency requirements | Remote SSD storage; budget-friendly; suitable for most lift-and-shift workloads |
-| **Business Critical** | 4 TB | Low I/O latency and minimal impact from maintenance operations | Local SSD; built-in Always On availability group; one free readable secondary replica |
-
-> **Exam tip:** SQL MI Business Critical provides a built-in read replica at no additional
-> cost — use it for read-scale-out or as a reporting endpoint. General Purpose is the
-> default tier and covers the majority of lift-and-shift scenarios.
-
-### Cosmos DB Capacity Modes
-
-Cosmos DB does not have service tiers in the traditional sense. Capacity is selected
-per container at creation time.
-
-| Mode | Max Storage | Use Case | Key Feature |
-| --- | --- | --- | --- |
-| **Provisioned Throughput (Manual)** | Unlimited (per container) | Predictable, steady-state workloads | Fixed RU/s ceiling; best price per RU at sustained utilisation |
-| **Provisioned Throughput (Autoscale)** | Unlimited (per container) | Variable workloads with bounded peaks | Scales 10–100% of configured max RU/s; you pay for peak consumed |
-| **Serverless** | 1 TB per container | Sporadic or dev/test workloads | No pre-provisioned capacity; billed per RU consumed per operation |
-
-### Azure Database for PostgreSQL and MySQL — Flexible Server Compute Tiers
-
-Both PostgreSQL and MySQL Flexible Server share the same three compute tiers.
-
-| Tier | Max Storage | Use Case | Key Feature |
-| --- | --- | --- | --- |
-| **Burstable** | 16 TB | Dev/test, low-traffic applications | Variable CPU (B-series); lowest cost; not for sustained CPU-intensive workloads |
-| **General Purpose** | 16 TB | Most production workloads | Balanced CPU/memory ratio; 2–96 vCores |
-| **Memory Optimized** | 16 TB | High-concurrency, in-memory analytics, large caches | Higher memory-to-vCore ratio; 2–64 vCores; suited for PostgreSQL connection-heavy workloads |
-
-> **Exam tip:** Burstable tier does not support high-availability (zone-redundant standby)
-> or read replicas — choose General Purpose or Memory Optimized when the requirement
-> mentions HA, read replicas, or geo-redundancy.
-
-### Azure Synapse Analytics Pool Types
-
-Synapse is not a single database with tiers — it is a workspace containing multiple
-pool types that you provision independently.
-
-| Pool Type | Max Storage | Billing Unit | Use Case | Key Feature |
-| --- | --- | --- | --- | --- |
-| **Serverless SQL Pool** | No local storage (queries ADLS) | Per TB of data processed | Ad-hoc T-SQL queries directly over ADLS Gen2 | No infrastructure to provision; always-on; pay-per-query |
-| **Dedicated SQL Pool** | Up to 240 TB compressed (Petabyte-scale uncompressed) | Data Warehouse Units (DWU) | Predictable BI/DW workloads with known query patterns | Massively parallel processing; scale DWU up/down without data loss |
-| **Apache Spark Pool** | No local storage (uses ADLS Gen2) | Node-hours (auto-pause supported) | Big data engineering, Delta Lake, ML data pipelines | Managed Spark clusters; auto-scale and auto-pause; integrated notebooks |
-
-> **Exam tip:** Serverless SQL Pool queries ADLS data directly using OPENROWSET — no
-> data is loaded or moved. Dedicated SQL Pool requires data to be loaded (COPY INTO or
-> PolyBase). When a scenario mentions "query data in place" or "no ETL", the answer is
-> Serverless SQL Pool.
-
-## Azure File Sync
+## Hybrid File Sync
 
 | Service | Type | Best For | Key Feature |
 | --- | --- | --- | --- |
@@ -213,8 +122,6 @@ pool types that you provision independently.
 
 ## Azure SQL Purchasing Models
 
-| Service | Type | Best For | Key Feature |
-| --- | --- | --- | --- |
 | **vCore model** | Provisioned or Serverless | New deployments, Azure Hybrid Benefit, Managed Instance | Decouples compute and storage; supports Serverless tier; required for SQL MI |
 | **DTU model** | Bundled compute+storage | Legacy workloads, simple cost predictability | Fixed ratio of CPU/memory/IO; Basic/Standard/Premium tiers; not available on SQL MI |
 

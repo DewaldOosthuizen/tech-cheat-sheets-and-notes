@@ -1,0 +1,9 @@
+flowchart TD
+    A{Relational, analytical, or NoSQL?}
+    A -->|Relational — single region, familiar SQL engine| B[Cloud SQL]
+    A -->|Relational — PostgreSQL compatibility plus analytical query performance| C[AlloyDB]
+    A -->|Relational — global scale, strong consistency, horizontal write scaling| D[Cloud Spanner]
+    A -->|Document NoSQL — web/mobile app backend with real-time sync| E[Firestore]
+    A -->|Wide-column NoSQL — high-throughput key-value or time-series| F[Cloud Bigtable]
+    A -->|In-memory caching| G[Memorystore Redis or Memcached]
+    A -->|Serverless analytics over large datasets| H[BigQuery]

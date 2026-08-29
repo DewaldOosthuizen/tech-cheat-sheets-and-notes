@@ -89,6 +89,7 @@ nav:
         - Exam Coverage: azure/files/exams/exams.md
         - Networking: azure/files/networking/networking.md
         - Security: azure/files/security/security.md
+        - Database: azure/files/database/database.md
         - Storage: azure/files/storage/storage.md
         - Migration: azure/files/migration/migration.md
         - Monitoring & Observability: azure/files/monitoring/monitoring.md
@@ -106,6 +107,7 @@ nav:
         - Storage: google/files/storage/storage.md
         - Identity & Access: google/files/identity/identity.md
         - Security: google/files/security/security.md
+        - Database: google/files/database/database.md
         - Monitoring & Observability: google/files/monitoring/monitoring.md
         - Messaging & Integration: google/files/messaging/messaging.md
         - Governance: google/files/governance/governance.md

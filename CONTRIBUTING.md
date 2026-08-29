@@ -386,6 +386,54 @@ Rules:
 
 ---
 
+## 11. Source metadata for volatile cloud facts
+
+Cloud product limits, recovery objectives, performance claims, compatibility statements, and
+feature availability change frequently. Unversioned factual claims can become stale while still
+passing lint, Mermaid validation, and generic content tests. When a page includes such volatile
+facts, add a **Source metadata** callout after the affected table or section.
+
+Format:
+
+> **Source metadata:** \<One or two sentences describing what the facts cover and why they are
+> volatile.\>
+>
+> **Last verified:** \<YYYY-MM-DD\>
+> **Primary sources:** \<Link to authoritative vendor documentation, possibly multiple links\>
+
+Rules:
+
+- Place the callout directly after the table or exam-tip block that contains the volatile facts.
+- Always include a `Last verified` date in `YYYY-MM-DD` format.
+- Always include at least one link to current vendor documentation.
+- Qualify claims that depend on region, tier, engine, configuration, or contractual SLA in the
+  prose around the table rather than in the source metadata block itself.
+- Source metadata is not required for stable language fundamentals, framework concepts, or
+  decision-flow structure — only for time-sensitive vendor facts.
+- Do not copy-paste vendor marketing claims without qualification. If a figure is a marketing
+  claim that varies by workload or configuration, say so.
+
+### When to add source metadata
+
+Add source metadata when a page includes any of the following without a visible source or
+verification date:
+
+- Service limits, quotas, or capacity figures
+- Recovery time objectives (RTO) or recovery point objectives (RPO)
+- Performance claims (e.g. "5x throughput", "single-digit ms latency")
+- Compatibility statements that depend on engine version or edition
+- Feature availability tied to a specific tier, region, or configuration
+- Durability or availability figures expressed in "nines"
+
+### When source metadata is optional
+
+Source metadata is optional but encouraged for:
+
+- Comparison tables where most rows are stable but one or two rows include time-sensitive facts
+- Exam tips that reference a specific numeric figure or SLA
+
+---
+
 ## 12. Documentation dependency management
 
 The documentation build dependencies are managed through a single locked,

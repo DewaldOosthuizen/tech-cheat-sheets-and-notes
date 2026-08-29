@@ -1,11 +1,17 @@
 flowchart TD
-    A{Relational database?} -->|Yes| B{Need MySQL/PostgreSQL compat?}
-    B -->|Standard| C[RDS]
-    B -->|High performance / cloud-native| D[Aurora]
-    A -->|No| E{Key-value or document NoSQL?}
-    E -->|Yes| F[DynamoDB]
-    E -->|No| G{In-memory caching?}
-    G -->|Yes| H[ElastiCache Redis or Memcached]
-    G -->|No| I{Analytics / OLAP data warehouse?}
-    I -->|Yes| J[Redshift]
-    I -->|No| K[Revisit requirements]
+    A{Relational database?}
+    A -->|Yes| B{Need a specific database engine?}
+    B -->|MySQL or PostgreSQL| C{Need cloud-native MySQL/PostgreSQL performance, serverless, or global read replicas?}
+    C -->|Yes| D[Aurora MySQL or Aurora PostgreSQL]
+    C -->|No| E[RDS for MySQL or RDS for PostgreSQL]
+    B -->|MariaDB| F[RDS for MariaDB]
+    B -->|Oracle| G[RDS for Oracle]
+    B -->|SQL Server| H[RDS for SQL Server]
+    B -->|Migration constraints or engine portability| I[Evaluate RDS engine support and DMS, or re-evaluate Aurora compatibility requirements]
+    A -->|No| J{Key-value or document NoSQL?}
+    J -->|Yes| K[DynamoDB]
+    J -->|No| L{In-memory caching?}
+    L -->|Yes| M[ElastiCache Redis or Memcached]
+    L -->|No| N{Analytics / OLAP data warehouse?}
+    N -->|Yes| O[Redshift]
+    N -->|No| P[Revisit requirements]
