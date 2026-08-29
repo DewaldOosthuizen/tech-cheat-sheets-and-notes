@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "buildCommand": "python -m pip install -r requirements-docs.txt && mkdocs build",
+  "buildCommand": "python -m pip install -r requirements-docs.txt && mkdocs build --strict",
   "outputDirectory": "site",
   "cleanUrls": true
 }

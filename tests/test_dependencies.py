@@ -8,6 +8,7 @@ Verifies that:
   - CONTRIBUTING.md Section 5 directs contributors to pip install -e '.[dev]'
 """
 
+import json
 import re
 
 from conftest import REPO_ROOT
@@ -17,6 +18,15 @@ from packaging.version import Version
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 LINT_YML = REPO_ROOT / ".github" / "workflows" / "lint.yml"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
+PACKAGE_JSON = REPO_ROOT / "package.json"
+VERCEL_JSON = REPO_ROOT / "vercel.json"
+PROD_DEPLOY_YML = REPO_ROOT / ".github" / "workflows" / "prod-deploy.yml"
+
+
+def _package_json_dev_deps():
+    """Return the devDependencies dict from package.json."""
+    data = json.loads(PACKAGE_JSON.read_text())
+    return data.get("devDependencies", {})
 
 
 class TestPyprojectUpperBounds:
@@ -65,7 +75,6 @@ class TestPyprojectUpperBounds:
 
     def test_no_open_ended_pytest(self):
         content = PYPROJECT.read_text()
-        # Line like '"pytest>=9.0.3",' with no upper bound must not exist
         assert not re.search(r'"pytest>=[\d.]+",', content), (
             "pytest must not appear with open-ended lower bound only"
         )
@@ -128,4 +137,71 @@ class TestContributingDevSetup:
         content = CONTRIBUTING.read_text()
         assert "pip install ruff pytest" not in content, (
             "CONTRIBUTING.md must not instruct bare 'pip install ruff pytest'"
+        )
+
+
+# ── Issues #293, #295, #296: Pin dependency versions and enforce strict builds ──
+
+
+class TestPuppeteerExactVersion:
+    """package.json must declare Puppeteer with an exact version."""
+
+    def test_puppeteer_is_declared(self):
+        deps = _package_json_dev_deps()
+        assert "puppeteer" in deps, "puppeteer must be listed in devDependencies"
+
+    def test_puppeteer_has_exact_version(self):
+        deps = _package_json_dev_deps()
+        version = deps["puppeteer"]
+        assert re.match(r"^\d+\.\d+\.\d+$", version), (
+            f"puppeteer must be an exact semver version, got: {version!r}"
+        )
+
+    def test_no_caret_or_wildcard_puppeteer(self):
+        content = PACKAGE_JSON.read_text()
+        assert not re.search(r'"puppeteer"\s*:\s*~?\^?[><=*]?\s*\d', content), (
+            "puppeteer must not appear with a caret, tilde, or wildcard range"
+        )
+
+
+class TestVercelCliPinned:
+    """Vercel CLI must be pinned exactly and not installed via @latest in prod deploy."""
+
+    def test_prod_deploy_no_vercel_latest(self):
+        content = PROD_DEPLOY_YML.read_text()
+        assert "vercel@latest" not in content, "prod-deploy.yml must not install vercel@latest"
+
+    def test_prod_deploy_pins_exact_vercel_version(self):
+        content = PROD_DEPLOY_YML.read_text()
+        assert re.search(r"npm install --global vercel@\d+\.\d+\.\d+", content), (
+            "prod-deploy.yml must install a pinned exact Vercel CLI version"
+        )
+
+
+class TestVercelStrictMkdocs:
+    """Vercel production build must use mkdocs build --strict."""
+
+    def test_vercel_json_has_build_command(self):
+        data = json.loads(VERCEL_JSON.read_text())
+        assert "buildCommand" in data, "vercel.json must define buildCommand"
+
+    def test_build_command_includes_strict(self):
+        data = json.loads(VERCEL_JSON.read_text())
+        cmd = data["buildCommand"]
+        assert "mkdocs build --strict" in cmd, (
+            f"buildCommand must include 'mkdocs build --strict', got: {cmd!r}"
+        )
+
+    def test_build_command_installs_requirements_docs(self):
+        data = json.loads(VERCEL_JSON.read_text())
+        cmd = data["buildCommand"]
+        assert "requirements-docs.txt" in cmd, (
+            "buildCommand must install requirements-docs.txt before building"
+        )
+
+    def test_no_vercel_latest_in_vercel_json(self):
+        data = json.loads(VERCEL_JSON.read_text())
+        cmd = data.get("buildCommand", "")
+        assert "vercel@latest" not in cmd, (
+            "vercel.json buildCommand must not reference vercel@latest"
         )
