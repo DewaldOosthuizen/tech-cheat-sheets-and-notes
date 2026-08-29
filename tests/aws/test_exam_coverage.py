@@ -13,17 +13,21 @@ INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AWS_EXAMS_MD = REPO_ROOT / "docs" / "aws" / "files" / "exams" / "exams.md"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"
 
+
 @pytest.fixture(scope="module")
 def index_text():
     return INDEX_MD.read_text()
+
 
 @pytest.fixture(scope="module")
 def aws_exams_text():
     return AWS_EXAMS_MD.read_text()
 
+
 @pytest.fixture(scope="module")
 def mkdocs_text():
     return MKDOCS_YML.read_text()
+
 
 # ── index.md — AWS exam coverage link ────────────────────────────────────────
 

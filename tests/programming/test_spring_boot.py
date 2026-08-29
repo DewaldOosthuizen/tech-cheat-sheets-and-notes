@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 import yaml
-from conftest import REPO_ROOT, expand_snippets
+from conftest import REPO_ROOT
 
 DOCS = REPO_ROOT / "docs"
 MKDOCS_YML = REPO_ROOT / "mkdocs.yml"

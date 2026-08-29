@@ -10,7 +10,7 @@ Covers all 4 sub-issues:
 from __future__ import annotations
 
 import pytest
-from conftest import REPO_ROOT, expand_snippets
+from conftest import REPO_ROOT
 
 DOCS = REPO_ROOT / "docs"
 

@@ -11,13 +11,16 @@ from conftest import REPO_ROOT
 INDEX_MD = REPO_ROOT / "docs" / "index.md"
 AZURE_EXAMS_MD = REPO_ROOT / "docs" / "azure" / "files" / "exams" / "exams.md"
 
+
 @pytest.fixture(scope="module")
 def index_text():
     return INDEX_MD.read_text()
 
+
 @pytest.fixture(scope="module")
 def azure_exams_text():
     return AZURE_EXAMS_MD.read_text()
+
 
 # ── index.md — Azure exam coverage link ──────────────────────────────────────
 
@@ -48,9 +51,7 @@ class TestAzureExamsUnchanged:
         assert "AZ-204" in azure_exams_text
 
     def test_azure_exams_has_seven_columns(self, azure_exams_text):
-        header = next(
-            (line for line in azure_exams_text.splitlines() if "Section" in line), None
-        )
+        header = next((line for line in azure_exams_text.splitlines() if "Section" in line), None)
         assert header is not None
         assert header.count("|") >= 8
 
