@@ -172,10 +172,10 @@ class TestIndexAzureDatabaseRow:
     """docs/index.md must list the Azure Database row."""
 
     def test_database_row_present(self, index_text):
-        # The Azure Database row must reference azure/files/database/database.md
-        # and mention Azure SQL Database (the repo's canonical phrasing in the
-        # Content column).
-        assert "azure/files/database/database.md" in index_text
+        # After snippet expansion, the provider index content appears with
+        # paths relative to its own directory (files/...), not
+        # azure/files/...
+        assert "files/database/database.md" in index_text
         assert "Azure SQL Database" in index_text
 
 
@@ -193,6 +193,6 @@ class TestReadmeAzureDatabaseRow:
         )
         azure_index = (REPO_ROOT / "docs" / "azure" / "index.md").read_text()
         assert "Database" in azure_index, "Expected a Database row in docs/azure/index.md"
-        assert "azure/files/database/database.md" in azure_index, (
-            "Expected azure/files/database/database.md link in docs/azure/index.md"
+        assert "files/database/database.md" in azure_index, (
+            "Expected files/database/database.md link in docs/azure/index.md"
         )

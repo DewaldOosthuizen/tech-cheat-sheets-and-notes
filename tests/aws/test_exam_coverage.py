@@ -141,7 +141,7 @@ class TestMkdocsAWSExamCoverage:
         assert aws_idx is not None, "- AWS: section not found in mkdocs.yml"
         # Find next nav entries after - AWS:
         child_entries = []
-        for line in lines[aws_idx + 1:]:
+        for line in lines[aws_idx + 1 :]:
             stripped = line.strip()
             if (
                 stripped.startswith("- ")

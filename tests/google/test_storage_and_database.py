@@ -208,8 +208,8 @@ class TestReadmeGoogleDatabaseRow:
         )
         google_index = (REPO_ROOT / "docs" / "google" / "index.md").read_text()
         assert "Database" in google_index, "Expected a Database row in docs/google/index.md"
-        assert "google/files/database/database.md" in google_index, (
-            "Expected google/files/database/database.md link in docs/google/index.md"
+        assert "files/database/database.md" in google_index, (
+            "Expected files/database/database.md link in docs/google/index.md"
         )
         assert "Cloud SQL" in google_index, "Expected Cloud SQL in docs/google/index.md"
 
@@ -219,12 +219,10 @@ class TestReadmeGoogleDatabaseRow:
         )
         google_index = (REPO_ROOT / "docs" / "google" / "index.md").read_text()
         google_storage_rows = [
-            ln for ln in google_index.splitlines()
-            if "Storage" in ln and "Cloud Storage" in ln
+            ln for ln in google_index.splitlines() if "Storage" in ln and "Cloud Storage" in ln
         ]
         google_db_rows = [
-            ln for ln in google_index.splitlines()
-            if "Database" in ln and "Cloud SQL" in ln
+            ln for ln in google_index.splitlines() if "Database" in ln and "Cloud SQL" in ln
         ]
         assert len(google_storage_rows) == 1, (
             "Expected exactly one Google Storage row in docs/google/index.md"

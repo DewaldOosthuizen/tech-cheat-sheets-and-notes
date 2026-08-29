@@ -150,9 +150,7 @@ class TestMkdocsAwsNav:
 
 class TestIndexMdAwsSection:
     def _index_text(self) -> str:
-        return expand_snippets(
-            (DOCS / "index.md").read_text(encoding="utf-8")
-        )
+        return expand_snippets((DOCS / "index.md").read_text(encoding="utf-8"))
 
     def test_aws_heading_present(self) -> None:
         text = self._index_text()
@@ -173,7 +171,7 @@ class TestIndexMdAwsSection:
     @pytest.mark.parametrize("domain", AWS_DOMAINS)
     def test_aws_domain_link_in_index(self, domain: str) -> None:
         text = self._index_text()
-        assert f"aws/files/{domain}/{domain}.md" in text, (
+        assert f"files/{domain}/{domain}.md" in text, (
             f"docs/index.md AWS domain table missing link for: {domain}"
         )
 

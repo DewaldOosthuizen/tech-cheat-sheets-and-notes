@@ -13,9 +13,15 @@ Content is comparison-oriented: tables, decision flowcharts, and Mermaid diagram
 
 --8<-- "azure/index.md"
 
+See the [Azure Exam Track Index](azure/files/exams/exams.md) for full coverage by certification.
+
 --8<-- "aws/index.md"
 
+See the [AWS Exam Track Index](aws/files/exams/exams.md) for full coverage by certification.
+
 --8<-- "google/index.md"
+
+See the [Google Cloud Exam Track Index](google/files/exams/exams.md) for full coverage by certification.
 
 ---
 
