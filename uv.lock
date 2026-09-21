@@ -943,7 +943,7 @@ requires-dist = [
     { name = "pymdown-extensions", marker = "extra == 'docs'", specifier = ">=11.0.2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1,<10" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.1.0,<8" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.5,<1" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.6,<1" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=84.0.0" },
 ]
 provides-extras = ["dev", "docs"]

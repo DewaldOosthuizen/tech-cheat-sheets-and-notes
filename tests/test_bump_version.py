@@ -52,13 +52,16 @@ class TestVersionComputation:
     """Test CalVer computation logic."""
 
     def test_new_day_resets_micro(self):
-        # Use actual current version from pyproject.toml (should be old)
-        # and don't pass override - let it compute from current date
-        result = _run_bump(["--dry-run"])
-        assert result.returncode == 0
-        # Should be today's date with micro=0
-        assert result.stdout.strip().startswith("2026.09.07")
-        assert not result.stdout.strip().endswith(".1")
+        from datetime import date
+        from unittest.mock import patch
+
+        from scripts.bump_version import _compute_next_version
+
+        with patch("scripts.bump_version.datetime") as mock_dt:
+            mock_dt.now.return_value.date.return_value = date(2026, 9, 7)
+            new_version, changed = _compute_next_version("2026.09.06", None)
+            assert new_version == "2026.09.07"
+            assert changed is True
 
     def test_same_day_increments_micro(self):
         from datetime import date
