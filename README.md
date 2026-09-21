@@ -87,8 +87,8 @@ preview.
 make ci
 ```
 
-Runs in order: markdownlint, Mermaid validation, ruff lint + format check,
-pytest with coverage, and a strict MkDocs build. A failing `make ci` means
+Runs in order: markdownlint, npm-audit, Mermaid validation, ruff lint + format check,
+pytest with coverage, python-audit, and a strict MkDocs build. A failing `make ci` means
 the GitHub Actions pipeline will also fail — fix it before opening a PR.
 
 For dead-link checking, run:

@@ -60,7 +60,6 @@ source = ["scripts"]
 # repo state and not re-executed during CI. Exclude them from coverage measurement.
 omit = [
     "scripts/extract_sections.py",
-    "scripts/update_cheat_sheets.py",
 ]
 
 [tool.coverage.report]

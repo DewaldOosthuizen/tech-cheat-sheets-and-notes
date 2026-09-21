@@ -271,7 +271,7 @@ check-docs-deps:
 	 exit 1)
 
 # ── Full CI pipeline ──────────────────────────────────────────────────────────
-ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test docs-build link-check
+ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test docs-build
 	@echo ""
 	@echo "=== CI passed ==="
 

@@ -11,11 +11,11 @@ Content is comparison-oriented: tables, decision flowcharts, and Mermaid diagram
 
 ## Cloud Service Providers
 
-| Provider | Domain Index |
+|| Provider | Domain Index |
 |----------|--------------|
-| [Microsoft Azure](azure/index.md) | organised by domain |
 | [Amazon Web Services](aws/index.md) | organised by domain |
 | [Google Cloud](google/index.md) | organised by domain |
+| [Microsoft Azure](azure/index.md) | organised by domain |
 
 See the [Azure Exam Track Index](azure/index.md), [AWS Exam Track Index](aws/index.md) and [Google Cloud Exam Track Index](google/index.md) for full certification coverage.
 

@@ -160,7 +160,7 @@
 | Service | Layer | Scope | Use Case | Key Feature |
 |---|---|---|---|---|
 | **Azure Front Door** | L7 (HTTP/S) | Global | CDN + WAF + global LB combined | Anycast PoP, WAF, SSL offload, caching rules |
-| **Azure CDN (Microsoft)** | L7 (HTTP/S) | Global | Static asset delivery, simple CDN | Verizon/Akamai PoPs, rules engine, legacy option |
+| **Azure CDN (Microsoft)** | L7 (HTTP/S) | Global | Static asset delivery, simple CDN | Microsoft global edge network, rules engine |
 
 > **⚠️ Deprecation warning:** Azure CDN classic profiles (Verizon and Akamai) are retiring
 > 30 September 2027. Migrate to **Azure Front Door** (CDN + WAF + global LB) or

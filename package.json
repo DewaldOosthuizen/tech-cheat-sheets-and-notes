@@ -1,7 +1,7 @@
 {
   "name": "tech-cheat-sheets-and-notes",
   "version": "1.0.0",
-  "description": "Azure architecture cheat sheets for AZ-305",
+  "description": "Technology cheat sheets and notes — Azure, AWS, Google Cloud, and Java",
   "private": true,
   "devDependencies": {
     "@mermaid-js/mermaid-cli": "11.17.0",
