@@ -160,6 +160,18 @@ jobs:
       - name: Expose local bin on PATH
         run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
 
+      - name: Install correct Puppeteer browser version
+        # Pin chrome-headless-shell to the version expected by the project's puppeteer.
+        # Without this, puppeteer may download a newer incompatible version on first run.
+        run: |
+          PUPPETEER_VERSION=$(node -e "console.log(require('./node_modules/puppeteer/package.json').version)" 2>/dev/null || echo "")
+          if [ -n "$PUPPETEER_VERSION" ]; then
+            echo "Puppeteer version: $PUPPETEER_VERSION"
+            npx puppeteer browsers install chrome-headless-shell
+          else
+            echo "WARNING: could not determine puppeteer version; skipping browser install"
+          fi
+
       - name: Validate Mermaid diagrams
         run: |
           echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json

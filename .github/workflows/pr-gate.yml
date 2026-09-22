@@ -33,7 +33,8 @@
 # 3. mermaid-check (needs: python-lint)
 # 4. python-test (needs: mermaid-check)
 # 5. npm-audit (independent; runs in parallel with the chain)
-# 6. pr-gate-summary (needs: all above; if: always() to report status)
+# 6. check-docs-deps (independent; runs in parallel with the chain)
+# 7. pr-gate-summary (needs: all above; if: always() to report status)
 
 name: PR Gate
 
@@ -127,6 +128,17 @@ jobs:
       - name: Expose local bin on PATH
         # npm ci installs mmdc into node_modules/.bin; add it so validate_mermaid.py can call it.
         run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
+      - name: Install correct Puppeteer browser version
+        # Pin chrome-headless-shell to the version expected by the project's puppeteer.
+        # Without this, puppeteer may download a newer incompatible version on first run.
+        run: |
+          PUPPETEER_VERSION=$(node -e "console.log(require('./node_modules/puppeteer/package.json').version)" 2>/dev/null || echo "")
+          if [ -n "$PUPPETEER_VERSION" ]; then
+            echo "Puppeteer version: $PUPPETEER_VERSION"
+            npx puppeteer browsers install chrome-headless-shell
+          else
+            echo "WARNING: could not determine puppeteer version; skipping browser install"
+          fi
       - name: Run mermaid validation
         run: |
           # Puppeteer flags avoid Chromium sandbox issues on GitHub runners.
@@ -182,13 +194,35 @@ jobs:
         # in dependabot weekly updates to avoid noise.
         run: npm audit --audit-level=high
 
+  # 6. Documentation dependency lock check
+  # Independent; runs in parallel because it doesn't depend on Python or Node steps.
+  # Fails if requirements-docs.txt does not match `uv export --extra docs --no-dev`.
+  check-docs-deps:
+    name: Docs Deps Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install uv
+        run: pip install uv
+      - name: Verify requirements-docs.txt matches uv.lock
+        run: |
+          uv export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 > /tmp/requirements-docs-generated.txt
+          grep -v '^[[:space:]]*#' requirements-docs.txt | grep -v '^[[:space:]]*$' > /tmp/docs-committed.txt
+          grep -v '^[[:space:]]*#' /tmp/requirements-docs-generated.txt | grep -v '^[[:space:]]*$' > /tmp/docs-generated.txt
+          diff /tmp/docs-committed.txt /tmp/docs-generated.txt
+
   # Summary job — ensures all required checks pass before merge
   # if: always() guarantees this runs even if a previous job failed, so
   # the PR shows a clear "PR Gate Summary" failure instead of a gray skip.
   pr-gate-summary:
     name: PR Gate Summary
     runs-on: ubuntu-latest
-    needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit]
+    needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit, check-docs-deps]
     if: always()
     steps:
       - name: Check all jobs succeeded
@@ -211,6 +245,10 @@ jobs:
           fi
           if [[ "${{ needs.mermaid-check.result }}" != "success" ]]; then
             echo "❌ mermaid-check failed"
+            exit 1
+          fi
+          if [[ "${{ needs.check-docs-deps.result }}" != "success" ]]; then
+            echo "❌ check-docs-deps failed"
             exit 1
           fi
           echo "✅ All PR gate checks passed"

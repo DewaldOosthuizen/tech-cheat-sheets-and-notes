@@ -12,3 +12,12 @@ repos:
     hooks:
       - id: markdownlint-cli2
         files: ^(docs/.*\.md|README\.md|AGENTS\.md)$
+
+  - repo: local
+    hooks:
+      - id: check-docs-deps
+        name: Check docs dependencies match uv.lock
+        entry: make check-docs-deps
+        language: system
+        pass_filenames: false
+        files: ^(requirements-docs\.txt|uv\.lock|pyproject\.toml)$
