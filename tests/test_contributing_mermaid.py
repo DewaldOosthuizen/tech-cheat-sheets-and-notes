@@ -53,9 +53,8 @@ class TestContributingMermaidDiagrams:
 
     def test_local_validation_command_documented(self) -> None:
         text = self._contributing_text()
-        assert "python3 scripts/validate_mermaid.py docs/azure/files/networking/networking.md" in text, (
-            "CONTRIBUTING.md missing per-file validation command"
-        )
+        expected = "python3 scripts/validate_mermaid.py docs/azure/files/networking/networking.md"
+        assert expected in text, "CONTRIBUTING.md missing per-file validation command"
 
     def test_mermaid_diagrams_subsection_is_in_section_9(self) -> None:
         """The new subsection must appear before the --- separator that ends §9 (before §10)."""
