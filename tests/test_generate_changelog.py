@@ -166,20 +166,20 @@ class TestChangelogFormatting:
 class TestGitIntegration:
     """Test git operations (requires git repo)."""
 
-    def test_get_last_tag(self):
-        from scripts.generate_changelog import _get_last_tag
+    def test_get_previous_tag(self):
+        from scripts.generate_changelog import _get_previous_tag
 
-        tag = _get_last_tag()
+        tag = _get_previous_tag()
         # In this repo there should be tags
         assert isinstance(tag, str)
 
     def test_get_commits_since_tag(self):
-        from scripts.generate_changelog import _get_commits_since, _get_last_tag
+        from scripts.generate_changelog import _get_commits_since, _get_previous_tag
 
-        tag = _get_last_tag()
+        tag = _get_previous_tag()
         commits = _get_commits_since(tag)
         assert isinstance(commits, list)
-        # Should have commits since last tag
+        # Should have commits since previous tag
         assert len(commits) >= 0
 
     def test_get_commits_all_history(self):

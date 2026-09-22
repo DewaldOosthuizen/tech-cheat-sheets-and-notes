@@ -52,10 +52,16 @@ def _run(cmd: list[str], cwd: Path | None = None) -> str:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{exc.stderr}") from exc
 
 
-def _get_last_tag() -> str:
-    """Return the most recent tag name, or empty string if none."""
+def _get_previous_tag() -> str:
+    """Return the second-most-recent tag name, or empty string if < 2 tags.
+
+    When a release tag has already been created and pushed (as in the release
+    pipeline), the newest tag is the one being released. The changelog should
+    show commits since the *previous* tag, so we skip the latest and use the
+    one before it. With 0 or 1 tags total, there is no baseline — return "".
+    """
     tags = _run(["git", "tag", "--sort=-v:refname"]).splitlines()
-    return tags[0] if tags else ""
+    return tags[1] if len(tags) >= 2 else ""
 
 
 def _get_commits_since(tag: str) -> list[str]:
@@ -136,7 +142,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        tag = args.since_tag or _get_last_tag()
+        tag = args.since_tag or _get_previous_tag()
         commits = _get_commits_since(tag)
         buckets = _categorize(commits)
         changelog = _format_changelog(buckets, tag)
