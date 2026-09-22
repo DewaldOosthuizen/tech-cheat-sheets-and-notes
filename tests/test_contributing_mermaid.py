@@ -53,7 +53,7 @@ class TestContributingMermaidDiagrams:
 
     def test_local_validation_command_documented(self) -> None:
         text = self._contributing_text()
-        assert "python3 scripts/validate_mermaid.py docs/AZ-305_CheatSheet.md" in text, (
+        assert "python3 scripts/validate_mermaid.py docs/azure/files/networking/networking.md" in text, (
             "CONTRIBUTING.md missing per-file validation command"
         )
 
