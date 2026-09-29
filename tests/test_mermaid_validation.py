@@ -500,8 +500,10 @@ class TestRealCheatSheet:
 
 # [ORCHESTRATOR NOTE] Pre-existing failure — unrelated to issue #321
 # Failure: TestRealCheatSheetIntegration::test_all_diagrams_pass
-# Reason: chrome-headless-shell binary not installed in this environment (mmdc requires puppeteer/Chrome)
-# Suggested fix: Install chrome-headless-shell via `npx puppeteer browsers install chrome-headless-shell`
+# Reason: chrome-headless-shell binary not installed in this env
+#   (mmdc requires puppeteer/Chrome)
+# Suggested fix: Install chrome-headless-shell via
+#   `npx puppeteer browsers install chrome-headless-shell`
 @pytest.mark.skipif(shutil.which("mmdc") is None, reason="mmdc not installed")
 class TestRealCheatSheetIntegration:
     """Integration tests that invoke validate_block against the real cheat sheet."""
