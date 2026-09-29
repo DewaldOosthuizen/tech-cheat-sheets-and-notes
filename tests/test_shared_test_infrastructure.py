@@ -31,6 +31,20 @@ class TestSharedScriptsBootstrap:
         src = inspect.getsource(conftest)
         assert 'sys.path.insert(0, "scripts")' not in src
 
+    def test_conftest_does_not_duplicate_expand_snippets(self):
+        src = inspect.getsource(conftest)
+        assert "def expand_snippets" not in src, (
+            "conftest must not carry its own expand_snippets body — "
+            "it should re-export from validate_mermaid"
+        )
+
+    def test_conftest_expand_snippets_is_validate_mermaid_expand_snippets(self):
+        assert conftest.expand_snippets is validate_mermaid.expand_snippets
+
+    def test_conftest_snippet_constants_are_validate_mermaid_aliases(self):
+        assert conftest._SNIPPET_RE is validate_mermaid._SNIPPET_RE
+        assert conftest._MAX_EXPAND_DEPTH is validate_mermaid._MAX_EXPAND_DEPTH
+
 
 class TestMermaidValidationBootstrapOwnership:
     """validate_mermaid tests must rely on shared bootstrap only."""

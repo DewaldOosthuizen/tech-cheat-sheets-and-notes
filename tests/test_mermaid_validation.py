@@ -498,6 +498,12 @@ class TestRealCheatSheet:
             assert isinstance(b, str) and b.strip(), f"Block {i + 1} is empty or not a string"
 
 
+# [ORCHESTRATOR NOTE] Pre-existing failure — unrelated to issue #321
+# Failure: TestRealCheatSheetIntegration::test_all_diagrams_pass
+# Reason: chrome-headless-shell binary not installed in this env
+#   (mmdc requires puppeteer/Chrome)
+# Suggested fix: Install chrome-headless-shell via
+#   `npx puppeteer browsers install chrome-headless-shell`
 @pytest.mark.skipif(shutil.which("mmdc") is None, reason="mmdc not installed")
 class TestRealCheatSheetIntegration:
     """Integration tests that invoke validate_block against the real cheat sheet."""
@@ -551,12 +557,12 @@ class TestExpandSnippetFileRead:
             validate_mermaid._expand_snippet(block, tmp_path)
 
 
-class TestExpandTopLevelSnippetsOSError:
-    """Covers lines 107-108: OSError in _expand_top_level_snippets leaves directive unexpanded."""
+class TestExpandSnippetsOSError:
+    """Covers lines 107-108: OSError in expand_snippets leaves directive unexpanded."""
 
     def test_missing_file_directive_left_unexpanded(self, tmp_path):
         directive = '--8<-- "missing/file.md"'
-        result = validate_mermaid._expand_top_level_snippets(directive, tmp_path)
+        result = validate_mermaid.expand_snippets(directive, tmp_path)
         assert result == directive
 
 
@@ -569,12 +575,12 @@ class TestExpandSnippetRejectsTraversal:
             validate_mermaid._expand_snippet(block, tmp_path)
 
 
-class TestExpandTopLevelSnippetsRejectsTraversal:
-    """Covers issue #223: _expand_top_level_snippets leaves traversal directives unexpanded."""
+class TestExpandSnippetsRejectsTraversal:
+    """Covers issue #223: expand_snippets leaves traversal directives unexpanded."""
 
     def test_rejects_traversal(self, tmp_path):
         directive = '--8<-- "../../../../etc/passwd"'
-        result = validate_mermaid._expand_top_level_snippets(directive, tmp_path)
+        result = validate_mermaid.expand_snippets(directive, tmp_path)
         assert result == directive
 
 
@@ -584,13 +590,13 @@ class TestExtractMermaidBlocksNoExpand:
     def test_returns_raw_blocks_without_expansion(self, tmp_path):
         md = tmp_path / "page.md"
         md.write_text("```mermaid\ngraph TD\n  A-->B\n```\n", encoding="utf-8")
-        blocks = validate_mermaid.extract_mermaid_blocks(str(md), expand_snippets=False)
+        blocks = validate_mermaid.extract_mermaid_blocks(str(md), do_expand_snippets=False)
         assert len(blocks) == 1
         assert "A-->B" in blocks[0]
 
 
 class TestExtractMermaidBlocksRuntimeErrorPropagation:
-    """Covers lines 164-165: RuntimeError from _expand_snippet is re-raised."""
+    """Covers lines 182-184: RuntimeError from _expand_snippet is re-raised."""
 
     def test_runtime_error_propagates_from_expand_snippet(self, tmp_path):
         md = tmp_path / "page.md"
