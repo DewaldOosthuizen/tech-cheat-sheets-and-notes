@@ -142,13 +142,7 @@ jobs:
         run: |
           # Puppeteer flags avoid Chromium sandbox issues on GitHub runners.
           echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json
-          # Collect markdown files excluding diagram-only dirs and theme overrides.
-          find docs -name '*.md' ! -path 'docs/azure/diagrams/*' ! -path 'docs/overrides/*' > /tmp/md-files.txt
-          # Collect standalone .mmd diagram files.
-          find docs -name '*.mmd' > /tmp/mmd-files.txt
-          # Pass both lists to the validator. PUPPETEER_CONFIG_FILE is respected
-          # by validate_mermaid.py and forwarded to mmdc.
-          PUPPETEER_CONFIG_FILE=/tmp/puppeteer-config.json python scripts/validate_mermaid.py $(cat /tmp/md-files.txt) $(cat /tmp/mmd-files.txt)
+          PUPPETEER_CONFIG_FILE=/tmp/puppeteer-config.json python scripts/validate_mermaid.py
 
   # 4. Python tests with coverage gate
   # Depends on mermaid-check; runs a single Python version (3.11) for speed.

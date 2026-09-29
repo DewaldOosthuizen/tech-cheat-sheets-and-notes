@@ -316,19 +316,24 @@ class TestExpandSnippetsRecursive:
 
 
 class TestMakefileMdFilesValidate:
+    """Verify that MD_FILES_VALIDATE in the Makefile delegates to
+    scripts/validate_mermaid.py discovery (issue #322)."""
+
     def _makefile_text(self) -> str:
         return (REPO_ROOT / "Makefile").read_text(encoding="utf-8")
 
-    def test_md_files_validate_uses_find(self) -> None:
+    def test_md_files_validate_uses_script_discovery(self) -> None:
         text = self._makefile_text()
-        assert "find docs" in text, (
-            "Makefile MD_FILES_VALIDATE should use 'find docs' glob, not a static list"
+        assert "scripts/validate_mermaid.py --discover-md" in text, (
+            "Makefile MD_FILES_VALIDATE must delegate to "
+            "scripts/validate_mermaid.py --discover-md (issue #322)"
         )
 
     def test_md_files_validate_excludes_diagrams(self) -> None:
         text = self._makefile_text()
-        assert "docs/diagrams" in text or "'docs/diagrams/*'" in text or "docs/diagrams" in text, (
-            "Makefile MD_FILES_VALIDATE should exclude docs/diagrams/ paths"
+        assert "discover-md" in text, (
+            "Makefile MD_FILES_VALIDATE should use script discovery which "
+            "excludes docs/azure/diagrams/* (issue #322)"
         )
 
     def test_static_list_removed(self) -> None:

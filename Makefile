@@ -40,11 +40,9 @@ MD_GLOBS         = "docs/**/*.md" "README.md" "AGENTS.md"
 LINT_TARGETS     = scripts/ tests/
 # Validate all Markdown files that contain Mermaid fences or snippet references to .mmd files.
 # This includes both cheat sheets and the section snippet files under docs/<section>/.
-MD_FILES_VALIDATE := $(shell find docs -name '*.md' \
-  ! -path 'docs/azure/diagrams/*' \
-  ! -path 'docs/overrides/*')
+MD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-md)
 # All standalone .mmd diagram files
-MMD_FILES_VALIDATE := $(shell find docs -name '*.mmd' 2>/dev/null)
+MMD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-mmd)
 
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install \
@@ -114,11 +112,11 @@ mermaid-check: puppeteer-config
 	npm ci
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
-	  $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE) $(MMD_FILES_VALIDATE) || \
-	  (sleep 5 && \
-	   PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
-	     PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
-	     $(PY) scripts/validate_mermaid.py $(MD_FILES_VALIDATE) $(MMD_FILES_VALIDATE))
+	  $(PY) scripts/validate_mermaid.py || \
+  (sleep 5 && \
+   PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
+     PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
+     $(PY) scripts/validate_mermaid.py)
 
 npm-audit:
 	@echo "--- npm-audit ---"
