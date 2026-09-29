@@ -1,7 +1,6 @@
 # PR Gate
 # 
-# Fast, lightweight CI gate that runs on every pull request and
-# pull_request_target event.
+# Fast, lightweight CI gate that runs on every pull request.
 #
 # Design goals:
 # - Fast feedback: lightweight checks before a reviewer even looks.
@@ -17,11 +16,13 @@
 # - pull_request (opened/synchronize/reopened/ready_for_review)
 #   Runs against the PR head. Safe for fork PRs as long as no secret
 #   is read in these steps.
-# - pull_request_target
-#   Runs in the base repo context and can read secrets. We include it
-#   because some future check may need secret access; it won't execute
-#   the heavy steps again since the same checks already ran on the
-#   pull_request event for same commits.
+#   NOTE: we intentionally do NOT also trigger on pull_request_target.
+#   None of these jobs read secrets, and running both events against the
+#   same commit only raced against each other in the shared concurrency
+#   group below (see cancel-in-progress) — the pull_request_target run
+#   would cancel the pull_request run mid-flight, showing a false failure
+#   on every job. Add pull_request_target back only if a job genuinely
+#   needs base-repo secret access, and scope concurrency by event_name too.
 #
 # Concurrency:
 # - Cancel in-progress runs for the same PR when new commits are pushed,
@@ -40,8 +41,6 @@ name: PR Gate
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
 
 # Cancel in-progress runs for the same PR when new commits are pushed
