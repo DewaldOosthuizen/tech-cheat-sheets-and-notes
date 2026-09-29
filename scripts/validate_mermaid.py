@@ -53,7 +53,7 @@ PUPPETEER_CONFIG = Path(os.environ.get("PUPPETEER_CONFIG_FILE", str(_default_pup
 #   --8<-- "path/to/file.mmd"
 # or
 #   --8<-- 'path/to/file.mmd'
-_SNIPPET_RE = re.compile(r"""^--8<--\s+["']([^"']+)["']\s*$""")
+_FENCE_SNIPPET_RE = re.compile(r"""^--8<--\s+["']([^"']+)["']\s*$""")
 
 
 def _repo_root() -> Path:
@@ -85,7 +85,7 @@ def _expand_snippet(block_src: str, base_dir: Path) -> str | None:
     Raises ``RuntimeError`` if the referenced file cannot be read.
     """
     stripped = block_src.strip()
-    m = _SNIPPET_RE.match(stripped)
+    m = _FENCE_SNIPPET_RE.match(stripped)
     if not m:
         return None
     rel_path = m.group(1)
@@ -98,49 +98,51 @@ def _expand_snippet(block_src: str, base_dir: Path) -> str | None:
         raise RuntimeError(f"Cannot read snippet file {abs_path}: {exc}") from exc
 
 
-_TOP_LEVEL_SNIPPET_RE = re.compile(r"""--8<--\s+["']([^"']+)["']""")
+_SNIPPET_RE = re.compile(r"""--8<--\s+["']([^"']+)["']""")
 _MAX_EXPAND_DEPTH = 10
 
 
-def _expand_top_level_snippets(content: str, base: Path) -> str:
-    """Recursively expand all top-level --8<-- directives in *content*.
+def expand_snippets(text: str, base: Path | None = None) -> str:
+    """Recursively expand all --8<-- directives in *text*.
 
-    This handles cheat-sheet files that include section snippet files via
-    ``--8<-- "networking/networking.md"`` directives.  Those section snippets
-    in turn contain ``mermaid`` fences with ``--8<-- "azure/diagrams/..."`` directives.
-    We expand the file-level includes up to _MAX_EXPAND_DEPTH passes so that
-    ``extract_mermaid_blocks`` can find the inline mermaid fences.
+    Paths are resolved relative to *base*.  When *base* is ``None`` it
+    defaults to ``<repo>/docs/`` so callers that omit *base* (e.g. test
+    code importing via conftest) still work.
 
-    Directives referencing missing files are left unexpanded.
+    Expansion is applied recursively until the text stabilises or
+    _MAX_EXPAND_DEPTH passes are exhausted.  Directives referencing
+    missing files are left unexpanded.
     """
+    if base is None:
+        base = _repo_root() / "docs"
 
     def _replace(m: re.Match) -> str:
         rel = m.group(1)
         abs_path = (base / rel).resolve()
         if not abs_path.is_relative_to(base.resolve()):
-            return m.group(0)  # reject path traversal outside base
+            return m.group(0)
         try:
             return abs_path.read_text(encoding="utf-8")
         except OSError:
             return m.group(0)
 
     for _ in range(_MAX_EXPAND_DEPTH):
-        expanded = _TOP_LEVEL_SNIPPET_RE.sub(_replace, content)
-        if expanded == content:
+        expanded = _SNIPPET_RE.sub(_replace, text)
+        if expanded == text:
             break
-        content = expanded
-    return content
+        text = expanded
+    return text
 
 
 def extract_mermaid_blocks(
     md_path,
     *,
-    expand_snippets: bool = True,
+    do_expand_snippets: bool = True,
     snippet_base: Path | None = None,
 ) -> list[str]:
     """Extract (and optionally expand) mermaid blocks from a Markdown file.
 
-    When *expand_snippets* is True (the default), each block that contains
+    When *do_expand_snippets* is True (the default), each block that contains
     a ``--8<-- "..."`` directive is replaced with the content of the
     referenced ``.mmd`` file so the actual diagram source is validated.
 
@@ -165,13 +167,13 @@ def extract_mermaid_blocks(
     if snippet_base is None:
         snippet_base = _repo_root() / "docs"
 
-    if expand_snippets:
+    if do_expand_snippets:
         # Pre-pass: expand file-level snippet includes (section snippets, etc.)
         # so that mermaid fences inside those included files are visible.
-        content = _expand_top_level_snippets(content, snippet_base)
+        content = expand_snippets(content, snippet_base)
 
     raw_blocks = _extract_from_text(content)
-    if not expand_snippets:
+    if not do_expand_snippets:
         return raw_blocks
 
     expanded: list[str] = []

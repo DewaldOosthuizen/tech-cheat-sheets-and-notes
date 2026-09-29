@@ -271,13 +271,20 @@ class TestExpandSnippetsRecursive:
         return (REPO_ROOT / "tests" / "conftest.py").read_text(encoding="utf-8")
 
     def test_max_expand_depth_defined(self) -> None:
-        text = self._conftest_text()
-        assert "_MAX_EXPAND_DEPTH" in text, "conftest.py missing _MAX_EXPAND_DEPTH constant"
+        import validate_mermaid
+
+        assert hasattr(validate_mermaid, "_MAX_EXPAND_DEPTH"), (
+            "validate_mermaid must define _MAX_EXPAND_DEPTH"
+        )
 
     def test_expand_snippets_has_loop(self) -> None:
-        text = self._conftest_text()
-        assert "for _ in range(_MAX_EXPAND_DEPTH)" in text, (
-            "conftest.py expand_snippets missing depth-limited loop"
+        import inspect
+
+        import validate_mermaid
+
+        src = inspect.getsource(validate_mermaid.expand_snippets)
+        assert "for _ in range(_MAX_EXPAND_DEPTH)" in src, (
+            "expand_snippets missing depth-limited loop"
         )
 
     def test_expand_snippets_stabilizes(self) -> None:
@@ -298,10 +305,10 @@ class TestExpandSnippetsRecursive:
 
     def test_expand_snippets_missing_file_left_unexpanded(self) -> None:
         """Missing snippet references are left as-is (not raised as error)."""
-        from tests.conftest import expand_snippets
+        import validate_mermaid
 
         original = '--8<-- "nonexistent/file.md"'
-        result = expand_snippets(original)
+        result = validate_mermaid.expand_snippets(original)
         assert result == original
 
 
