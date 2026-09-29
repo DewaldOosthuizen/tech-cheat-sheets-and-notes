@@ -55,6 +55,14 @@ PUPPETEER_CONFIG = Path(os.environ.get("PUPPETEER_CONFIG_FILE", str(_default_pup
 #   --8<-- 'path/to/file.mmd'
 _FENCE_SNIPPET_RE = re.compile(r"""^--8<--\s+["']([^"']+)["']\s*$""")
 
+# Minimum file size (bytes) for an SVG produced by mmdc to be considered valid.
+# mmdc can return exit code 0 yet produce an empty or near-empty SVG when the
+# browser render fails silently (e.g. headless Chrome crash, missing font, or
+# JS error in the Mermaid render pipeline).  A valid minimal SVG — at minimum an
+# XML declaration plus a root <svg> element with width/height/viewBox attributes —
+# exceeds this threshold, so anything smaller is treated as degenerate.
+MIN_VALID_SVG_SIZE_BYTES = 100
+
 
 def _repo_root() -> Path:
     """Return the repository root directory (parent of the scripts/ folder)."""
@@ -206,7 +214,7 @@ def validate_block(index, diagram_src, timeout: int | None = None):
             timeout=timeout,
         )
         if result.returncode == 0:
-            if not out_path.exists() or out_path.stat().st_size < 100:
+            if not out_path.exists() or out_path.stat().st_size < MIN_VALID_SVG_SIZE_BYTES:
                 return (
                     False,
                     "mmdc produced an empty/degenerate SVG (possible silent render failure)",
