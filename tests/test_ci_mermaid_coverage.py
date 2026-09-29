@@ -52,19 +52,18 @@ class TestCiMermaidCoverage:
 
     def test_md_find_covers_all_docs(self) -> None:
         block = self._step_block()
-        assert "find docs" in block, (
-            "CI mermaid-check must use 'find docs' (not provider-scoped paths)"
+        assert "python scripts/validate_mermaid.py" in block, (
+            "CI mermaid-check must invoke validate_mermaid.py"
         )
-        assert "docs/azure/files docs/aws/files" not in block, (
-            "CI mermaid-check still uses narrow azure/aws find — must be broadened to 'find docs'"
+        assert "find docs" not in block, (
+            "CI mermaid-check must not inline find commands — discovery moved to validate_mermaid.py"
         )
 
     def test_mmd_find_covers_all_docs(self) -> None:
         block = self._step_block()
-        assert "find docs -name '*.mmd'" in block, (
-            "CI mermaid-check must use 'find docs -name *.mmd' (not provider-scoped paths)"
+        assert "python scripts/validate_mermaid.py" in block, (
+            "CI mermaid-check must invoke validate_mermaid.py"
         )
-        assert "docs/azure/diagrams docs/aws/diagrams" not in block, (
-            "CI mermaid-check still uses narrow azure/aws .mmd find —"
-            " must be broadened to 'find docs'"
+        assert "find docs" not in block, (
+            "CI mermaid-check must not inline find commands — discovery moved to validate_mermaid.py"
         )

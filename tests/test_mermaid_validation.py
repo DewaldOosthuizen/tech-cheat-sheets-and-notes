@@ -314,6 +314,11 @@ class TestParseArgs:
             args = validate_mermaid.parse_args()
         assert args.md_files == ["docs/azure/files/networking/networking.md"]
 
+    def test_parse_args_accepts_zero_positional_arguments(self):
+        with patch("validate_mermaid.sys.argv", ["validate_mermaid.py"]):
+            args = validate_mermaid.parse_args()
+        assert args.md_files == []
+
     def test_parse_args_exits_2_when_no_positional_argument(self):
         with (
             patch("validate_mermaid.sys.argv", ["validate_mermaid.py"]),
@@ -740,6 +745,59 @@ class TestMainEntryPoint:
             mock_parse.return_value.md_files = []
             validate_mermaid.main()
         assert exc_info.value.code == 0
+
+    def test_main_discovers_files_when_no_positional_arguments(self):
+        """main() must call discover_files() when args.md_files is empty."""
+        with (
+            patch("validate_mermaid.shutil.which", return_value="/usr/bin/mmdc"),
+            patch("validate_mermaid.parse_args") as mock_parse,
+            patch("validate_mermaid.discover_files") as mock_discover,
+            patch("validate_mermaid.run", return_value=0),
+            pytest.raises(SystemExit),
+        ):
+            mock_parse.return_value.md_files = []
+            validate_mermaid.main()
+        mock_discover.assert_called_once()
+
+
+class TestDiscoverFiles:
+    """Tests for the new discover_files() function — canonical exclusion rules."""
+
+    def test_discover_md_includes_google_files(self):
+        md_files, mmd_files = validate_mermaid.discover_files()
+        assert any("docs/google/files" in p for p in md_files), (
+            "Google Cloud Markdown files not found by discover_files()"
+        )
+
+    def test_discover_md_includes_programming_files(self):
+        md_files, mmd_files = validate_mermaid.discover_files()
+        assert any("docs/programming" in p for p in md_files), (
+            "Programming Markdown files not found by discover_files()"
+        )
+
+    def test_discover_md_excludes_azure_diagrams(self):
+        md_files, mmd_files = validate_mermaid.discover_files()
+        assert not any("docs/azure/diagrams" in p for p in md_files), (
+            "docs/azure/diagrams Markdown files must be excluded by discover_files()"
+        )
+
+    def test_discover_md_excludes_overrides(self):
+        md_files, mmd_files = validate_mermaid.discover_files()
+        assert not any("docs/overrides" in p for p in md_files), (
+            "docs/overrides paths must be excluded by discover_files()"
+        )
+
+    def test_discover_mmd_includes_google_diagrams(self):
+        md_files, mmd_files = validate_mermaid.discover_files()
+        assert any("docs/google/diagrams" in p for p in mmd_files), (
+            "Google Cloud diagrams not found by discover_files()"
+        )
+
+    def test_discover_mmd_includes_programming_diagrams(self):
+        md_files, mmd_files = validate_mermaid.discover_files()
+        assert any("docs/programming" in p for p in mmd_files), (
+            "Programming diagrams not found by discover_files()"
+        )
 
 
 # ---------------------------------------------------------------------------
