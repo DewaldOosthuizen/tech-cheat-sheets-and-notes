@@ -4,8 +4,8 @@
   "description": "Technology cheat sheets and notes — Azure, AWS, Google Cloud, and Java",
   "private": true,
   "devDependencies": {
-    "@mermaid-js/mermaid-cli": "11.17.0",
-    "puppeteer": "25.10.0"
+    "@mermaid-js/mermaid-cli": "12.0.0",
+    "puppeteer": "25.12.0"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
