@@ -1,4 +1,4 @@
-"""Tests for issue #42 - error handling and exit-code reporting in validate_mermaid.py."""
+"""Tests for error handling and exit-code reporting in validate_mermaid.py."""
 
 import re
 import shutil
@@ -133,7 +133,7 @@ class TestExtractMermaidBlocks:
 
 
 class TestPathlibRefactor:
-    """Tests for issue #62 — pathlib usage in validate_block() and run()."""
+    """Tests for pathlib usage in validate_block() and run()."""
 
     def test_validate_block_unlinks_tmp_via_pathlib(self):
         """Cleanup must use Path.unlink, not os.unlink."""
@@ -384,7 +384,7 @@ class TestMainZeroBlocks:
 
 
 class TestTraversalGuard:
-    """Tests for issue #126 - path traversal / shell-injection guard in run()."""
+    """Path traversal / shell-injection guard in run()."""
 
     def test_run_returns_1_on_path_traversal(self, capsys):
         """Path resolving outside repo root must be rejected with return code 1."""
@@ -503,12 +503,6 @@ class TestRealCheatSheet:
             assert isinstance(b, str) and b.strip(), f"Block {i + 1} is empty or not a string"
 
 
-# [ORCHESTRATOR NOTE] Pre-existing failure — unrelated to issue #321
-# Failure: TestRealCheatSheetIntegration::test_all_diagrams_pass
-# Reason: chrome-headless-shell binary not installed in this env
-#   (mmdc requires puppeteer/Chrome)
-# Suggested fix: Install chrome-headless-shell via
-#   `npx puppeteer browsers install chrome-headless-shell`
 @pytest.mark.skipif(shutil.which("mmdc") is None, reason="mmdc not installed")
 class TestRealCheatSheetIntegration:
     """Integration tests that invoke validate_block against the real cheat sheet."""
@@ -572,7 +566,7 @@ class TestExpandSnippetsOSError:
 
 
 class TestExpandSnippetRejectsTraversal:
-    """Covers issue #223: _expand_snippet rejects path-traversal directives."""
+    """ _expand_snippet rejects path-traversal directives."""
 
     def test_rejects_traversal(self, tmp_path):
         block = '--8<-- "../../../../etc/passwd"'
@@ -581,7 +575,7 @@ class TestExpandSnippetRejectsTraversal:
 
 
 class TestExpandSnippetsRejectsTraversal:
-    """Covers issue #223: expand_snippets leaves traversal directives unexpanded."""
+    """expand_snippets leaves traversal directives unexpanded."""
 
     def test_rejects_traversal(self, tmp_path):
         directive = '--8<-- "../../../../etc/passwd"'
@@ -670,7 +664,7 @@ class TestValidateBlockStderrEmptyStdoutPresent:
 
 
 # ---------------------------------------------------------------------------
-# Tests for issue #330 — bounded retry inside validate_block().
+# bounded retry inside validate_block().
 # ---------------------------------------------------------------------------
 
 
@@ -1061,7 +1055,7 @@ class TestDiscoverFiles:
 
 
 # ---------------------------------------------------------------------------
-# Regression tests for issue #291 — Google Cloud and Programming must be
+# Regression tests — Google Cloud and Programming must be
 # included in Mermaid validation discovery (Makefile + CI workflow).
 # ---------------------------------------------------------------------------
 
