@@ -141,9 +141,9 @@ class TestPathlibRefactor:
 
         import validate_mermaid as vm
 
-        src = inspect.getsource(vm.validate_block)
-        assert "os.unlink" not in src, "validate_block must not use os.unlink"
-        assert "os.path.exists" not in src, "validate_block must not use os.path.exists"
+        src = inspect.getsource(vm._run_mmdc)
+        assert "os.unlink" not in src, "_run_mmdc must not use os.unlink"
+        assert "os.path.exists" not in src, "_run_mmdc must not use os.path.exists"
         assert "unlink(missing_ok=True)" in src
 
     def test_main_uses_pathlib_is_file(self):
@@ -182,7 +182,7 @@ class TestPathlibRefactor:
 
         import validate_mermaid as vm
 
-        src = inspect.getsource(vm.validate_block)
+        src = inspect.getsource(vm._run_mmdc)
         assert '.replace(".mmd"' not in src, "must not use string.replace for suffix"
         assert "with_suffix" in src
 
@@ -683,9 +683,9 @@ class TestValidateBlockRetryCountEnv:
 
         attempts = []
 
-        def _fail_twice_then_succeed(cmd, **kwargs):
+        def _fail_once_then_succeed(cmd, **kwargs):
             attempts.append(1)
-            if len(attempts) <= 2:
+            if len(attempts) == 1:
                 return subprocess.CompletedProcess(
                     args=cmd, returncode=1, stdout="transient error", stderr=""
                 )
@@ -698,7 +698,7 @@ class TestValidateBlockRetryCountEnv:
 
         with (
             patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_fail_twice_then_succeed),
+            patch("validate_mermaid.subprocess.run", side_effect=_fail_once_then_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -780,9 +780,9 @@ class TestValidateBlockRetryCountCustom:
 
         attempts = []
 
-        def _fail_three_times_then_succeed(cmd, **kwargs):
+        def _fail_twice_then_succeed(cmd, **kwargs):
             attempts.append(1)
-            if len(attempts) <= 3:
+            if len(attempts) <= 2:
                 return subprocess.CompletedProcess(
                     args=cmd, returncode=1, stdout="transient", stderr=""
                 )
@@ -796,12 +796,12 @@ class TestValidateBlockRetryCountCustom:
         with (
             patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_COUNT": "2"}),
             patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_fail_three_times_then_succeed),
+            patch("validate_mermaid.subprocess.run", side_effect=_fail_twice_then_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
         assert ok is True
-        assert len(attempts) == 4  # 3 retries + 1 initial = 4 total
+        assert len(attempts) == 3  # 2 retries + 1 initial = 3 total
 
 
 class TestValidateBlockNoRetryOnFileNotFoundError:

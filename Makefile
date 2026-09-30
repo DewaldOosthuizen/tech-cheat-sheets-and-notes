@@ -112,11 +112,7 @@ mermaid-check: puppeteer-config
 	npm ci
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
-	  $(PY) scripts/validate_mermaid.py || \
-  (sleep 5 && \
-   PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
-     PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
-     $(PY) scripts/validate_mermaid.py)
+	  $(PY) scripts/validate_mermaid.py
 
 npm-audit:
 	@echo "--- npm-audit ---"
