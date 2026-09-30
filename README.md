@@ -4,8 +4,9 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/paypalme/DewaldOosthuizen1)
 
 A growing collection of technology cheat sheets — quick-reference study notes organised by topic
-and certification track. Comparisons between services, decision flows, and Mermaid diagrams that
-answer "which one and why?" — not step-by-step tutorials or portal walkthroughs.
+and certification track. Covers Microsoft Azure, Amazon Web Services, Google Cloud, and Java,
+with comparisons between services, decision flows, and Mermaid diagrams that answer "which one
+and why?" — not step-by-step tutorials or portal walkthroughs.
 
 ## Current Content
 
