@@ -41,13 +41,13 @@ class TestMakefileMermaidCoverage:
 
     def test_mermaid_check_invokes_validate_mermaid_without_file_lists(self) -> None:
         content = MAKEFILE.read_text()
-        m = re.search(r"mermaid-check:.*?validate_mermaid\.py ([^\n]*)", content, re.S)
+        m = re.search(r"mermaid-check:.*?validate_mermaid\.py[^\n]*", content, re.S)
         assert m, "Could not locate validate_mermaid.py invocation in mermaid-check target"
-        invocation_args = m.group(1)
-        assert "$(MD_FILES_VALIDATE)" not in invocation_args, (
+        invocation_text = m.group(0)
+        assert "$(MD_FILES_VALIDATE)" not in invocation_text, (
             "mermaid-check must not pass $(MD_FILES_VALIDATE) — script self-discovers"
         )
-        assert "$(MMD_FILES_VALIDATE)" not in invocation_args, (
+        assert "$(MMD_FILES_VALIDATE)" not in invocation_text, (
             "mermaid-check must not pass $(MMD_FILES_VALIDATE) — script self-discovers"
         )
 

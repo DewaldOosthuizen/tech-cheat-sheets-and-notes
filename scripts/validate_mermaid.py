@@ -35,6 +35,18 @@ Environment variables
     an ``mmdc`` invocation before raising ``subprocess.TimeoutExpired``.
     Defaults to ``60`` when unset.  CI environments that need more time can
     export a higher value, e.g. ``export MMDC_TIMEOUT_SECONDS=300``.
+
+``MMDC_RETRY_COUNT``
+    Maximum number of retries (in addition to the initial attempt) that
+    ``validate_block()`` performs when ``mmdc`` fails transiently — e.g.
+    non-zero exit code, timeout, or a degenerate (empty) SVG.  Defaults to
+    ``1`` (one retry = two total attempts).  Set to ``0`` to disable
+    retries entirely.  Permanent errors such as ``FileNotFoundError``
+    (mmdc missing from PATH) are never retried.
+
+``MMDC_RETRY_DELAY_SECONDS``
+    Wall-clock delay (seconds) that ``validate_block()`` sleeps between
+    retry attempts.  Defaults to ``2`` when unset.
 """
 
 import argparse
@@ -44,6 +56,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 _default_puppeteer_config = Path(tempfile.gettempdir()) / "puppeteer-config.json"
@@ -197,6 +210,24 @@ def extract_mermaid_blocks(
 def validate_block(index, diagram_src, timeout: int | None = None):
     if timeout is None:
         timeout = int(os.environ.get("MMDC_TIMEOUT_SECONDS", "60"))
+    retry_count = int(os.environ.get("MMDC_RETRY_COUNT", "1"))
+    retry_delay = int(os.environ.get("MMDC_RETRY_DELAY_SECONDS", "2"))
+    last_error: str = ""
+    for attempt in range(retry_count + 1):
+        if attempt > 0:
+            time.sleep(retry_delay)
+        ok, stderr = _run_mmdc(diagram_src, timeout)
+        if ok:
+            return True, stderr
+        last_error = stderr
+        # FileNotFoundError is permanent — do not retry.
+        if "mmdc binary not found on PATH" in stderr:
+            return False, stderr
+    return False, last_error
+
+
+def _run_mmdc(diagram_src: str, timeout: int) -> tuple[bool, str]:
+    """Run mmdc once against *diagram_src*.  Returns (ok, message)."""
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".mmd", delete=False, encoding="utf-8"
     ) as tmp:
