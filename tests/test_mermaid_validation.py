@@ -669,6 +669,269 @@ class TestValidateBlockStderrEmptyStdoutPresent:
         assert "Diagram 1: FAIL" in captured.out
 
 
+# ---------------------------------------------------------------------------
+# Tests for issue #330 — bounded retry inside validate_block().
+# ---------------------------------------------------------------------------
+
+
+class TestValidateBlockRetryCountEnv:
+    """validate_block() retries up to MMDC_RETRY_COUNT times (default 1)."""
+
+    def test_default_retry_count_is_1(self):
+        """With no env var set, validate_block retries once (2 total attempts)."""
+        import subprocess
+
+        attempts = []
+
+        def _fail_twice_then_succeed(cmd, **kwargs):
+            attempts.append(1)
+            if len(attempts) <= 2:
+                return subprocess.CompletedProcess(
+                    args=cmd, returncode=1, stdout="transient error", stderr=""
+                )
+            input_flag = cmd.index("--input")
+            from pathlib import Path as _Path
+
+            out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+            out_file.write_bytes(b"<svg>" + b"x" * 200 + b"</svg>")
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_fail_twice_then_succeed),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is True
+        assert len(attempts) == 2
+
+
+class TestValidateBlockRetryDelayEnv:
+    """validate_block() sleeps MMDC_RETRY_DELAY_SECONDS (default 2) between retries."""
+
+    def test_default_retry_delay_is_2_seconds(self):
+        """With no env var set, validate_block sleeps 2s before retrying."""
+        import subprocess
+        import time
+
+        attempts = []
+
+        def _fail_once_then_succeed(cmd, **kwargs):
+            attempts.append(1)
+            if len(attempts) == 1:
+                return subprocess.CompletedProcess(
+                    args=cmd, returncode=1, stdout="transient", stderr=""
+                )
+            input_flag = cmd.index("--input")
+            from pathlib import Path as _Path
+
+            out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+            out_file.write_bytes(b"<svg>" + b"x" * 200 + b"</svg>")
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        sleep_calls = []
+
+        def fake_sleep(secs):
+            sleep_calls.append(secs)
+            return None
+
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_fail_once_then_succeed),
+            patch("time.sleep", fake_sleep),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is True
+        assert len(attempts) == 2
+        assert len(sleep_calls) == 1
+        assert sleep_calls[0] == 2
+
+
+class TestValidateBlockRetryCountCustom:
+    """validate_block() respects MMDC_RETRY_COUNT env var."""
+
+    def test_retry_count_0_means_no_retry(self):
+        """MMDC_RETRY_COUNT=0: only one attempt, no retry."""
+        import subprocess
+
+        attempts = []
+
+        def _always_fail(cmd, **kwargs):
+            attempts.append(1)
+            return subprocess.CompletedProcess(
+                args=cmd, returncode=1, stdout="always fails", stderr=""
+            )
+
+        with (
+            patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_COUNT": "0"}),
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_always_fail),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is False
+        assert len(attempts) == 1
+        assert "always fails" in err
+
+    def test_retry_count_2_retries_twice(self):
+        """MMDC_RETRY_COUNT=2: three total attempts."""
+        import subprocess
+
+        attempts = []
+
+        def _fail_three_times_then_succeed(cmd, **kwargs):
+            attempts.append(1)
+            if len(attempts) <= 3:
+                return subprocess.CompletedProcess(
+                    args=cmd, returncode=1, stdout="transient", stderr=""
+                )
+            input_flag = cmd.index("--input")
+            from pathlib import Path as _Path
+
+            out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+            out_file.write_bytes(b"<svg>" + b"x" * 200 + b"</svg>")
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        with (
+            patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_COUNT": "2"}),
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_fail_three_times_then_succeed),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is True
+        assert len(attempts) == 4  # 3 retries + 1 initial = 4 total
+
+
+class TestValidateBlockNoRetryOnFileNotFoundError:
+    """validate_block() does NOT retry on FileNotFoundError (mmdc missing from PATH)."""
+
+    def test_file_not_found_returns_immediately_without_retry(self):
+        """FileNotFoundError is a permanent error — no retry, single attempt."""
+        attempts = []
+
+        def _raise_file_not_found(*args, **kwargs):
+            attempts.append(1)
+            raise FileNotFoundError("mmdc not found")
+
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_raise_file_not_found),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is False
+        assert err == "mmdc binary not found on PATH"
+        assert len(attempts) == 1
+
+
+class TestValidateBlockRetryDelayCustom:
+    """validate_block() respects MMDC_RETRY_DELAY_SECONDS env var."""
+
+    def test_custom_retry_delay(self):
+        """MMDC_RETRY_DELAY_SECONDS=5: sleep 5s before retry."""
+        import subprocess
+        import time
+
+        attempts = []
+
+        def _fail_once_then_succeed(cmd, **kwargs):
+            attempts.append(1)
+            if len(attempts) == 1:
+                return subprocess.CompletedProcess(
+                    args=cmd, returncode=1, stdout="transient", stderr=""
+                )
+            input_flag = cmd.index("--input")
+            from pathlib import Path as _Path
+
+            out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+            out_file.write_bytes(b"<svg>" + b"x" * 200 + b"</svg>")
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        sleep_calls = []
+
+        def fake_sleep(secs):
+            sleep_calls.append(secs)
+            return None
+
+        with (
+            patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_DELAY_SECONDS": "5"}),
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_fail_once_then_succeed),
+            patch("time.sleep", fake_sleep),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is True
+        assert len(attempts) == 2
+        assert len(sleep_calls) == 1
+        assert sleep_calls[0] == 5
+
+
+class TestValidateBlockRetryOnlyTransient:
+    """Retry only covers transient failures; permanent errors fail immediately."""
+
+    def test_timeout_is_transient_and_retried(self):
+        """TimeoutExpired is transient — validate_block retries on timeout."""
+        import subprocess
+
+        attempts = []
+
+        def _timeout_once_then_succeed(cmd, **kwargs):
+            attempts.append(1)
+            if len(attempts) == 1:
+                raise subprocess.TimeoutExpired(cmd="mmdc", timeout=60)
+            input_flag = cmd.index("--input")
+            from pathlib import Path as _Path
+
+            out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+            out_file.write_bytes(b"<svg>" + b"x" * 200 + b"</svg>")
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_timeout_once_then_succeed),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is True
+        assert len(attempts) == 2
+
+    def test_degenerate_svg_is_transient_and_retried(self):
+        """Degenerate SVG is transient — validate_block retries."""
+        import subprocess
+
+        attempts = []
+
+        def _degenerate_once_then_succeed(cmd, **kwargs):
+            attempts.append(1)
+            if len(attempts) == 1:
+                input_flag = cmd.index("--input")
+                from pathlib import Path as _Path
+
+                out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+                out_file.write_bytes(b"")
+                return subprocess.CompletedProcess(
+                    args=cmd, returncode=0, stdout="", stderr=""
+                )
+            input_flag = cmd.index("--input")
+            from pathlib import Path as _Path
+
+            out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
+            out_file.write_bytes(b"<svg>" + b"x" * 200 + b"</svg>")
+            return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
+
+        with (
+            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("validate_mermaid.subprocess.run", side_effect=_degenerate_once_then_succeed),
+        ):
+            mock_cfg.exists.return_value = False
+            ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
+        assert ok is True
+        assert len(attempts) == 2
+
+
 class TestValidateMmdFile:
     """Covers lines 207-228: _validate_mmd_file."""
 
