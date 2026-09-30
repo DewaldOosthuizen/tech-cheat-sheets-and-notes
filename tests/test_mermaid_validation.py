@@ -459,6 +459,10 @@ class TestTraversalGuard:
 class TestValidateBlockDegenerateSvg:
     """Tests for degenerate (empty/missing) SVG guard in validate_block()."""
 
+    def test_min_valid_svg_size_bytes_constant_exists_and_equals_100(self):
+        """The MIN_VALID_SVG_SIZE_BYTES constant must be exposed and equal 100."""
+        assert validate_mermaid.MIN_VALID_SVG_SIZE_BYTES == 100
+
     def test_validate_block_returns_false_on_degenerate_svg(self, tmp_path):
         import subprocess
 
