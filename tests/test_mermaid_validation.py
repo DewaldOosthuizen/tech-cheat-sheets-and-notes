@@ -712,7 +712,6 @@ class TestValidateBlockRetryDelayEnv:
     def test_default_retry_delay_is_2_seconds(self):
         """With no env var set, validate_block sleeps 2s before retrying."""
         import subprocess
-        import time
 
         attempts = []
 
@@ -832,7 +831,6 @@ class TestValidateBlockRetryDelayCustom:
     def test_custom_retry_delay(self):
         """MMDC_RETRY_DELAY_SECONDS=5: sleep 5s before retry."""
         import subprocess
-        import time
 
         attempts = []
 
@@ -912,9 +910,7 @@ class TestValidateBlockRetryOnlyTransient:
 
                 out_file = _Path(cmd[input_flag + 1]).with_suffix(".svg")
                 out_file.write_bytes(b"")
-                return subprocess.CompletedProcess(
-                    args=cmd, returncode=0, stdout="", stderr=""
-                )
+                return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
             input_flag = cmd.index("--input")
             from pathlib import Path as _Path
 
