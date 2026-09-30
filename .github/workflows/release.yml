@@ -175,9 +175,7 @@ jobs:
       - name: Validate Mermaid diagrams
         run: |
           echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json
-          find docs -name '*.md' ! -path 'docs/azure/diagrams/*' ! -path 'docs/overrides/*' > /tmp/md-files.txt
-          find docs -name '*.mmd' > /tmp/mmd-files.txt
-          PUPPETEER_CONFIG_FILE=/tmp/puppeteer-config.json python scripts/validate_mermaid.py $(cat /tmp/md-files.txt) $(cat /tmp/mmd-files.txt)
+          PUPPETEER_CONFIG_FILE=/tmp/puppeteer-config.json python scripts/validate_mermaid.py
 
   # ── 4. Python Tests ────────────────────────────────────────────────────────
   python-test:

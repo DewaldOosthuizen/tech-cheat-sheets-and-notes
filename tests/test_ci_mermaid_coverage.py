@@ -1,9 +1,9 @@
 """Tests for Makefile and CI Mermaid coverage (issue #224).
 
 Verifies that:
-  - Makefile's MMD_FILES_VALIDATE find covers all of docs/
-  - Makefile's mermaid-check target forwards $(MMD_FILES_VALIDATE)
-  - CI lint.yml "Validate Mermaid diagrams" step uses broad 'find docs' discovery
+  - Makefile's MMD_FILES_VALIDATE delegates to scripts/validate_mermaid.py
+  - Makefile's mermaid-check target invokes validate_mermaid.py without inline file lists
+  - CI 'Validate Mermaid diagrams' step delegates discovery to validate_mermaid.py
 """
 
 from __future__ import annotations
@@ -17,28 +17,43 @@ RELEASE_YML = REPO_ROOT / ".github" / "workflows" / "release.yml"
 
 
 class TestMakefileMermaidCoverage:
-    """MMD_FILES_VALIDATE must cover all docs/, and be wired in."""
+    """MMD_FILES_VALIDATE must be derived from validate_mermaid.py discovery."""
 
-    def test_mmd_files_validate_covers_all_docs(self) -> None:
+    def test_mmd_files_validate_uses_script_discovery(self) -> None:
         content = MAKEFILE.read_text()
-        m = re.search(r"MMD_FILES_VALIDATE\s*:=\s*\$\(shell find ([^)]*?)-name '\*\.mmd'", content)
-        assert m, "Could not locate MMD_FILES_VALIDATE definition in Makefile"
-        find_paths = m.group(1).strip()
-        assert find_paths == "docs", (
-            f"MMD_FILES_VALIDATE must search all of docs/, got: {find_paths!r}"
+        m = re.search(
+            r"MMD_FILES_VALIDATE\s*:=\s*\$\(shell "
+            r"(\$\(PY\) scripts/validate_mermaid\.py --discover-mmd)\)",
+            content,
+        )
+        assert m, (
+            "MMD_FILES_VALIDATE must be derived from scripts/validate_mermaid.py --discover-mmd"
         )
 
-    def test_mermaid_check_forwards_mmd_files_validate(self) -> None:
+    def test_md_files_validate_uses_script_discovery(self) -> None:
+        content = MAKEFILE.read_text()
+        m = re.search(
+            r"MD_FILES_VALIDATE\s*:=\s*\$\(shell "
+            r"(\$\(PY\) scripts/validate_mermaid\.py --discover-md)\)",
+            content,
+        )
+        assert m, "MD_FILES_VALIDATE must be derived from scripts/validate_mermaid.py --discover-md"
+
+    def test_mermaid_check_invokes_validate_mermaid_without_file_lists(self) -> None:
         content = MAKEFILE.read_text()
         m = re.search(r"mermaid-check:.*?validate_mermaid\.py ([^\n]*)", content, re.S)
         assert m, "Could not locate validate_mermaid.py invocation in mermaid-check target"
         invocation_args = m.group(1)
-        assert "$(MD_FILES_VALIDATE)" in invocation_args
-        assert "$(MMD_FILES_VALIDATE)" in invocation_args
+        assert "$(MD_FILES_VALIDATE)" not in invocation_args, (
+            "mermaid-check must not pass $(MD_FILES_VALIDATE) — script self-discovers"
+        )
+        assert "$(MMD_FILES_VALIDATE)" not in invocation_args, (
+            "mermaid-check must not pass $(MMD_FILES_VALIDATE) — script self-discovers"
+        )
 
 
 class TestCiMermaidCoverage:
-    """CI 'Validate Mermaid diagrams' step must use broad 'find docs' discovery."""
+    """CI 'Validate Mermaid diagrams' step must delegate discovery to validate_mermaid.py."""
 
     def _step_block(self) -> str:
         content = RELEASE_YML.read_text()
@@ -52,19 +67,20 @@ class TestCiMermaidCoverage:
 
     def test_md_find_covers_all_docs(self) -> None:
         block = self._step_block()
-        assert "find docs" in block, (
-            "CI mermaid-check must use 'find docs' (not provider-scoped paths)"
+        assert "python scripts/validate_mermaid.py" in block, (
+            "CI mermaid-check must invoke validate_mermaid.py"
         )
-        assert "docs/azure/files docs/aws/files" not in block, (
-            "CI mermaid-check still uses narrow azure/aws find — must be broadened to 'find docs'"
+        assert "find docs" not in block, (
+            "CI mermaid-check must not inline find commands — "
+            "discovery moved to validate_mermaid.py"
         )
 
     def test_mmd_find_covers_all_docs(self) -> None:
         block = self._step_block()
-        assert "find docs -name '*.mmd'" in block, (
-            "CI mermaid-check must use 'find docs -name *.mmd' (not provider-scoped paths)"
+        assert "python scripts/validate_mermaid.py" in block, (
+            "CI mermaid-check must invoke validate_mermaid.py"
         )
-        assert "docs/azure/diagrams docs/aws/diagrams" not in block, (
-            "CI mermaid-check still uses narrow azure/aws .mmd find —"
-            " must be broadened to 'find docs'"
+        assert "find docs" not in block, (
+            "CI mermaid-check must not inline find commands — "
+            "discovery moved to validate_mermaid.py"
         )

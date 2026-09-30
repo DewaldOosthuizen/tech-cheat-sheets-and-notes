@@ -257,6 +257,35 @@ def _validate_mmd_file(mmd_path: str, repo_root: Path) -> int:
     return 1
 
 
+def discover_files() -> tuple[list[str], list[str]]:
+    """Discover Markdown and standalone .mmd files under docs/ using the
+    canonical exclusion rules shared by the Makefile and CI workflows.
+
+    Returns (md_files, mmd_files) as two lists of relative paths from the
+    repository root.
+    """
+    repo_root = _repo_root()
+    docs_dir = repo_root / "docs"
+    md_files: list[str] = []
+    mmd_files: list[str] = []
+
+    for path in docs_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = str(path.relative_to(repo_root))
+        if path.suffix == ".mmd":
+            mmd_files.append(rel)
+        elif path.suffix == ".md":
+            # Exclude standalone diagram directories and theme overrides.
+            if path.is_relative_to(docs_dir / "azure" / "diagrams"):
+                continue
+            if path.is_relative_to(docs_dir / "overrides"):
+                continue
+            md_files.append(rel)
+
+    return sorted(md_files), sorted(mmd_files)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
@@ -266,18 +295,46 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "md_files",
-        nargs="+",
-        help="Markdown (.md) or standalone Mermaid (.mmd) file(s) to validate",
+        nargs="*",
+        help=(
+            "Markdown (.md) or standalone Mermaid (.mmd) file(s) to validate. "
+            "When omitted, the script discovers files under docs/ using the "
+            "canonical exclusion rules."
+        ),
+    )
+    parser.add_argument(
+        "--discover-md",
+        action="store_true",
+        help="Print the discovered Markdown files (one per line) and exit. "
+        "Used by the Makefile to populate MD_FILES_VALIDATE.",
+    )
+    parser.add_argument(
+        "--discover-mmd",
+        action="store_true",
+        help="Print the discovered .mmd files (one per line) and exit. "
+        "Used by the Makefile to populate MMD_FILES_VALIDATE.",
     )
     return parser.parse_args()
 
 
-def run(md_paths: list[str]) -> int:
-    """Orchestrate extraction and validation. Returns exit code (0/1/2)."""
+def run(md_paths: list[str] | tuple[list[str], list[str]]) -> int:
+    """Orchestrate extraction and validation. Returns exit code (0/1/2).
+
+    *md_paths* may be a flat list of file paths, or the 2-tuple returned by
+    ``discover_files()`` — ``(md_files, mmd_files)``.  When a tuple is
+    supplied the two lists are concatenated before validation.
+    """
     repo_root = _repo_root()
     overall_failed = 0
 
-    for md_path in md_paths:
+    # Normalise the discover_files() 2-tuple back to a flat list.
+    if isinstance(md_paths, tuple):
+        md_files, mmd_files = md_paths
+        all_paths = list(md_files) + list(mmd_files)
+    else:
+        all_paths = md_paths
+
+    for md_path in all_paths:
         # Standalone .mmd file — validate directly without extraction
         if Path(md_path).suffix == ".mmd":
             overall_failed += _validate_mmd_file(md_path, repo_root)
@@ -320,6 +377,19 @@ def run(md_paths: list[str]) -> int:
 
 
 def main():
+    # Discovery-only mode: print discovered file lists and exit.
+    # These flags are used by the Makefile ($(shell ...)) so the script is
+    # the single source of truth for file discovery.  mmdc is not needed here.
+    if "--discover-md" in sys.argv or "--discover-mmd" in sys.argv:
+        md_files, mmd_files = discover_files()
+        if "--discover-md" in sys.argv:
+            for f in md_files:
+                print(f)
+        if "--discover-mmd" in sys.argv:
+            for f in mmd_files:
+                print(f)
+        sys.exit(0)
+
     # Guard: verify mmdc is available before proceeding; exit early with clear message
     if shutil.which("mmdc") is None:
         print(
@@ -327,7 +397,12 @@ def main():
             file=sys.stderr,
         )
         sys.exit(2)
+
     args = parse_args()
+    if not args.md_files:
+        md_list, mmd_list = discover_files()
+        args.md_files = md_list + mmd_list
+
     sys.exit(run(args.md_files))
 
 
