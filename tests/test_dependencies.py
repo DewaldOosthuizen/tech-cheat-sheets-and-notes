@@ -148,15 +148,13 @@ class TestReleaseNpmAuditGate:
         needs_match = re.search(r"(?m)^    needs: \[(.*?)\]$", gate_block)
 
         assert needs_match, "validation-gate must declare its required jobs"
-        assert "npm-audit" in needs_match.group(1), (
-            "validation-gate must depend on npm-audit"
-        )
-        assert 'needs.npm-audit.result' in gate_block, (
+        assert "npm-audit" in needs_match.group(1), "validation-gate must depend on npm-audit"
+        assert "needs.npm-audit.result" in gate_block, (
             "validation-gate must check the npm-audit result"
         )
-        assert re.search(
-            r'needs\.npm-audit\.result\s*}}\s*!=\s*"success"', gate_block
-        ), "validation-gate must fail unless npm-audit succeeds"
+        assert re.search(r'needs\.npm-audit\.result\s*}}\s*"\s*!=\s*"success"', gate_block), (
+            "validation-gate must fail unless npm-audit succeeds"
+        )
 
 
 class TestContributingDevSetup:

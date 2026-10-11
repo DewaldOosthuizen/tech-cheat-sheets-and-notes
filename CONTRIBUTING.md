@@ -212,6 +212,15 @@ Audit Python dependencies for known CVEs:
 make python-audit
 ```
 
+Audit Node dependencies for high and critical vulnerabilities:
+
+```bash
+npm ci
+npm audit --audit-level=high
+```
+
+The release workflow runs this audit against the commit being released. Its validation gate blocks release and deployment if the audit fails.
+
 All checks must exit with code `0` before opening a PR.
 
 ---
