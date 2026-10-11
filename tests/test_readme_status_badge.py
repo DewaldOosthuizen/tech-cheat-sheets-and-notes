@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).parent.parent
 EXPECTED_BADGE = (
     "[![PR Gate](https://github.com/DewaldOosthuizen/tech-cheat-sheets-and-notes/"
