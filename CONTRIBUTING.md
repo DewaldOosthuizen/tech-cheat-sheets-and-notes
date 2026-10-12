@@ -213,6 +213,14 @@ Audit Python dependencies for known CVEs:
 make python-audit
 ```
 
+Audit Node dependencies for high and critical vulnerabilities:
+
+```bash
+make npm-audit
+```
+
+The release workflow runs this audit against the commit being released. Its validation gate blocks release and deployment if the audit fails.
+
 All checks must exit with code `0` before opening a PR.
 
 ---
@@ -508,6 +516,7 @@ issues when the default branch resolution differs from the intended merge target
 
 Do not remove the `groups` or `target-branch` fields from `.github/dependabot.yml` during
 maintenance — their absence would revert to ungrouped, potentially noisy Dependabot PRs.
+
 
 ## 14. Production releases
 
