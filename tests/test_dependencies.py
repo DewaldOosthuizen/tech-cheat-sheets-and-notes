@@ -9,7 +9,10 @@ Verifies that:
 """
 
 import json
+import os
 import re
+import subprocess
+import tempfile
 
 from conftest import REPO_ROOT
 from packaging.requirements import Requirement
@@ -121,6 +124,105 @@ class TestCIPythonTestJob:
         assert "pip install pytest pytest-cov" not in content, (
             "python-test job must not use bare unconstrained pip install"
         )
+
+
+class TestReleaseVersionInputSafety:
+    """Manual release versions must be isolated and validated before use."""
+
+    @staticmethod
+    def _compute_step() -> str:
+        content = RELEASE_YML.read_text()
+        match = re.search(
+            r"^      - name: Compute CalVer tag(?P<step>.*?)(?=^      - name: |\Z)",
+            content,
+            re.M | re.S,
+        )
+        assert match, "Could not locate the Compute CalVer tag step"
+        return match.group("step")
+
+    def test_dispatch_version_is_mapped_to_environment_not_shell_source(self):
+        step = self._compute_step()
+        assert "VERSION_INPUT: ${{ github.event.inputs.version }}" in step, (
+            "manual version must be mapped through the compute step environment"
+        )
+        run_script = step.split("        run: |\n", maxsplit=1)[1]
+        assert "${{ github.event.inputs.version }}" not in run_script, (
+            "manual version must not be interpolated into the shell script"
+        )
+        assert 'VERSION_ARG="$VERSION_INPUT"' in run_script
+
+    def test_calver_validation_precedes_tag_output(self):
+        run_script = self._compute_step().split("        run: |\n", maxsplit=1)[1]
+        validation = run_script.index('if [[ ! "$TAG" =~ ^[0-9]{4}')
+        tag_output = run_script.index('echo "tag=${TAG}" >> "$GITHUB_OUTPUT"')
+        assert validation < tag_output, "tag output must not be published before CalVer validation"
+
+    def test_calver_validation_accepts_valid_versions_and_rejects_invalid_input(self):
+        run_script = self._compute_step().split("        run: |\n", maxsplit=1)[1]
+        match = re.search(
+            r'(?ms)^          if \[\[ ! "\$TAG" =~ .*?'
+            r'^          echo "tag=\$\{TAG\}" >> "\$GITHUB_OUTPUT"$',
+            run_script,
+        )
+        assert match, "Could not extract CalVer validation and tag-output logic"
+        validation_script = "\n".join(
+            line.removeprefix("          ") for line in match.group().splitlines()
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = os.path.join(temp_dir, "github-output")
+            marker_path = os.path.join(temp_dir, "injected")
+
+            def validate(tag: str) -> subprocess.CompletedProcess:
+                with open(output_path, "w", encoding="utf-8"):
+                    pass
+                result = subprocess.run(
+                    ["bash", "-euo", "pipefail", "-c", validation_script],
+                    env={**os.environ, "TAG": tag, "GITHUB_OUTPUT": output_path},
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                return result
+
+            def read_output() -> str:
+                with open(output_path, encoding="utf-8") as output_file:
+                    return output_file.read()
+
+            for valid_tag in ("2026.10.12", "2026.10.12.3"):
+                result = validate(valid_tag)
+                assert result.returncode == 0, result.stderr
+                assert read_output() == f"tag={valid_tag}\n"
+
+            invalid_tags = (
+                "2026.10.12; touch " + marker_path,
+                "2026.10.12.$(touch " + marker_path + ")",
+                "2026.10.12.extra",
+                "2026.1.12",
+            )
+            for invalid_tag in invalid_tags:
+                result = validate(invalid_tag)
+                assert result.returncode != 0, f"accepted invalid tag: {invalid_tag!r}"
+                assert read_output() == "", "invalid version must fail before writing a tag output"
+            assert not os.path.exists(marker_path), "shell-shaped version input was executed"
+
+    def test_downstream_tag_steps_use_validated_version_output(self):
+        content = RELEASE_YML.read_text()
+        expected_tag_source = 'TAG="${{ steps.version.outputs.tag }}"'
+        for step_name in (
+            "Verify tag does not already exist",
+            "Create tag and push",
+            "Create GitHub Release",
+        ):
+            match = re.search(
+                rf"^      - name: {re.escape(step_name)}(?P<step>.*?)(?=^      - name: |\Z)",
+                content,
+                re.M | re.S,
+            )
+            assert match, f"Could not locate downstream step: {step_name}"
+            assert expected_tag_source in match.group("step"), (
+                f"{step_name} must consume the validated version step output"
+            )
 
 
 class TestReleaseNpmAuditGate:

@@ -28,6 +28,7 @@ clean, reviewable contributions to this repository.
   - [11. Source metadata for volatile cloud facts](#11-source-metadata-for-volatile-cloud-facts)
   - [12. Documentation dependency management](#12-documentation-dependency-management)
   - [13. Dependabot update strategy](#13-dependabot-update-strategy)
+  - [14. Release version input](#14-release-version-input)
 
 ---
 
@@ -515,3 +516,10 @@ issues when the default branch resolution differs from the intended merge target
 
 Do not remove the `groups` or `target-branch` fields from `.github/dependabot.yml` during
 maintenance — their absence would revert to ungrouped, potentially noisy Dependabot PRs.
+
+## 14. Release version input
+
+When manually dispatching the release workflow, an optional version override must match
+`YYYY.MM.DD` or `YYYY.MM.DD.MICRO`: a four-digit year, two-digit month and day, and an
+optional numeric micro component. Leave the input blank to let the workflow compute the
+CalVer version automatically.
