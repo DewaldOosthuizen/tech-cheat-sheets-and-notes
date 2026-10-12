@@ -566,7 +566,7 @@ class TestExpandSnippetsOSError:
 
 
 class TestExpandSnippetRejectsTraversal:
-    """ _expand_snippet rejects path-traversal directives."""
+    """_expand_snippet rejects path-traversal directives."""
 
     def test_rejects_traversal(self, tmp_path):
         block = '--8<-- "../../../../etc/passwd"'

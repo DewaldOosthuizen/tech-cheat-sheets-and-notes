@@ -236,7 +236,8 @@ class TestProductionReleaseWorkflow:
         gate = self._job(content, "validation-gate")
         assert re.search(r"(?m)^    needs:.*\brelease-ref-check\b", gate)
         assert re.search(r"(?m)^    if: always\(\)$", gate)
-        assert 'needs.release-ref-check.result" != "success"' in gate
+        assert "${{ needs.release-ref-check.result }}" in gate
+        assert '!= "success"' in gate
 
         build = self._job(content, "build")
         version_release = self._job(content, "version-tag-release")
@@ -274,17 +275,13 @@ class TestProductionReleaseWorkflow:
 
     def test_default_skip_changelog_keeps_custom_changelog_generator(self):
         content = RELEASE_YML.read_text()
-        assert re.search(
-            r"(?m)^\s+skip_changelog:[\s\S]*?^\s+default: false$", content
-        )
+        assert re.search(r"(?m)^\s+skip_changelog:[\s\S]*?^\s+default: false$", content)
         release_step = re.search(
             r"(?ms)^      - name: Create GitHub Release\n(?P<body>.*?)(?=^      - name:|\Z)",
             content,
         )
         assert release_step, "GitHub Release creation step must exist"
-        assert "scripts/generate_changelog.py --output CHANGELOG.md" in release_step.group(
-            "body"
-        )
+        assert "scripts/generate_changelog.py --output CHANGELOG.md" in release_step.group("body")
         assert "--notes-file CHANGELOG.md" in release_step.group("body")
 
     def test_skip_changelog_with_prior_tag_uses_previous_tag_as_notes_baseline(self):
@@ -296,8 +293,12 @@ class TestProductionReleaseWorkflow:
         )
         assert release_step, "GitHub Release creation step must exist"
         assert "last_tag=${LAST_TAG}" in skip_check
+        assert skip_check.index('echo "last_tag=${LAST_TAG}"') < skip_check.index(
+            'git push origin "$TAG"'
+        )
         assert "--generate-notes" in release_step.group("body")
-        assert "--notes-start-tag \"$BASELINE_TAG\"" in release_step.group("body")
+        assert '"${{ inputs.skip_changelog }}" == "true"' in release_step.group("body")
+        assert '--notes-start-tag "$BASELINE_TAG"' in release_step.group("body")
         assert "steps.skip-check.outputs.last_tag" in release_step.group("body")
 
     def test_skip_changelog_without_baseline_omits_notes_start_tag(self):
@@ -308,9 +309,13 @@ class TestProductionReleaseWorkflow:
         )
         assert release_step, "GitHub Release creation step must exist"
         body = release_step.group("body")
+        assert '"${{ inputs.skip_changelog }}" == "true"' in body
         assert re.search(r"(?s)if \[ -n \"\$BASELINE_TAG\" \].*?--notes-start-tag", body)
         assert re.search(r"(?s)else\s+gh release create.*?--generate-notes", body)
-        assert re.search(r"(?s)else\s+gh release create.*?--generate-notes(?!.*--notes-start-tag)", body)
+        assert re.search(
+            r"(?s)else\s+gh release create.*?--generate-notes(?!.*--notes-start-tag)",
+            body,
+        )
 
     def test_release_workflow_concurrency_configuration_is_unchanged(self):
         content = RELEASE_YML.read_text()
