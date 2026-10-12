@@ -329,7 +329,10 @@ class TestProductionReleaseWorkflow:
             body,
         )
 
-    def test_release_workflow_concurrency_configuration_is_unchanged(self):
+    def test_release_workflow_concurrency_is_scoped_to_ref(self):
         content = RELEASE_YML.read_text()
-        assert re.search(r"(?m)^concurrency:\n  group: \$\{\{ github\.workflow }}$", content)
+        assert re.search(
+            r"(?m)^concurrency:\n  group: \$\{\{ github\.workflow }}-\$\{\{ github\.ref }}$",
+            content,
+        )
         assert re.search(r"(?m)^  cancel-in-progress: true$", content)
