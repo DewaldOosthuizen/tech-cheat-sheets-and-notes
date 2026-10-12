@@ -263,15 +263,27 @@ class TestProductionReleaseWorkflow:
         ],
     )
     def test_deploy_eligibility(self, event, ref, skip_deploy, expected_deploy):
-        del event  # The typed input is absent on push events and defaults to false.
         deploy = self._job(RELEASE_YML.read_text(), "deploy")
         condition = re.search(r"(?m)^    if: \$\{\{ (?P<expr>.+) }}$", deploy)
         assert condition, "deploy must have an explicit condition"
         expression = condition.group("expr")
-        assert "github.ref == 'refs/heads/main'" in expression
-        assert "!inputs.skip_deploy" in expression
-        eligible = ref == "refs/heads/main" and not bool(skip_deploy)
-        assert eligible is expected_deploy
+        parsed_condition = re.fullmatch(
+            r"github\.ref == '([^']+)' && !inputs\.([a-z_]+)", expression
+        )
+        assert parsed_condition, f"Unsupported deploy condition: {expression!r}"
+        main_ref, skip_input_name = parsed_condition.groups()
+        assert main_ref == "refs/heads/main"
+        assert skip_input_name == "skip_deploy"
+
+        if event == "push":
+            assert skip_deploy is None, "Push events do not provide workflow_dispatch inputs"
+            dispatch_inputs = {}
+        else:
+            assert event == "workflow_dispatch"
+            dispatch_inputs = {} if skip_deploy is None else {skip_input_name: skip_deploy}
+
+        evaluated = ref == main_ref and not bool(dispatch_inputs.get(skip_input_name))
+        assert evaluated is expected_deploy
 
     def test_default_skip_changelog_keeps_custom_changelog_generator(self):
         content = RELEASE_YML.read_text()
