@@ -123,6 +123,56 @@ class TestCIPythonTestJob:
         )
 
 
+class TestReleaseVersionInputSafety:
+    """Manual release versions must be isolated and validated before use."""
+
+    @staticmethod
+    def _compute_step() -> str:
+        content = RELEASE_YML.read_text()
+        match = re.search(
+            r"^      - name: Compute CalVer tag(?P<step>.*?)(?=^      - name: |\Z)",
+            content,
+            re.M | re.S,
+        )
+        assert match, "Could not locate the Compute CalVer tag step"
+        return match.group("step")
+
+    def test_dispatch_version_is_mapped_to_environment_not_shell_source(self):
+        step = self._compute_step()
+        assert "VERSION_INPUT: ${{ github.event.inputs.version }}" in step, (
+            "manual version must be mapped through the compute step environment"
+        )
+        run_script = step.split("        run: |\n", maxsplit=1)[1]
+        assert "${{ github.event.inputs.version }}" not in run_script, (
+            "manual version must not be interpolated into the shell script"
+        )
+        assert 'VERSION_ARG="$VERSION_INPUT"' in run_script
+
+    def test_calver_validation_precedes_tag_output(self):
+        run_script = self._compute_step().split("        run: |\n", maxsplit=1)[1]
+        validation = run_script.index('if [[ ! "$TAG" =~ ^[0-9]{4}')
+        tag_output = run_script.index('echo "tag=${TAG}" >> "$GITHUB_OUTPUT"')
+        assert validation < tag_output, "tag output must not be published before CalVer validation"
+
+    def test_downstream_tag_steps_use_validated_version_output(self):
+        content = RELEASE_YML.read_text()
+        expected_tag_source = 'TAG="${{ steps.version.outputs.tag }}"'
+        for step_name in (
+            "Verify tag does not already exist",
+            "Create tag and push",
+            "Create GitHub Release",
+        ):
+            match = re.search(
+                rf"^      - name: {re.escape(step_name)}(?P<step>.*?)(?=^      - name: |\Z)",
+                content,
+                re.M | re.S,
+            )
+            assert match, f"Could not locate downstream step: {step_name}"
+            assert expected_tag_source in match.group("step"), (
+                f"{step_name} must consume the validated version step output"
+            )
+
+
 class TestContributingDevSetup:
     """CONTRIBUTING.md Section 5 must point to the Makefile-based setup."""
 
