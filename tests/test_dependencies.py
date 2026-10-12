@@ -259,7 +259,6 @@ class TestReleaseNpmAuditGate:
         )
 
 
-
 class TestContributingDevSetup:
     """CONTRIBUTING.md Section 5 must point to the Makefile-based setup."""
 
