@@ -517,7 +517,6 @@ issues when the default branch resolution differs from the intended merge target
 Do not remove the `groups` or `target-branch` fields from `.github/dependabot.yml` during
 maintenance — their absence would revert to ungrouped, potentially noisy Dependabot PRs.
 
-
 ## 14. Production releases
 
 Pushes to `main` retain the automatic release path. For a manual
