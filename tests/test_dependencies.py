@@ -123,6 +123,40 @@ class TestCIPythonTestJob:
         )
 
 
+class TestReleaseNpmAuditGate:
+    """The release validation gate must require a high-severity npm audit."""
+
+    @staticmethod
+    def _job_block(content: str, job_name: str) -> str:
+        match = re.search(
+            rf"(?ms)^  {re.escape(job_name)}:\n(?P<block>.*?)(?=^  [\w-]+:\n|\Z)", content
+        )
+        assert match, f"Could not locate {job_name} job in release.yml"
+        return match.group("block")
+
+    def test_release_npm_audit_job_installs_dependencies_before_auditing(self):
+        content = RELEASE_YML.read_text()
+        job_block = self._job_block(content, "npm-audit")
+
+        install_index = job_block.index("run: npm ci")
+        audit_index = job_block.index("run: npm audit --audit-level=high")
+        assert install_index < audit_index, "npm audit must run after npm ci"
+
+    def test_validation_gate_requires_npm_audit_success(self):
+        content = RELEASE_YML.read_text()
+        gate_block = self._job_block(content, "validation-gate")
+        needs_match = re.search(r"(?m)^    needs: \[(.*?)\]$", gate_block)
+
+        assert needs_match, "validation-gate must declare its required jobs"
+        assert "npm-audit" in needs_match.group(1), "validation-gate must depend on npm-audit"
+        assert "needs.npm-audit.result" in gate_block, (
+            "validation-gate must check the npm-audit result"
+        )
+        assert re.search(r'needs\.npm-audit\.result\s*}}\s*"\s*!=\s*"success"', gate_block), (
+            "validation-gate must fail unless npm-audit succeeds"
+        )
+
+
 class TestContributingDevSetup:
     """CONTRIBUTING.md Section 5 must point to the Makefile-based setup."""
 
