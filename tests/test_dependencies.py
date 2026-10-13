@@ -14,6 +14,7 @@ import re
 import subprocess
 import tempfile
 
+import pytest
 from conftest import REPO_ROOT
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -340,3 +341,134 @@ class TestVercelStrictMkdocs:
         assert "vercel@latest" not in cmd, (
             "vercel.json buildCommand must not reference vercel@latest"
         )
+
+
+class TestProductionReleaseWorkflow:
+    """Production release workflow is restricted to main and handles inputs safely."""
+
+    @staticmethod
+    def _job(content: str, name: str) -> str:
+        match = re.search(
+            rf"(?ms)^  {re.escape(name)}:\n(?P<body>.*?)(?=^  [\w-]+:|\Z)",
+            content,
+        )
+        assert match, f"Workflow job {name!r} must exist"
+        return match.group("body")
+
+    def test_push_and_manual_dispatch_triggers_are_retained(self):
+        content = RELEASE_YML.read_text()
+        triggers = re.search(r'(?ms)^"on":\n(?P<body>.*?)(?=^permissions:)', content)
+        assert triggers, "Release workflow must define its triggers"
+        assert re.search(r"(?m)^  push:\n    branches:\n      - main$", triggers.group("body"))
+        assert re.search(r"(?m)^  workflow_dispatch:$", triggers.group("body"))
+
+    def test_non_main_ref_check_is_a_validation_gate_dependency(self):
+        content = RELEASE_YML.read_text()
+        ref_check = self._job(content, "release-ref-check")
+        assert "if: ${{ github.ref != 'refs/heads/main' }}" in ref_check
+        assert "Production releases can only run from refs/heads/main" in ref_check
+        assert "exit 1" in ref_check
+
+        gate = self._job(content, "validation-gate")
+        assert re.search(r"(?m)^    needs:.*\brelease-ref-check\b", gate)
+        assert re.search(r"(?m)^    if: always\(\)$", gate)
+        assert "${{ needs.release-ref-check.result }}" in gate
+        assert '!= "success"' in gate
+
+        build = self._job(content, "build")
+        version_release = self._job(content, "version-tag-release")
+        deploy = self._job(content, "deploy")
+        assert "needs: validation-gate" in build
+        assert "needs: build" in version_release
+        assert "needs: version-tag-release" in deploy
+
+    def test_mutating_jobs_have_explicit_main_ref_guards(self):
+        content = RELEASE_YML.read_text()
+        for job_name in ("version-tag-release", "deploy"):
+            job = self._job(content, job_name)
+            assert "github.ref == 'refs/heads/main'" in job
+
+    @pytest.mark.parametrize(
+        ("event", "ref", "skip_deploy", "expected_deploy"),
+        [
+            ("workflow_dispatch", "refs/heads/main", None, True),
+            ("workflow_dispatch", "refs/heads/main", False, True),
+            ("workflow_dispatch", "refs/heads/main", True, False),
+            ("push", "refs/heads/main", None, True),
+            ("workflow_dispatch", "refs/heads/feature", False, False),
+        ],
+    )
+    def test_deploy_eligibility(self, event, ref, skip_deploy, expected_deploy):
+        deploy = self._job(RELEASE_YML.read_text(), "deploy")
+        condition = re.search(r"(?m)^    if: \$\{\{ (?P<expr>.+) }}$", deploy)
+        assert condition, "deploy must have an explicit condition"
+        expression = condition.group("expr")
+        parsed_condition = re.fullmatch(
+            r"github\.ref == '([^']+)' && !inputs\.([a-z_]+)", expression
+        )
+        assert parsed_condition, f"Unsupported deploy condition: {expression!r}"
+        main_ref, skip_input_name = parsed_condition.groups()
+        assert main_ref == "refs/heads/main"
+        assert skip_input_name == "skip_deploy"
+
+        if event == "push":
+            assert skip_deploy is None, "Push events do not provide workflow_dispatch inputs"
+            dispatch_inputs = {}
+        else:
+            assert event == "workflow_dispatch"
+            dispatch_inputs = {} if skip_deploy is None else {skip_input_name: skip_deploy}
+
+        evaluated = ref == main_ref and not bool(dispatch_inputs.get(skip_input_name))
+        assert evaluated is expected_deploy
+
+    def test_default_skip_changelog_keeps_custom_changelog_generator(self):
+        content = RELEASE_YML.read_text()
+        assert re.search(r"(?m)^\s+skip_changelog:[\s\S]*?^\s+default: false$", content)
+        release_step = re.search(
+            r"(?ms)^      - name: Create GitHub Release\n(?P<body>.*?)(?=^      - name:|\Z)",
+            content,
+        )
+        assert release_step, "GitHub Release creation step must exist"
+        assert "scripts/generate_changelog.py --output CHANGELOG.md" in release_step.group("body")
+        assert "--notes-file CHANGELOG.md" in release_step.group("body")
+
+    def test_skip_changelog_with_prior_tag_uses_previous_tag_as_notes_baseline(self):
+        content = RELEASE_YML.read_text()
+        skip_check = self._job(content, "version-tag-release")
+        release_step = re.search(
+            r"(?ms)^      - name: Create GitHub Release\n(?P<body>.*?)(?=^      - name:|\Z)",
+            skip_check,
+        )
+        assert release_step, "GitHub Release creation step must exist"
+        assert "last_tag=${LAST_TAG}" in skip_check
+        assert skip_check.index('echo "last_tag=${LAST_TAG}"') < skip_check.index(
+            'git push origin "$TAG"'
+        )
+        assert "--generate-notes" in release_step.group("body")
+        assert '"${{ inputs.skip_changelog }}" == "true"' in release_step.group("body")
+        assert '--notes-start-tag "$BASELINE_TAG"' in release_step.group("body")
+        assert "steps.skip-check.outputs.last_tag" in release_step.group("body")
+
+    def test_skip_changelog_without_baseline_omits_notes_start_tag(self):
+        content = RELEASE_YML.read_text()
+        release_step = re.search(
+            r"(?ms)^      - name: Create GitHub Release\n(?P<body>.*?)(?=^      - name:|\Z)",
+            content,
+        )
+        assert release_step, "GitHub Release creation step must exist"
+        body = release_step.group("body")
+        assert '"${{ inputs.skip_changelog }}" == "true"' in body
+        assert re.search(r"(?s)if \[ -n \"\$BASELINE_TAG\" \].*?--notes-start-tag", body)
+        assert re.search(r"(?s)else\s+gh release create.*?--generate-notes", body)
+        assert re.search(
+            r"(?s)else\s+gh release create.*?--generate-notes(?!.*--notes-start-tag)",
+            body,
+        )
+
+    def test_release_workflow_concurrency_is_scoped_to_ref(self):
+        content = RELEASE_YML.read_text()
+        assert re.search(
+            r"(?m)^concurrency:\n  group: \$\{\{ github\.workflow }}-\$\{\{ github\.ref }}$",
+            content,
+        )
+        assert re.search(r"(?m)^  cancel-in-progress: true$", content)

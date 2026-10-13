@@ -72,7 +72,7 @@ jobs:
           # Explicitly pass the project's relaxed config so CI matches local
           # `make markdownlint` behavior. Without this, the action falls back
           # to bundled defaults that differ from the repo's `.markdownlint-cli2.yaml`.
-          config_file: .markdownlint-cli2.yaml
+          config: .markdownlint-cli2.yaml
 
   # 2. Python linting (ruff check + format check)
   # Depends on markdownlint; skips if formatting is already broken.

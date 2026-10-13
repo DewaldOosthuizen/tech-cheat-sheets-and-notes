@@ -28,7 +28,7 @@ clean, reviewable contributions to this repository.
   - [11. Source metadata for volatile cloud facts](#11-source-metadata-for-volatile-cloud-facts)
   - [12. Documentation dependency management](#12-documentation-dependency-management)
   - [13. Dependabot update strategy](#13-dependabot-update-strategy)
-  - [14. Release version input](#14-release-version-input)
+  - [14. Production releases](#14-production-releases)
 
 ---
 
@@ -517,9 +517,12 @@ issues when the default branch resolution differs from the intended merge target
 Do not remove the `groups` or `target-branch` fields from `.github/dependabot.yml` during
 maintenance — their absence would revert to ungrouped, potentially noisy Dependabot PRs.
 
-## 14. Release version input
+## 14. Production releases
 
-When manually dispatching the release workflow, an optional version override must match
-`YYYY.MM.DD` or `YYYY.MM.DD.MICRO`: a four-digit year, two-digit month and day, and an
-optional numeric micro component. Leave the input blank to let the workflow compute the
-CalVer version automatically.
+Pushes to `main` retain the automatic release path. For a manual
+`workflow_dispatch`, select `main`; another ref is rejected before any tag,
+GitHub Release, or production deployment is created. The optional `version`
+input overrides the computed CalVer. `skip_deploy` skips only the Vercel
+production deployment. `skip_changelog` uses GitHub-generated release notes
+with the preceding CalVer tag as the baseline; when there is no prior tag,
+GitHub-generated notes are used without an explicit baseline tag.

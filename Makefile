@@ -36,7 +36,7 @@ LYCHEE_VERSION        ?= lychee-v0.24.2
 LYCHEE_DIR            := .tools/lychee/$(LYCHEE_VERSION)
 LYCHEE_BIN            := $(LYCHEE_DIR)/lychee
 
-MD_GLOBS         = "docs/**/*.md" "README.md" "AGENTS.md"
+MD_GLOBS         = "docs/**/*.md" "README.md" "AGENTS.md" "CONTRIBUTING.md"
 LINT_TARGETS     = scripts/ tests/
 # Validate all Markdown files that contain Mermaid fences or snippet references to .mmd files.
 # This includes both cheat sheets and the section snippet files under docs/<section>/.
@@ -107,7 +107,7 @@ markdownlint:
 puppeteer-config:
 	@echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > $(PUPPETEER_CONFIG_FILE)
 
-mermaid-check: puppeteer-config
+mermaid-check: venv puppeteer-config
 	@echo "--- mermaid-check ---"
 	npm ci
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
