@@ -1,6 +1,6 @@
 # Tech Cheat Sheets And Notes
 
-[![Lint](https://github.com/DewaldOosthuizen/tech-cheat-sheets-and-notes/actions/workflows/release.yml/badge.svg?branch=main&event=push)](https://github.com/DewaldOosthuizen/tech-cheat-sheets-and-notes/actions/workflows/release.yml)
+[![PR Gate](https://github.com/DewaldOosthuizen/tech-cheat-sheets-and-notes/actions/workflows/pr-gate.yml/badge.svg?event=pull_request)](https://github.com/DewaldOosthuizen/tech-cheat-sheets-and-notes/actions/workflows/pr-gate.yml)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/paypalme/DewaldOosthuizen1)
 
 Quick-reference study notes for technology certifications and architecture decisions.
