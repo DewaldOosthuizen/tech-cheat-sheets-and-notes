@@ -365,9 +365,9 @@ class TestProductionReleaseWorkflow:
         for job_name, job in jobs.items():
             if job_name == "version-tag-release":
                 continue
-            assert all(
-                access != "write" for access in job.get("permissions", {}).values()
-            ), f"{job_name} must not grant write permissions"
+            assert all(access != "write" for access in job.get("permissions", {}).values()), (
+                f"{job_name} must not grant write permissions"
+            )
 
     def test_push_and_manual_dispatch_triggers_are_retained(self):
         content = RELEASE_YML.read_text()
