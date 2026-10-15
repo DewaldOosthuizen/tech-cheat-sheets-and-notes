@@ -68,7 +68,13 @@ nav:
       - Persistence: programming/java/files/persistence/persistence.md
       - Spring Boot: programming/java/files/spring-boot/spring-boot.md
       - Collections: programming/java/files/collections/collections.md
-    - Python (Coming soon): programming/python/README.md
+    - Python:
+      - Language Fundamentals: programming/python/files/language-fundamentals/language-fundamentals.md
+      - Collections: programming/python/files/collections/collections.md
+      - Exceptions: programming/python/files/exceptions/exceptions.md
+      - Concurrency: programming/python/files/concurrency/concurrency.md
+      - Packaging: programming/python/files/packaging/packaging.md
+      - Testing: programming/python/files/testing/testing.md
   - Cloud Service Providers:
     - AWS:
         - Abbreviations: aws/files/abbreviations/abbreviations.md
