@@ -523,7 +523,9 @@ Pushes to `main` retain the automatic release path. For a manual
 `workflow_dispatch`, select `main`; another ref is rejected before any tag,
 GitHub Release, or production deployment is created. The optional `version`
 input overrides the computed CalVer. `skip_deploy` skips only the Vercel
-production deployment. `skip_changelog` uses GitHub-generated release notes
+production deployment. Override versions must be real calendar dates
+(YYYY.MM.DD[.micro], a valid YYYY-MM-DD date) and the optional micro
+component must be a non-negative integer. `skip_changelog` uses GitHub-generated release notes
 with the preceding CalVer tag as the baseline; when there is no prior tag,
 GitHub-generated notes are used without an explicit baseline tag.
 

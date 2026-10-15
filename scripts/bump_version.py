@@ -56,6 +56,12 @@ def _parse_calver(version: str) -> tuple[int, int, int, int]:
         micro = int(parts[3]) if len(parts) == 4 else 0
     except ValueError as exc:
         raise ValueError(f"Non-numeric version component in: {version}") from exc
+    if micro < 0:
+        raise ValueError(f"Micro component must be a non-negative integer: {version}")
+    try:
+        datetime(year, month, day).date()
+    except ValueError as exc:
+        raise ValueError(f"Invalid calendar date in: {version}") from exc
     return year, month, day, micro
 
 

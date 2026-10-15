@@ -128,6 +128,16 @@ class TestVersionComputation:
         result = _run_bump(["--dry-run", "2026.01.xx"])
         assert result.returncode == 1
 
+    def test_invalid_override_bad_calendar_date_exits_one(self):
+        result = _run_bump(["--dry-run", "2026.99.99"])
+        assert result.returncode == 1
+        assert "error" in result.stderr.lower()
+
+    def test_invalid_override_negative_micro_exits_one(self):
+        result = _run_bump(["--dry-run", "2026.01.01.-1"])
+        assert result.returncode == 1
+        assert "error" in result.stderr.lower()
+
 
 class TestVersionFormat:
     """Test version string formatting."""
@@ -164,6 +174,41 @@ class TestVersionFormat:
             _parse_calver("2026.09")
         with pytest.raises(ValueError):
             _parse_calver("2026.09.07.1.2")
+
+    def test_parse_valid_leap_date(self):
+        from scripts.bump_version import _parse_calver
+
+        assert _parse_calver("2024.02.29") == (2024, 2, 29, 0)
+
+    def test_parse_invalid_month_raises(self):
+        from scripts.bump_version import _parse_calver
+
+        with pytest.raises(ValueError):
+            _parse_calver("2026.99.01")
+
+    def test_parse_invalid_day_raises(self):
+        from scripts.bump_version import _parse_calver
+
+        with pytest.raises(ValueError):
+            _parse_calver("2026.01.99")
+
+    def test_parse_invalid_leap_date_raises(self):
+        from scripts.bump_version import _parse_calver
+
+        with pytest.raises(ValueError):
+            _parse_calver("2023.02.29")
+
+    def test_parse_negative_micro_raises(self):
+        from scripts.bump_version import _parse_calver
+
+        with pytest.raises(ValueError):
+            _parse_calver("2026.09.07.-1")
+
+    def test_parse_malformed_micro_raises(self):
+        from scripts.bump_version import _parse_calver
+
+        with pytest.raises(ValueError):
+            _parse_calver("2026.09.07.x")
 
 
 class TestPyprojectIntegration:

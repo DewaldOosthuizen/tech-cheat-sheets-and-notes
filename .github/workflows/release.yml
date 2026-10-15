@@ -394,6 +394,11 @@ jobs:
             echo "::error::Computed tag '$TAG' does not match CalVer (YYYY.MM.DD or YYYY.MM.DD.Micro)"
             exit 1
           fi
+          # Validate that the date components form a real calendar date (and micro is non-negative).
+          if ! python3 -c "import sys; from datetime import date; tag=sys.argv[1]; parts=tag.split('.'); y,m,d=(int(p) for p in parts[:3]); micro=int(parts[3]) if len(parts)==4 else 0; date(y,m,d); sys.exit(0 if micro>=0 else 1)" "$TAG"; then
+            echo "::error::Computed tag '$TAG' is not a valid CalVer date (YYYY.MM.DD[.micro])"
+            exit 1
+          fi
 
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           MICRO="${TAG#${BASE}.}"
