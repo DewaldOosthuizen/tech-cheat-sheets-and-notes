@@ -149,9 +149,7 @@ def test_python_test_workflow_matrix_covers_supported_versions(workflow):
     versions_text = matrix_line.partition("[")[2].partition("]")[0]
     versions = tuple(value.strip().strip('"') for value in versions_text.split(","))
     assert versions == SUPPORTED_PYTHON_VERSIONS
-    assert any(
-        line.strip() == "python-version: ${{ matrix.python-version }}" for line in job_lines
-    )
+    assert any(line.strip() == "python-version: ${{ matrix.python-version }}" for line in job_lines)
 
 
 def test_makefile_python_test_all_matches_supported_versions():
