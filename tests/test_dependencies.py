@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 
 import pytest
+import yaml
 from conftest import REPO_ROOT
 from packaging.requirements import Requirement
 from packaging.version import Version
@@ -354,6 +355,19 @@ class TestProductionReleaseWorkflow:
         )
         assert match, f"Workflow job {name!r} must exist"
         return match.group("body")
+
+    def test_write_permissions_are_limited_to_version_tag_release(self):
+        workflow = yaml.safe_load(RELEASE_YML.read_text())
+        jobs = workflow["jobs"]
+
+        assert workflow["permissions"] == {"contents": "read"}
+        assert jobs["version-tag-release"]["permissions"] == {"contents": "write"}
+        for job_name, job in jobs.items():
+            if job_name == "version-tag-release":
+                continue
+            assert all(access != "write" for access in job.get("permissions", {}).values()), (
+                f"{job_name} must not grant write permissions"
+            )
 
     def test_push_and_manual_dispatch_triggers_are_retained(self):
         content = RELEASE_YML.read_text()

@@ -526,3 +526,9 @@ input overrides the computed CalVer. `skip_deploy` skips only the Vercel
 production deployment. `skip_changelog` uses GitHub-generated release notes
 with the preceding CalVer tag as the baseline; when there is no prior tag,
 GitHub-generated notes are used without an explicit baseline tag.
+
+The workflow defaults to read-only `contents` permissions. Only the
+`version-tag-release` job receives `contents: write`, which it needs to push
+the release tag and create the GitHub Release. No job receives GitHub OIDC
+permissions; Vercel deployment authenticates with the configured
+`VERCEL_TOKEN`.
