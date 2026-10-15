@@ -4,7 +4,7 @@
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/paypalme/DewaldOosthuizen1)
 
 A growing collection of technology cheat sheets — quick-reference study notes organised by topic
-and certification track. Covers Microsoft Azure, Amazon Web Services, Google Cloud, and Java,
+and certification track. Covers Microsoft Azure, Amazon Web Services, Google Cloud, and Java and Python,
 with comparisons between services, decision flows, and Mermaid diagrams that answer "which one
 and why?" — not step-by-step tutorials or portal walkthroughs.
 
@@ -16,6 +16,7 @@ and why?" — not step-by-step tutorials or portal walkthroughs.
 | [Amazon Web Services](docs/aws/index.md) |
 | [Google Cloud](docs/google/index.md) |
 | [Programming (Java)](docs/programming/java/index.md) |
+| [Programming (Python)](docs/programming/python/index.md) |
 
 More topics (other cloud providers, DevOps tooling, architecture patterns) will be added over time.
 Each new topic lives under its own subdirectory inside `docs/`.
@@ -45,6 +46,10 @@ docs/
   programming/
     java/
       index.md                   — Java overview (topic index)
+      files/
+        <domain>/<domain>.md     — One page per topic
+    python/
+      index.md                   — Python overview (topic index)
       files/
         <domain>/<domain>.md     — One page per topic
   index.md                      — MkDocs site home page

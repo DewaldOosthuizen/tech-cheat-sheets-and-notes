@@ -205,14 +205,52 @@ class TestMkdocsProgrammingNav:
                     f"Nav entry '{key}' points to '{entry[key]}', expected '{expected_path}'"
                 )
 
-    def test_python_coming_soon_present(self, mkdocs_config):
+    def test_python_subgroup_present(self, mkdocs_config):
         programming_section = next(
             (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
             None,
         )
         assert programming_section is not None, "Programming nav section missing"
-        entry_keys = [next(iter(e.keys())) for e in programming_section]
-        assert "Python (Coming soon)" in entry_keys, "Python (Coming soon) entry not found"
+        py_entry = next((e for e in programming_section if "Python" in e), None)
+        assert py_entry is not None, "Python subgroup not found"
+        py_section = py_entry["Python"]
+        entry_keys = [next(iter(e.keys())) for e in py_section]
+        assert entry_keys == [
+            "Language Fundamentals",
+            "Collections",
+            "Exceptions",
+            "Concurrency",
+            "Packaging",
+            "Testing",
+        ], f"Python nav entries not in approved order: {entry_keys}"
+
+    def test_python_domain_entry_paths(self, mkdocs_config):
+        programming_section = next(
+            (item["Programming"] for item in mkdocs_config["nav"] if "Programming" in item),
+            None,
+        )
+        assert programming_section is not None, "Programming nav section missing"
+        py_entry = next((e for e in programming_section if "Python" in e), None)
+        assert py_entry is not None, "Python subgroup not found"
+        py_section = py_entry["Python"]
+
+        expected_paths = {
+            "Language Fundamentals": (
+                "programming/python/files/language-fundamentals/language-fundamentals.md"
+            ),
+            "Collections": "programming/python/files/collections/collections.md",
+            "Exceptions": "programming/python/files/exceptions/exceptions.md",
+            "Concurrency": "programming/python/files/concurrency/concurrency.md",
+            "Packaging": "programming/python/files/packaging/packaging.md",
+            "Testing": "programming/python/files/testing/testing.md",
+        }
+        for entry in py_section:
+            key = next(iter(entry.keys()))
+            expected_path = expected_paths.get(key)
+            if expected_path:
+                assert entry[key] == expected_path, (
+                    f"Nav entry '{key}' points to '{entry[key]}', expected '{expected_path}'"
+                )
 
 
 # ── README current content ─────────────────────────────────────────────────────
