@@ -12,7 +12,7 @@ Verifies that:
 from __future__ import annotations
 
 import pytest
-from conftest import REPO_ROOT
+from conftest import REPO_ROOT, expand_snippets
 
 AWS_DB_MD = REPO_ROOT / "docs" / "aws" / "files" / "database" / "database.md"
 
@@ -20,6 +20,11 @@ AWS_DB_MD = REPO_ROOT / "docs" / "aws" / "files" / "database" / "database.md"
 @pytest.fixture(scope="module")
 def aws_db_text():
     return AWS_DB_MD.read_text()
+
+
+@pytest.fixture(scope="module")
+def text():
+    return expand_snippets(AWS_DB_MD.read_text())
 
 
 class TestAwsDatabaseFileExists:
@@ -118,3 +123,14 @@ class TestAwsDatabaseSourceMetadata:
 
     def test_aws_sources_present(self, aws_db_text):
         assert "aws.amazon.com" in aws_db_text or "docs.aws.amazon.com" in aws_db_text
+
+
+class TestAwsDatabaseDiagramAndExamTip:
+    def test_mermaid_diagram_present(self, text):
+        assert "```mermaid" in text
+
+    def test_diagram_slug_referenced(self):
+        assert "aws/diagrams/database/decision-flow.mmd" in AWS_DB_MD.read_text()
+
+    def test_exam_tip_present(self, text):
+        assert "> **Exam tip:**" in text
