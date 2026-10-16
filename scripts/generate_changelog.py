@@ -23,7 +23,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Commit message prefixes mapped to changelog sections
+try:
+    from bump_version import _parse_calver as _bump_parse_calver
+except ImportError:
+    from scripts.bump_version import _parse_calver as _bump_parse_calver
+
+# CalVer tag matching YYYY.MM.DD or YYYY.MM.DD.micro, used for changelog
+# baseline selection (must stay consistent with .github/workflows/release.yml).
+CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
+
+# Commit message prefixes mapped to changelog sections"""
+
 CATEGORIES = [
     ("feat", "✨ Features"),
     ("fix", "🐛 Bug Fixes"),
@@ -52,16 +62,28 @@ def _run(cmd: list[str], cwd: Path | None = None) -> str:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{exc.stderr}") from exc
 
 
-def _get_previous_tag() -> str:
-    """Return the second-most-recent tag name, or empty string if < 2 tags.
+def _parse_calver(tag: str) -> tuple[int, int, int, int]:
+    """Thin wrapper around scripts.bump_version._parse_calver (re-exported for tests)."""
+    return _bump_parse_calver(tag)
+
+
+def _filter_calver_tags(raw_tags: list[str]) -> list[str]:
+    return [t for t in raw_tags if CALVER_TAG_RE.match(t.strip())]
+
+
+def _get_previous_tag(cwd: Path | None = None, repo_root: Path | None = None) -> str:
+    """Return the second-most-recent CalVer tag name, or empty string if < 2.
 
     When a release tag has already been created and pushed (as in the release
     pipeline), the newest tag is the one being released. The changelog should
     show commits since the *previous* tag, so we skip the latest and use the
-    one before it. With 0 or 1 tags total, there is no baseline — return "".
+    one before it. With 0 or 1 CalVer tags total, there is no baseline — return "".
     """
-    tags = _run(["git", "tag", "--sort=-v:refname"]).splitlines()
-    return tags[1] if len(tags) >= 2 else ""
+    root = repo_root if repo_root is not None else (cwd if cwd is not None else _repo_root())
+    tags_raw = _run(["git", "tag"], cwd=root).splitlines()
+    calver_tags = _filter_calver_tags(tags_raw)
+    calver_tags.sort(key=_parse_calver, reverse=True)
+    return calver_tags[1] if len(calver_tags) >= 2 else ""
 
 
 def _get_commits_since(tag: str) -> list[str]:
