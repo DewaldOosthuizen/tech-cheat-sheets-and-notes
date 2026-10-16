@@ -23,6 +23,26 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from scripts import bump_version
+except ImportError:  # running as script from scripts/
+    import bump_version  # type: ignore
+
+
+# CalVer tag regex consistent with .github/workflows/release.yml
+CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
+
+
+def _filter_calver_tags(raw_tags) -> list[str]:
+    """Return only tags matching CalVer YYYY.MM.DD[.micro]."""
+    return [t for t in raw_tags if CALVER_TAG_RE.match(str(t).strip())]
+
+
+def _parse_calver(tag: str):
+    """Delegate to scripts.bump_version._parse_calver (thin wrapper)."""
+    return bump_version._parse_calver(tag)
+
+
 # Commit message prefixes mapped to changelog sections
 CATEGORIES = [
     ("feat", "✨ Features"),
@@ -52,16 +72,16 @@ def _run(cmd: list[str], cwd: Path | None = None) -> str:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{exc.stderr}") from exc
 
 
-def _get_previous_tag() -> str:
-    """Return the second-most-recent tag name, or empty string if < 2 tags.
+def _get_previous_tag(cwd: Path | None = None, repo_root: Path | None = None):
+    """Return the second-most-recent CalVer tag, or '' if fewer than 2.
 
-    When a release tag has already been created and pushed (as in the release
-    pipeline), the newest tag is the one being released. The changelog should
-    show commits since the *previous* tag, so we skip the latest and use the
-    one before it. With 0 or 1 tags total, there is no baseline — return "".
+    Optional cwd/repo_root propagated to _run; default behaviour unchanged.
     """
-    tags = _run(["git", "tag", "--sort=-v:refname"]).splitlines()
-    return tags[1] if len(tags) >= 2 else ""
+    root = repo_root or cwd
+    tags_raw = _run(["git", "tag"], cwd=root).splitlines()
+    calver = _filter_calver_tags(tags_raw)
+    calver_sorted = sorted(calver, key=_parse_calver, reverse=True)
+    return calver_sorted[1] if len(calver_sorted) >= 2 else ""
 
 
 def _get_commits_since(tag: str) -> list[str]:
