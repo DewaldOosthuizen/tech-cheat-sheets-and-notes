@@ -32,7 +32,7 @@ except ImportError:
 # baseline selection (must stay consistent with .github/workflows/release.yml).
 CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
 
-# Commit message prefixes mapped to changelog sections"""
+# Commit message prefixes mapped to changelog sections
 
 CATEGORIES = [
     ("feat", "✨ Features"),
