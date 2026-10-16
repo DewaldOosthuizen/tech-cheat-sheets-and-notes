@@ -1,0 +1,7 @@
+flowchart TD
+    A[Protect workload?] --> B{Protect against data loss?}
+    B -- Yes --> C[Azure Backup - configure policy + vault]
+    A --> D{Protect against region failure?}
+    D -- Yes --> E[Azure Site Recovery - replicate VM to secondary region]
+    C --> F[Set retention and backup frequency]
+    E --> G[Test failover regularly]

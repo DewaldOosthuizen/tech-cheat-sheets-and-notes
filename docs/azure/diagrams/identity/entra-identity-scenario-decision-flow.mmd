@@ -1,0 +1,8 @@
+flowchart TD
+    A[Who needs to sign in?] --> B{Internal employees?}
+    B -- Yes --> C[Entra ID workforce tenant]
+    B -- No --> D{External partners in collaboration model?}
+    D -- Yes --> E[Entra B2B guest access in workforce tenant]
+    D -- No --> F{Customer-facing app users?}
+    F -- Yes --> G[Entra External ID external tenant]
+    F -- No --> H[Reassess identity boundary and tenant model]

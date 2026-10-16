@@ -1,0 +1,12 @@
+flowchart TD
+    A[Need an API gateway?] --> B{Global multi-region\nor CDN required?}
+    B -- Yes --> C[Azure Front Door\n+ optional APIM backend]
+    B -- No --> D{WAF required\nfor web/app traffic?}
+    D -- Yes --> E[Application Gateway + WAF\nor Front Door with WAF]
+    D -- No --> F{Private VNet /\ninternal APIs?}
+    F -- Yes --> G{Full API portal,\npolicies, rate-limiting?}
+    G -- Yes --> H[APIM Premium\nInternal VNet mode]
+    G -- No --> I[Application Gateway\nInternal mode]
+    F -- No --> J{Serverless / no\ndeveloper portal needed?}
+    J -- Yes --> K[APIM Consumption tier\nor raw Functions URL]
+    J -- No --> L[APIM Standard or Premium\nExternal mode]

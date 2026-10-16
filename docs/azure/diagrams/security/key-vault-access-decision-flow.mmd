@@ -1,0 +1,6 @@
+flowchart TD
+    A[App needs secret/key/cert?] --> B{Use managed identity?}
+    B -- Yes --> C[Assign Key Vault role via RBAC to managed identity]
+    B -- No --> D{RBAC or Access Policy?}
+    D -- RBAC --> E[Assign Key Vault Secrets Officer / Reader role]
+    D -- Access Policy --> F[Set Get/List/Set permissions per principal]

@@ -1,0 +1,6 @@
+flowchart TD
+    A[Requirement keyword?] -->|Scale / latency| B[Performance Efficiency\nCDN · Front Door · VMSS · Redis]
+    A -->|Uptime / SLA| C[Reliability\nAvailability Zones · Traffic Manager · ASR]
+    A -->|Cost / budget| D[Cost Optimization\nReserved Instances · Spot VMs · Advisor]
+    A -->|Breach / threat| E[Security\nDefender · Sentinel · Key Vault · RBAC]
+    A -->|Safe deploy / ops| F[Operational Excellence\nAzure Monitor · Deployment Slots · IaC]

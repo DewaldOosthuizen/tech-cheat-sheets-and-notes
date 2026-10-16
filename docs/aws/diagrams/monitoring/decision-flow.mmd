@@ -1,0 +1,11 @@
+flowchart TD
+    A{Metrics and alarms?} -->|Yes| B[CloudWatch Metrics and Alarms]
+    A -->|No| C{API audit trail?}
+    C -->|Yes| D[CloudTrail]
+    C -->|No| E{Distributed tracing?}
+    E -->|Yes| F[AWS X-Ray]
+    E -->|No| G{Resource configuration history?}
+    G -->|Yes| H[AWS Config]
+    G -->|No| I{Log aggregation and query?}
+    I -->|Yes| J[CloudWatch Logs Insights]
+    I -->|No| K[Revisit requirements]

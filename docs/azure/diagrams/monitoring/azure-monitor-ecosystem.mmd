@@ -1,0 +1,10 @@
+graph TD
+    Sources["Data Sources\n(VMs, Apps, PaaS, Logs)"] --> Monitor[Azure Monitor]
+    ActivityLog["Activity Log\n(control-plane events)"] --> Monitor
+    Monitor --> Metrics[Metrics]
+    Monitor -->|"via Diagnostic Settings"| Logs[Log Analytics Workspace]
+    Monitor --> Alerts[Alerts & Action Groups]
+    Monitor --> Insights[Insights: VM, Container, App]
+    Logs --> Sentinel[Microsoft Sentinel]
+    Logs --> Workbooks[Workbooks / Dashboards]
+    Alerts --> AG[Action Group\nEmail / SMS / ITSM / Webhook / Runbook]

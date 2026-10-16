@@ -1,0 +1,14 @@
+flowchart TD
+    A[Serverless / Event-Driven workload?] --> B{Execution duration\n< 10 minutes?}
+    B -- Yes --> C{Stateless with\nHTTP / queue / timer trigger?}
+    B -- No --> D{Need long-running\norchestration / stateful?}
+    C -- Yes --> E{Code-first preference?}
+    C -- No --> F{Enterprise workflow\nor B2B integration?}
+    D -- Yes --> DURABLE[Azure Functions Premium/Dedicated\nwith Durable Functions]
+    D -- No --> ACA_LONG[Azure Container Apps]
+    E -- Yes --> FUNC_CONS[Azure Functions Consumption]
+    E -- No --> LOGIC_CONS[Logic Apps Consumption]
+    F -- Yes --> G{Low-code / visual designer?}
+    F -- No --> FUNC_CONS
+    G -- Yes --> LOGIC_CONS
+    G -- No --> LOGIC_STD[Logic Apps Standard]

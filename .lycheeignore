@@ -1,0 +1,12 @@
+# Rate-limited — returns 429 on automated scans
+https://learn.microsoft.com
+
+# Auth-gated — redirects to login page
+https://portal.azure.com
+
+# Aggressively redirecting — causes false-positive failures
+https://docs.microsoft.com
+
+# Repository-relative links unresolvable in GitHub Actions runner context
+../../issues
+../../pulls

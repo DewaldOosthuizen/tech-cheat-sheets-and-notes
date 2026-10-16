@@ -1,0 +1,6 @@
+flowchart TD
+    A[Choose Service Bus SKU] --> B{Need topics?}
+    B -- No --> C[Basic SKU]
+    B -- Yes --> D{Need VNet / private endpoint?}
+    D -- No --> E[Standard SKU]
+    D -- Yes --> F[Premium SKU]

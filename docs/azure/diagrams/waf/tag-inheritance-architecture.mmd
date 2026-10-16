@@ -1,0 +1,6 @@
+graph TD
+    A[Management Group] --> B[Subscription]
+    B --> C[Resource Group]
+    C --> D[Resource]
+    A -. "No auto-inherit" .-> D
+    C -. "Policy: Inherit tag from RG" .-> D

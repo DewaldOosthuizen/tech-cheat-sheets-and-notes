@@ -1,0 +1,8 @@
+flowchart TD
+    A[Control Azure costs?] --> B{Track by team/project?}
+    B -- Yes --> C[Apply tags - Environment, CostCenter, Owner]
+    C --> D{Enforce tagging?}
+    D -- Yes --> E[Azure Policy - Require tag or Inherit from RG]
+    A --> F{Alert on overspend?}
+    F -- Yes --> G[Create Budget with alert thresholds]
+    G --> H[Attach Action Group for email/webhook notification]

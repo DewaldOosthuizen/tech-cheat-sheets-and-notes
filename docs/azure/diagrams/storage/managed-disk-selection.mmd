@@ -1,0 +1,8 @@
+flowchart TD
+    A[Choose managed disk] --> B{Production workload?}
+    B -- No --> C[Standard HDD or Standard SSD]
+    B -- Yes --> D{Latency-sensitive?}
+    D -- Extreme sub-ms --> E[Ultra Disk]
+    D -- High but not extreme --> F{Tunable IOPS needed?}
+    F -- Yes --> G[Premium SSD v2]
+    F -- No --> H[Premium SSD]

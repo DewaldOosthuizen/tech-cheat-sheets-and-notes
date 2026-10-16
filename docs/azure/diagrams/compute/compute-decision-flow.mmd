@@ -1,0 +1,12 @@
+flowchart TD
+    A[New workload?] --> B{Need full OS / legacy lift-and-shift?}
+    B -- Yes --> VM[Azure VM / VMSS]
+    B -- No --> C{Containerised?}
+    C -- No --> D{Event-driven / serverless?}
+    D -- Yes --> AF[Azure Functions]
+    D -- No --> AS[App Service]
+    C -- Yes --> E{Need K8s API or custom controllers?}
+    E -- Yes --> AKS[AKS]
+    E -- No --> F{Single burst / long-lived scale?}
+    F -- Yes --> ACI[ACI]
+    F -- No --> ACA[Azure Container Apps]

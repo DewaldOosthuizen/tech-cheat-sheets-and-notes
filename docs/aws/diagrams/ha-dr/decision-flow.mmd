@@ -1,0 +1,11 @@
+flowchart TD
+    A{Single-region outage tolerable?} -->|No| B{RTO and RPO near zero?}
+    B -->|Yes| C[Active-Active Multi-Region]
+    B -->|No| D{Minutes RTO acceptable?}
+    D -->|Yes| E[Warm Standby Multi-Region]
+    D -->|No| F{Hours RTO acceptable?}
+    F -->|Yes| G[Pilot Light Multi-Region]
+    F -->|No| H[Backup and Restore with AWS Backup]
+    A -->|Yes| I{Zone-level redundancy?}
+    I -->|Yes| J[Multi-AZ deployment RDS / ALB / EKS]
+    I -->|No| K[Single-AZ with snapshots]

@@ -1,0 +1,9 @@
+flowchart TD
+    A[Need VM monitoring?] --> B{New or existing deployment?}
+    B -- New --> C[Azure Monitor Agent + DCR]
+    B -- Existing with MMA --> D{Migrate before retirement?}
+    D -- Yes --> C
+    D -- No yet --> E[Keep MMA - plan migration]
+    C --> F{Need process/network map?}
+    F -- Yes --> G[Add Dependency Agent]
+    F -- No --> H[AMA only]

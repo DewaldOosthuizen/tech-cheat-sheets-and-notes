@@ -1,0 +1,121 @@
+site_name: Tech Cheat Sheets
+site_description: >-
+  Quick-reference study notes for tech certifications and architecture decisions.
+  Currently focused on Microsoft Azure, organised by domain.
+site_url: https://tech-cheat-sheets-and-notes.vercel.app/
+repo_name: DewaldOosthuizen/tech-cheat-sheets-and-notes
+repo_url: https://github.com/DewaldOosthuizen/tech-cheat-sheets-and-notes
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    - scheme: slate
+      primary: blue
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: blue
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+
+markdown_extensions:
+  # pymdownx.snippets: expands --8<-- "path/to/file" directives.
+  # base_path is relative to docs_dir so paths in cheat sheets start
+  # with azure/diagrams/ and resolve to docs/azure/diagrams/.
+  - pymdownx.snippets:
+      base_path:
+        - docs
+      check_paths: true
+  # pymdownx.superfences: enables custom fences.  The mermaid fence
+  # emits a <code class="mermaid"> block that Material picks up and
+  # renders via the bundled Mermaid JS loader.
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          # yamllint disable-line rule:truthy
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - tables
+  - toc:
+      permalink: true
+  - admonition
+
+nav:
+  - Home: index.md
+  # Always alphabetically order top-level sections for easier navigation and maintenance.
+  - Programming:
+    - Java:
+      - Abbreviations: programming/java/files/abbreviations/abbreviations.md
+      - Exam Coverage: programming/java/files/exams/exams.md
+      - Language Fundamentals: programming/java/files/language-fundamentals/language-fundamentals.md
+      - OOP: programming/java/files/oop/oop.md
+      - Functional Programming: programming/java/files/functional-programming/functional-programming.md
+      - Persistence: programming/java/files/persistence/persistence.md
+      - Spring Boot: programming/java/files/spring-boot/spring-boot.md
+      - Collections: programming/java/files/collections/collections.md
+    - Python:
+      - Language Fundamentals: programming/python/files/language-fundamentals/language-fundamentals.md
+      - Collections: programming/python/files/collections/collections.md
+      - Exceptions: programming/python/files/exceptions/exceptions.md
+      - Concurrency: programming/python/files/concurrency/concurrency.md
+      - Packaging: programming/python/files/packaging/packaging.md
+      - Testing: programming/python/files/testing/testing.md
+  - Cloud Service Providers:
+    - AWS:
+        - Abbreviations: aws/files/abbreviations/abbreviations.md
+        - Exam Coverage: aws/files/exams/exams.md
+        - Compute: aws/files/compute/compute.md
+        - Networking: aws/files/networking/networking.md
+        - Storage: aws/files/storage/storage.md
+        - Identity & Access: aws/files/identity/identity.md
+        - Security: aws/files/security/security.md
+        - Database: aws/files/database/database.md
+        - Monitoring & Observability: aws/files/monitoring/monitoring.md
+        - Messaging & Integration: aws/files/messaging/messaging.md
+        - Governance: aws/files/governance/governance.md
+        - High Availability & DR: aws/files/ha-dr/ha-dr.md
+        - Well-Architected Framework: aws/files/waf/waf.md
+    - Azure:
+        - Abbreviations: azure/files/abbreviations/abbreviations.md
+        - Exam Coverage: azure/files/exams/exams.md
+        - Networking: azure/files/networking/networking.md
+        - Security: azure/files/security/security.md
+        - Database: azure/files/database/database.md
+        - Storage: azure/files/storage/storage.md
+        - Migration: azure/files/migration/migration.md
+        - Monitoring & Observability: azure/files/monitoring/monitoring.md
+        - Compute: azure/files/compute/compute.md
+        - Identity & Access: azure/files/identity/identity.md
+        - High Availability & DR: azure/files/ha-dr/ha-dr.md
+        - Governance: azure/files/governance/governance.md
+        - Messaging & Integration: azure/files/messaging/messaging.md
+        - Well-Architected Framework: azure/files/waf/waf.md
+    - Google Cloud:
+        - Abbreviations: google/files/abbreviations/abbreviations.md
+        - Exam Coverage: google/files/exams/exams.md
+        - Compute: google/files/compute/compute.md
+        - Networking: google/files/networking/networking.md
+        - Storage: google/files/storage/storage.md
+        - Identity & Access: google/files/identity/identity.md
+        - Security: google/files/security/security.md
+        - Database: google/files/database/database.md
+        - Monitoring & Observability: google/files/monitoring/monitoring.md
+        - Messaging & Integration: google/files/messaging/messaging.md
+        - Governance: google/files/governance/governance.md
+        - High Availability & DR: google/files/ha-dr/ha-dr.md
+        - Well-Architected Framework: google/files/waf/waf.md

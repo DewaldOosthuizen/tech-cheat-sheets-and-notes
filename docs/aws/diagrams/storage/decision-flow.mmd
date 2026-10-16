@@ -1,0 +1,11 @@
+flowchart TD
+    A{Object storage needed?} -->|Yes| B{Archive / infrequent access?}
+    B -->|Archive| C[S3 Glacier / Glacier Deep Archive]
+    B -->|Standard| D[S3 Standard or S3 Intelligent-Tiering]
+    A -->|No| E{Block storage for EC2?}
+    E -->|Yes| F[EBS Elastic Block Store]
+    E -->|No| G{Shared file system across instances?}
+    G -->|Yes| H[EFS Elastic File System]
+    G -->|No| I{On-prem hybrid access?}
+    I -->|Yes| J[Storage Gateway]
+    I -->|No| K[Revisit requirements]

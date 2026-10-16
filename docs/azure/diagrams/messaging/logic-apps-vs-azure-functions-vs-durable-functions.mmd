@@ -1,0 +1,6 @@
+flowchart TD
+    A[Integration or automation need?] --> B{Low-code / SaaS connectors?}
+    B -- Yes --> LA[Logic Apps]
+    B -- No --> C{Long-running or stateful workflow?}
+    C -- Yes --> DF[Durable Functions]
+    C -- No --> AF[Azure Functions]

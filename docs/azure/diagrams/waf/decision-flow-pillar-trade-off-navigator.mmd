@@ -1,0 +1,10 @@
+flowchart TD
+    C1[Pillar conflict?] -->|Reliability vs Cost| RC{SLA target >= 99.99%?}
+    RC -->|Yes| RC_Y[Reliability wins\nMulti-region active-active\nFront Door + geo-replicated DB]
+    RC -->|No| RC_N[Cost Optimization wins\nSingle-region + Availability Zones\nReserved Instances]
+    C1 -->|Security vs Performance| SP{Data classified or regulated?}
+    SP -->|Yes| SP_Y[Security wins\nEncryption-at-rest + in-transit\nPrivate Endpoints · CMK]
+    SP -->|No| SP_N[Performance Efficiency wins\nCDN · Redis Cache · Front Door\nAdd controls incrementally]
+    C1 -->|OpEx vs Cost| OC{Prod or deploy freq > daily?}
+    OC -->|Yes| OC_Y[Operational Excellence wins\nDeployment Slots · IaC pipeline\nAzure Monitor alerts]
+    OC -->|No| OC_N[Cost Optimization wins\nManual deploy acceptable\nDev/test environment]

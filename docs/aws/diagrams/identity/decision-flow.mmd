@@ -1,0 +1,11 @@
+flowchart TD
+    A{External user federation?} -->|Yes| B[Cognito User Pools]
+    A -->|No| C{Cross-account access?}
+    C -->|Yes| D[IAM Roles with STS AssumeRole]
+    C -->|No| E{Workforce SSO?}
+    E -->|Yes| F[IAM Identity Center SSO]
+    E -->|No| G{Service-to-service auth?}
+    G -->|Yes| H[IAM Roles for EC2 / Lambda / ECS]
+    G -->|No| I{Multi-account governance?}
+    I -->|Yes| J[AWS Organizations with SCPs]
+    I -->|No| K[IAM Users and Groups]

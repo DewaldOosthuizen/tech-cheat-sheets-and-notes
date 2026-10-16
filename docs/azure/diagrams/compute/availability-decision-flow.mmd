@@ -1,0 +1,6 @@
+flowchart TD
+    A[Need VM HA?] --> B{Multiple datacenters?}
+    B -- No --> C[Availability Set]
+    B -- Yes --> D{Auto-scale needed?}
+    D -- No --> E[Place VMs across Availability Zones manually]
+    D -- Yes --> F[VM Scale Set - Flexible orchestration across zones]

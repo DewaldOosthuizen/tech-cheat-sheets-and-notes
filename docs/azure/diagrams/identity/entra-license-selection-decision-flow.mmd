@@ -1,0 +1,12 @@
+flowchart TD
+    Q1{Minimum required feature?}
+
+    Q1 -- Basic MFA / SSPR cloud-only\nB2B guest users / Basic SSO --> FREE[Entra ID Free]
+    Q1 -- Conditional Access\nSSPR with writeback\nDynamic Groups\nApp Proxy\nUnlimited SSO --> P1[Entra ID P1]
+    Q1 -- Risk-based Conditional Access\nIdentity Protection\nPIM / JIT role activation\nAccess Reviews --> P2[Entra ID P2]
+    Q1 -- Entitlement Management\nLifecycle Workflows\nPIM for Groups\nAdvanced Access Reviews --> GOV[Entra ID Governance\nadd-on to P1 or P2]
+
+    FREE --> NOTE_FREE[Included with M365 / Azure subscription]
+    P1 --> NOTE_P1[Superset of Free]
+    P2 --> NOTE_P2[Superset of P1]
+    GOV --> NOTE_GOV[Requires P1 or P2 as prerequisite]

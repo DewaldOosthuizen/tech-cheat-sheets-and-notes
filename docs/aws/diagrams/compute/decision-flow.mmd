@@ -1,0 +1,9 @@
+flowchart TD
+    A{Need serverless?} -->|Yes| B[Lambda]
+    A -->|No| C{Need containers?}
+    C -->|Yes| D{Manage cluster?}
+    D -->|Yes| E[EKS]
+    D -->|No| F[ECS Fargate]
+    C -->|No| G{Full OS control?}
+    G -->|Yes| H[EC2]
+    G -->|No| I[Elastic Beanstalk]

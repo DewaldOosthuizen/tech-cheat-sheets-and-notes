@@ -1,0 +1,26 @@
+flowchart TD
+    Start[Choose Google Cloud identity & access approach] --> Q1{Who are the identities?}
+
+    Q1 -->|Human users — workforce| Q2{On-prem AD exists?}
+    Q2 -->|Yes — hybrid| DCI[Cloud Identity — sync with on-prem AD via Google Cloud Directory Sync]
+    Q2 -->|No — cloud-only| CI[Cloud Identity — standalone cloud identity]
+
+    Q1 -->|Human users — customers/partners| CI2[Cloud Identity or third-party IdP via SAML/OIDC]
+
+    Q1 -->|Workloads — service-to-service| Q3{Google Cloud resource or external?}
+    Q3 -->|Google Cloud resource| SA[Service Account — dedicated identity for the workload]
+    Q3 -->|GKE workload| WI[Workload Identity — map K8s SA to IAM SA]
+    Q3 -->|External workload| EXTERN[Service Account with key or workload identity federation]
+
+    Q1 -->|Fine-grained access control| Q4{Resource-level permissions needed?}
+    Q4 -->|Yes — IAM Conditions, roles| IAM[Cloud IAM — roles, policies, conditions]
+    Q4 -->|No — basic roles| IAM2[Cloud IAM predefined roles]
+
+    DCI --> End[Configure SSO, MFA, device policies]
+    CI --> End
+    CI2 --> End
+    SA --> End[Grant least-privilege IAM roles to the SA]
+    WI --> End
+    EXTERN --> End
+    IAM --> End
+    IAM2 --> End

@@ -1,0 +1,14 @@
+flowchart TD
+    A([Choose App Service Plan]) --> B{Need full VNet isolation\nor regulatory compliance\neg. PCI-DSS / HIPAA?}
+    B -- Yes --> C[Isolated v2 / ASEv3\nI1v2–I3v2\n100 instances]
+    B -- No --> D{Need VNet integration\nor more than 5\ndeployment slots?}
+    D -- Yes --> E{Need zone redundancy\nor highest RAM/CPU ratio?}
+    E -- Yes --> F[Premium v3\nP1v3–P3v3\n20 slots]
+    E -- No --> G[Premium v2\nP1v2–P3v2\n20 slots — cost-optimised]
+    D -- No --> H{Need auto-scale\nor deployment slots?}
+    H -- Yes --> I[Standard\nS1–S3\n5 slots]
+    H -- No --> J{Production workload\nrequiring SLA?}
+    J -- Yes --> I
+    J -- No --> K{Need dedicated\ncompute?}
+    K -- Yes --> L[Basic\nB1–B3\nmanual scale up to 3]
+    K -- No --> M[Free / Shared\nF1 / D1\nno SLA — dev only]

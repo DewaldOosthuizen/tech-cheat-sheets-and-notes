@@ -1,0 +1,18 @@
+flowchart TD
+    Q1{Need outbound internet\nfrom private subnet?} -- No --> SKIP[No NAT required]
+    Q1 -- Yes --> Q2{Need policy-based\ninspection / FQDN filtering?}
+
+    Q2 -- Yes --> FW[Azure Firewall\nStateful L3-L7 + SNAT]
+    Q2 -- No --> Q3{Static outbound IPs\nfor third-party whitelisting?}
+
+    Q3 -- Yes --> NATGW[NAT Gateway\nManaged SNAT, static public IPs]
+    Q3 -- No --> Q4{SNAT port exhaustion\nor high connection scale?}
+
+    Q4 -- Yes --> NATGW
+    Q4 -- No --> Q5{VMs already behind\nStandard Load Balancer?}
+
+    Q5 -- Yes --> LBOUT[LB Outbound Rules\nSNAT via LB frontend IPs]
+    Q5 -- No --> NATGW
+
+    NATGW --> NOTE1[Up to 16 public IPs\n64,512 SNAT ports each\nStandard SKU IPs only]
+    FW --> NOTE2[Centralised egress\nFQDN rules + threat intel]

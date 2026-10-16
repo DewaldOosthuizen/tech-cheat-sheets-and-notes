@@ -1,0 +1,12 @@
+flowchart TD
+    A[Choose replication] --> B{Need geo-redundancy?}
+    B -- No --> C{Need zone redundancy?}
+    C -- No --> D[LRS]
+    C -- Yes --> E[ZRS]
+    B -- Yes --> F{Need read access to secondary?}
+    F -- No --> G{Need zone redundancy at primary?}
+    G -- No --> H[GRS]
+    G -- Yes --> I[GZRS]
+    F -- Yes --> J{Zone redundancy at primary?}
+    J -- No --> K[RA-GRS]
+    J -- Yes --> L[RA-GZRS]

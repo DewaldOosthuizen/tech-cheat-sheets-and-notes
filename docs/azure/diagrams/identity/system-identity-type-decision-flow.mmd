@@ -1,0 +1,8 @@
+flowchart TD
+    A[System needs to authenticate to Azure resources?] --> B{Runs on Azure resource?}
+    B -- Yes --> C{Identity used by one resource only?}
+    C -- Yes --> D[System-assigned Managed Identity]
+    C -- No --> E[User-assigned Managed Identity]
+    B -- No --> F{Can use workload federation or cert-based app auth?}
+    F -- Yes --> G["Service Principal (App Registration)"]
+    F -- No --> H[Re-evaluate architecture to avoid long-lived secrets]

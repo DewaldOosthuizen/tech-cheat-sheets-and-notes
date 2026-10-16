@@ -1,0 +1,8 @@
+flowchart TD
+    A[Need Redis caching?] --> B{Dev/test only?}
+    B -- Yes --> C[Basic]
+    B -- No --> D{Need VNet or geo-replication?}
+    D -- No --> E[Standard]
+    D -- Yes --> F{Active-active multi-region\\nor Redis modules?}
+    F -- No --> G[Premium]
+    F -- Yes --> H[Enterprise / Enterprise Flash]

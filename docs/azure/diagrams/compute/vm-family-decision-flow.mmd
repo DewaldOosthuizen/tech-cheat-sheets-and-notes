@@ -1,0 +1,8 @@
+flowchart TD
+    A[Choose VM size] --> B{GPU required?}
+    B -- Yes --> C[N-series]
+    B -- No --> D{Primary constraint?}
+    D -- Balanced --> E[D-series General Purpose]
+    D -- High CPU --> F[F-series Compute Optimized]
+    D -- High Memory --> G[E or M-series Memory Optimized]
+    D -- High Disk Throughput --> H[L-series Storage Optimized]

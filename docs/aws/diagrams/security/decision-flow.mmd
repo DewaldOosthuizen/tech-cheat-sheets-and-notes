@@ -1,0 +1,13 @@
+flowchart TD
+    A{Threat detection?} -->|Yes| B[GuardDuty]
+    A -->|No| C{Unified security posture?}
+    C -->|Yes| D[Security Hub]
+    C -->|No| E{Web application protection?}
+    E -->|Yes| F{DDoS layer?}
+    F -->|L7 WAF rules| G[AWS WAF]
+    F -->|L3/L4 DDoS| H[AWS Shield Standard or Advanced]
+    E -->|No| I{Data classification / PII?}
+    I -->|Yes| J[Amazon Macie]
+    I -->|No| K{Encryption key management?}
+    K -->|Yes| L[AWS KMS]
+    K -->|No| M[Revisit requirements]

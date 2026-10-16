@@ -1,0 +1,8 @@
+flowchart TD
+    A[Choose messaging service] --> B{Multiple consumers for same message?}
+    B -- Yes --> C[Service Bus Topic with subscriptions]
+    B -- No --> D{Need dead-letter or ordering?}
+    D -- Yes --> E[Service Bus Queue]
+    D -- No --> F{Large volume simple queue?}
+    F -- Yes --> G[Storage Queue]
+    F -- No --> E

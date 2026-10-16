@@ -1,0 +1,8 @@
+flowchart TD
+    A[Inbound packet arrives] --> B[Check subnet NSG]
+    B --> C{Rule match?}
+    C -- Allow --> D[Check NIC NSG]
+    C -- Deny --> E[Drop packet]
+    D --> F{Rule match?}
+    F -- Allow --> G[Packet reaches VM]
+    F -- Deny --> H[Drop packet]

@@ -1,0 +1,6 @@
+flowchart TD
+    A[Need load balancing?] --> B{HTTP or HTTPS traffic?}
+    B -- No --> C{Production workload?}
+    B -- Yes --> D[Application Gateway]
+    C -- No --> E[Load Balancer Basic]
+    C -- Yes --> F[Load Balancer Standard]

@@ -1,0 +1,16 @@
+flowchart TD
+    AI[Application Insights] --> LM[Live Metrics\nReal-time telemetry stream]
+    AI --> AM[Application Map\nComponent topology + health]
+    AI --> AT[Availability Tests\nExternal URL probes]
+    AI --> SD[Smart Detection\nAI anomaly alerts]
+    AI --> PR[Profiler\nProduction CPU flame graphs]
+    AI --> SDB[Snapshot Debugger\nException call-stack snapshots]
+    AI --> UA[Usage Analytics\nUser behaviour: Users, Sessions, Events]
+
+    AM --> AM1{Dependency healthy?}
+    AM1 -- Yes --> AM2[Green node]
+    AM1 -- No --> AM3[Red node + failure rate]
+
+    AT --> AT1{Probe type?}
+    AT1 -- URL ping / Standard --> AT2[Single URL, up to 5 locations]
+    AT1 -- Multi-step / Custom TrackAvailability --> AT3[Scripted transaction]

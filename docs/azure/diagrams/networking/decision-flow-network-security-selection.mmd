@@ -1,0 +1,9 @@
+flowchart TD
+    A[Protect a workload?] --> B{Volumetric DDoS\nrisk?}
+    B -- Yes, VNet-wide --> C[DDoS Network Protection]
+    B -- Yes, single IP --> D[DDoS IP Protection]
+    B -- No --> E{Inspect / filter\nnetwork traffic?}
+    E -- Subnet/NIC rules only --> F[NSG + ASG]
+    E -- Centralized FQDN\nor L7 filtering --> G{Compliance /\nTLS inspection?}
+    G -- Yes --> H[Azure Firewall Premium]
+    G -- No --> I[Azure Firewall Standard]

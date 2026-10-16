@@ -1,0 +1,11 @@
+graph TD
+    A[AWS Organizations Root]
+    A --> B[Management Account]
+    A --> C[Organizational Units OUs]
+    C --> D[SCPs Service Control Policies]
+    C --> E[Member Accounts]
+    E --> F[Control Tower Guardrails]
+    F --> G[Preventive - SCP-based]
+    F --> H[Detective - AWS Config rules]
+    B --> I[Service Catalog]
+    B --> J[AWS Budgets and Cost Anomaly Detection]

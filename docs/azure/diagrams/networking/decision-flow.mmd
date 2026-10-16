@@ -1,0 +1,10 @@
+flowchart TD
+    A[Need load balancing?] --> B{HTTP/HTTPS?}
+    B -- No --> C{Global?}
+    B -- Yes --> D{Global?}
+    C -- No --> E[Azure Load Balancer]
+    C -- Yes --> F[Traffic Manager]
+    D -- No --> G{Need WAF?}
+    D -- Yes --> H[Azure Front Door]
+    G -- Yes --> I[Application Gateway + WAF]
+    G -- No --> J[Application Gateway]

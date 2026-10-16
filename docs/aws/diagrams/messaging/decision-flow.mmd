@@ -1,0 +1,11 @@
+flowchart TD
+    A{Fan-out / pub-sub?} -->|Yes| B[SNS Simple Notification Service]
+    A -->|No| C{Reliable queue / decoupling?}
+    C -->|Yes| D[SQS Simple Queue Service]
+    C -->|No| E{Event routing from AWS services?}
+    E -->|Yes| F[EventBridge]
+    E -->|No| G{Multi-step workflow orchestration?}
+    G -->|Yes| H[Step Functions]
+    G -->|No| I{Real-time streaming?}
+    I -->|Yes| J[Kinesis Data Streams or Firehose]
+    I -->|No| K[Revisit requirements]

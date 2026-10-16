@@ -1,0 +1,6 @@
+flowchart TD
+    A[Access frequency?] -->|Frequent reads/writes| B[Hot tier]
+    A -->|Infrequent, cost-sensitive; 30-day min| C[Cool tier]
+    A -->|Rarely accessed; 90-day min| D[Cold tier]
+    A -->|Archival, rare access; 180-day min| E[Archive tier]
+    E --> F[Note: requires rehydration to Hot or Cool before read]

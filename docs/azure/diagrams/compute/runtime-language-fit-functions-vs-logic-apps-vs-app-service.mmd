@@ -1,0 +1,8 @@
+flowchart TD
+    A[Workload needs HTTP/API or workflow?] --> B{Primarily integration workflow\nwith many connectors?}
+    B -- Yes --> C[Logic Apps]
+    B -- No --> D{Event-triggered\nsmall units of code?}
+    D -- Yes --> E[Azure Functions]
+    D -- No --> F{Long-running web/API\nwith framework runtime control?}
+    F -- Yes --> G[Azure App Service]
+    F -- No --> H[Re-evaluate with Container Apps/AKS]

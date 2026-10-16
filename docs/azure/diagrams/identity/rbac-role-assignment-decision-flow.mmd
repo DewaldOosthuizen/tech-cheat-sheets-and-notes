@@ -1,0 +1,8 @@
+flowchart TD
+    A[Assign role?] --> B{Need to manage resources?}
+    B -- No --> C{Need to manage access only?}
+    B -- Yes --> D{Need to assign roles too?}
+    C -- Yes --> E[User Access Administrator]
+    C -- No --> F[Reader]
+    D -- No --> G[Contributor]
+    D -- Yes --> H[Owner]

@@ -1,0 +1,21 @@
+{#-
+  This file is part of the MkDocs Material theme customization.
+  It adds Vercel Web Analytics and Speed Insights to track page views,
+  site usage, and performance metrics.
+  
+  The scripts are loaded from Vercel's CDN and automatically track
+  page views and performance data across the documentation site.
+  
+  For more information, see:
+  - Analytics: https://vercel.com/docs/analytics/quickstart
+  - Speed Insights: https://vercel.com/docs/speed-insights/quickstart
+-#}
+
+<!-- Vercel Web Analytics -->
+<script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+
+<!-- Vercel Speed Insights -->
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>

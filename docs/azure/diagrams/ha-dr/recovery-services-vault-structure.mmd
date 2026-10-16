@@ -1,0 +1,7 @@
+graph TD
+    A[Recovery Services Vault] --> B[Backup Items]
+    A --> C[Replication Items - ASR]
+    B --> D[Azure VMs]
+    B --> E[SQL in VM]
+    B --> F[Azure Files]
+    C --> G[Replicated VMs - failover ready]

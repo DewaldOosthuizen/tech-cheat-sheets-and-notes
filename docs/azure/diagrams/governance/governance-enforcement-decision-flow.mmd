@@ -1,0 +1,6 @@
+flowchart TD
+    A[Governance requirement?] -->|Enforce compliance rules / auto-remediate| B[Azure Policy]
+    A -->|Organise subscriptions + inherit controls| C[Management Groups]
+    A -->|Provision repeatable governed environment| D[Template Specs + Policy + RBAC]
+    A -->|Cap or alert on spend| E[Budgets + Cost Management]
+    D -->|Legacy environment uses Blueprints?| F[Migrate: Template Specs + Policy + RBAC\nBlueprints retired July 2026]

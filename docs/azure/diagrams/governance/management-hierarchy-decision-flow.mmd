@@ -1,0 +1,6 @@
+flowchart TD
+    A[Organize Azure resources] --> B{Multiple subscriptions?}
+    B -- No --> C[Use Resource Groups within subscription]
+    B -- Yes --> D{Apply policies across subscriptions?}
+    D -- No --> E[Assign policy per subscription]
+    D -- Yes --> F[Create Management Group and assign policy there]

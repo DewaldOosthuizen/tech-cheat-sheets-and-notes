@@ -1,0 +1,7 @@
+graph LR
+    A[Azure Resource] --> B[Diagnostic Settings]
+    B --> C[Log Analytics Workspace]
+    B --> D[Storage Account]
+    B --> E[Event Hub]
+    E --> F[Sentinel / SIEM]
+    C --> G[Alerts / Dashboards]

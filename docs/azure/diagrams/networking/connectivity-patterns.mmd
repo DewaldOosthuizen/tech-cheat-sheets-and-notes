@@ -1,0 +1,6 @@
+graph LR
+    OnPrem -->|ExpressRoute / VPN Gateway| HubVNet
+    HubVNet -->|Peering| SpokeVNet1
+    HubVNet -->|Peering| SpokeVNet2
+    HubVNet --> AzureFirewall
+    HubVNet --> Bastion

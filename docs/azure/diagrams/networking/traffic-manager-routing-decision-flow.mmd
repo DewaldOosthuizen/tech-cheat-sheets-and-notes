@@ -1,0 +1,13 @@
+flowchart TD
+    TM[Traffic Manager — DNS-based global LB] --> Q1{Primary requirement?}
+
+    Q1 -- Lowest latency\nfor user location --> PERF[Performance routing\nRoute to lowest-latency endpoint]
+    Q1 -- Active / standby\nfailover --> PRI[Priority routing\nP1 always first; P2 on failure]
+    Q1 -- Distribute load\nby proportion --> WGT[Weighted routing\n1–1000 weight per endpoint]
+    Q1 -- User location\ncompliance / data residency --> GEO[Geographic routing\nMap regions to endpoints]
+    Q1 -- Return multiple IPs\nfor DNS client-side LB --> MV[Multivalue routing\nIPv4/IPv6 endpoints only]
+    Q1 -- Route by\nclient subnet / IP range --> SUB[Subnet routing\nMap IP ranges to endpoints]
+
+    PERF --> NOTE1[Uses Azure latency tables;\nnot real-time probe]
+    GEO --> NOTE2[Traffic DENIED if\nno region mapping defined]
+    MV --> NOTE3[Up to 10 healthy IPs\nreturned per DNS query]

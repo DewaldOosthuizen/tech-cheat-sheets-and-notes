@@ -1,0 +1,10 @@
+graph TD
+    A[Choose Replication] --> B{Need DR to another region?}
+    B -- No --> C{Need zone resilience?}
+    B -- Yes --> D{Need read from secondary anytime?}
+    C -- No --> E[LRS — cheapest]
+    C -- Yes --> F[ZRS]
+    D -- No --> G{Need zone resilience in primary?}
+    D -- Yes --> H[RA-GRS or RA-GZRS]
+    G -- No --> I[GRS]
+    G -- Yes --> J[GZRS]

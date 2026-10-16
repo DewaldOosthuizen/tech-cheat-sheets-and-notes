@@ -1,0 +1,7 @@
+flowchart TD
+    A[Connect two networks?] --> B{Same or different subscription/region?}
+    B -- Same region --> C[VNet Peering - Regional]
+    B -- Different region --> D[VNet Peering - Global]
+    A --> E{On-premises to Azure?}
+    E -- Low cost, variable --> F[VPN Gateway Site-to-Site]
+    E -- High bandwidth, private --> G[ExpressRoute]

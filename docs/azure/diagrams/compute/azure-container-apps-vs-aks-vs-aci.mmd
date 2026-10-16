@@ -1,0 +1,12 @@
+flowchart TD
+    A[Container workload?] --> B{Existing Kubernetes\nteam expertise or\ncustom K8s API access?}
+    B -- Yes --> AKS[Azure Kubernetes Service]
+    B -- No --> C{Scale-to-zero\nrequirement?}
+    C -- Yes --> D{Microservice complexity\nor Dapr integration?}
+    C -- No --> E{Simple web app\nor single container?}
+    D -- Yes --> ACA[Azure Container Apps]
+    D -- No --> F{Single burst / short-lived\ntask, no persistent scale?}
+    F -- Yes --> ACI[Azure Container Instances]
+    F -- No --> ACA
+    E -- Yes --> APPSVC[App Service Containers]
+    E -- No --> ACA

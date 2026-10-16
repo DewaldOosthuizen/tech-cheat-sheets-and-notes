@@ -1,0 +1,10 @@
+flowchart TD
+    A[Need async communication?] --> B{Events or Messages?}
+    B -- Events --> C{Fan-out to multiple subscribers?}
+    B -- Messages --> D{Ordering required?}
+    C -- Yes --> E[Event Grid]
+    C -- No / High-volume stream --> F[Event Hub]
+    D -- Yes --> G[Service Bus Queue - FIFO sessions]
+    D -- No --> H{Volume very high / simple?}
+    H -- Yes --> I[Storage Queue]
+    H -- No --> J[Service Bus Queue]

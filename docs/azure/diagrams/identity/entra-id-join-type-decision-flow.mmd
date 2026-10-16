@@ -1,0 +1,8 @@
+flowchart TD
+    A[Device registration?] --> B{Corporate or personal device?}
+    B -- Personal/BYOD --> C[Entra ID Registered]
+    B -- Corporate --> D{Existing on-prem AD domain?}
+    D -- No --> E[Entra ID Join - cloud only]
+    D -- Yes --> F{Keep GPO/on-prem dependency?}
+    F -- Yes --> G[Hybrid Entra ID Join]
+    F -- No --> E

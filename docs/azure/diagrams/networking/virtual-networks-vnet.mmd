@@ -1,0 +1,6 @@
+flowchart TD
+    A[Secure PaaS service access?] --> B{Require private IP in VNet?}
+    B -- Yes --> PE[Private Endpoint]
+    B -- No --> C{Traffic must stay on Azure backbone?}
+    C -- Yes --> SE[Service Endpoint]
+    C -- No --> PUB[Public endpoint with firewall rules]

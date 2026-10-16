@@ -1,0 +1,6 @@
+flowchart TD
+    A[AKS workload needs to scale?] --> B{Too many pods for current nodes?}
+    B -- No --> C[HPA adds pod replicas within current node capacity]
+    B -- Yes --> D{Sustained load or burst?}
+    D -- Sustained --> E[Cluster Autoscaler provisions new VM nodes]
+    D -- Short burst --> F[Virtual Nodes burst overflow pods to ACI]

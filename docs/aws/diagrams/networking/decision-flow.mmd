@@ -1,0 +1,13 @@
+flowchart TD
+    A{Global HTTP traffic?} -->|Yes| B[CloudFront]
+    A -->|No| C{API exposure?}
+    C -->|Yes| D[API Gateway]
+    C -->|No| E{Load balance EC2/ECS?}
+    E -->|Yes| F{Layer 7 HTTP/S?}
+    F -->|Yes| G[ALB Application Load Balancer]
+    F -->|No| H{TCP/UDP?}
+    H -->|Yes| I[NLB Network Load Balancer]
+    H -->|No| J[CLB Classic Load Balancer]
+    E -->|No| K{DNS routing?}
+    K -->|Yes| L[Route 53]
+    K -->|No| M[VPC Subnets / Security Groups]
