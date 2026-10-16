@@ -24,23 +24,17 @@ import sys
 from pathlib import Path
 
 try:
-    from scripts import bump_version
-except ImportError:  # running as script from scripts/
-    import bump_version  # type: ignore
+    from bump_version import _parse_calver as _bump_parse_calver
+except ImportError:
+    from scripts.bump_version import _parse_calver as _bump_parse_calver
 
 # CalVer tag matching YYYY.MM.DD or YYYY.MM.DD.micro, used for changelog
 # baseline selection (must stay consistent with .github/workflows/release.yml).
 CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
 
 
-def _filter_calver_tags(raw_tags) -> list[str]:
-    """Return only tags matching CalVer YYYY.MM.DD[.micro]."""
-    return [t for t in raw_tags if CALVER_TAG_RE.match(str(t).strip())]
-
-
-def _parse_calver(tag: str):
-    """Delegate to scripts.bump_version._parse_calver (thin wrapper)."""
-    return bump_version._parse_calver(tag)
+def _filter_calver_tags(raw_tags: list[str]) -> list[str]:
+    return [tag for tag in raw_tags if CALVER_TAG_RE.match(tag.strip())]
 
 
 # Commit message prefixes mapped to changelog sections
@@ -71,6 +65,11 @@ def _run(cmd: list[str], cwd: Path | None = None) -> str:
         return result.stdout.strip()
     except subprocess.CalledProcessError as exc:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{exc.stderr}") from exc
+
+
+def _parse_calver(tag: str) -> tuple[int, int, int, int]:
+    """Thin wrapper around scripts.bump_version._parse_calver (re-exported for tests)."""
+    return _bump_parse_calver(tag)
 
 
 def _get_previous_tag(cwd: Path | None = None, repo_root: Path | None = None) -> str:
