@@ -534,3 +534,7 @@ The workflow defaults to read-only `contents` permissions. Only the
 the release tag and create the GitHub Release. No job receives GitHub OIDC
 permissions; Vercel deployment authenticates with the configured
 `VERCEL_TOKEN`.
+
+## GitHub Actions Pinning Policy
+
+All GitHub Actions referenced in `.github/workflows/release.yml` must be pinned to a full-length (40-character hexadecimal) commit SHA with a readable version comment (for example `actions/checkout@<sha>  # v4.2.2`). Movable tags such as `@vX` or `@latest` are prohibited.
