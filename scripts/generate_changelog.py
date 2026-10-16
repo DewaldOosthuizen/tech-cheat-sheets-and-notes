@@ -44,6 +44,7 @@ def _parse_calver(tag: str):
 
 
 # Commit message prefixes mapped to changelog sections
+
 CATEGORIES = [
     ("feat", "✨ Features"),
     ("fix", "🐛 Bug Fixes"),
