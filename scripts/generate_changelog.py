@@ -28,8 +28,8 @@ try:
 except ImportError:  # running as script from scripts/
     import bump_version  # type: ignore
 
-
-# CalVer tag regex consistent with .github/workflows/release.yml
+# CalVer tag matching YYYY.MM.DD or YYYY.MM.DD.micro, used for changelog
+# baseline selection (must stay consistent with .github/workflows/release.yml).
 CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
 
 
@@ -72,16 +72,19 @@ def _run(cmd: list[str], cwd: Path | None = None) -> str:
         raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{exc.stderr}") from exc
 
 
-def _get_previous_tag(cwd: Path | None = None, repo_root: Path | None = None):
-    """Return the second-most-recent CalVer tag, or '' if fewer than 2.
+def _get_previous_tag(cwd: Path | None = None, repo_root: Path | None = None) -> str:
+    """Return the second-most-recent CalVer tag name, or empty string if < 2.
 
-    Optional cwd/repo_root propagated to _run; default behaviour unchanged.
+    When a release tag has already been created and pushed (as in the release
+    pipeline), the newest tag is the one being released. The changelog should
+    show commits since the *previous* tag, so we skip the latest and use the
+    one before it. With 0 or 1 CalVer tags total, there is no baseline — return "".
     """
-    root = repo_root or cwd
+    root = repo_root if repo_root is not None else (cwd if cwd is not None else _repo_root())
     tags_raw = _run(["git", "tag"], cwd=root).splitlines()
-    calver = _filter_calver_tags(tags_raw)
-    calver_sorted = sorted(calver, key=_parse_calver, reverse=True)
-    return calver_sorted[1] if len(calver_sorted) >= 2 else ""
+    calver_tags = _filter_calver_tags(tags_raw)
+    calver_tags.sort(key=_parse_calver, reverse=True)
+    return calver_tags[1] if len(calver_tags) >= 2 else ""
 
 
 def _get_commits_since(tag: str) -> list[str]:

@@ -258,6 +258,61 @@ class TestMainInProcess:
             _run(["git", "this-is-not-a-git-subcommand"])
 
 
+class TestCalverBaselineSelection:
+    """Deterministic CalVer baseline selection helpers."""
+
+    def test_parse_calver_basic_and_micro(self):
+        from scripts.generate_changelog import _parse_calver
+
+        assert _parse_calver("2026.10.15") == (2026, 10, 15, 0)
+        assert _parse_calver("2026.10.15.1") == (2026, 10, 15, 1)
+
+    def test_filter_calver_tags_mixed(self):
+        from scripts.generate_changelog import _filter_calver_tags
+
+        raw = ["v1.0.0", "release-foo", "2026.10.15", "2026.10.15.1", "not-a-date"]
+        assert _filter_calver_tags(raw) == ["2026.10.15", "2026.10.15.1"]
+
+    def test_get_previous_tag_temp_repo_mixed_tags(self, tmp_path):
+        import subprocess
+
+        from scripts.generate_changelog import _get_previous_tag
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / "f").write_text("x")
+        subprocess.run(["git", "add", "."], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-m", "first"], cwd=repo, check=True)
+        for tag in ["v1.0.0", "release-foo", "2026.10.15", "not-a-date"]:
+            subprocess.run(["git", "tag", tag], cwd=repo, check=True)
+        (repo / "f").write_text("y")
+        subprocess.run(["git", "add", "."], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-m", "second"], cwd=repo, check=True)
+        subprocess.run(["git", "tag", "2026.10.15.1"], cwd=repo, check=True)
+
+        assert _get_previous_tag(repo_root=repo) == "2026.10.15"
+
+    def test_get_previous_tag_fewer_than_two_calver(self, tmp_path):
+        import subprocess
+
+        from scripts.generate_changelog import _get_previous_tag
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / "f").write_text("x")
+        subprocess.run(["git", "add", "."], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-m", "first"], cwd=repo, check=True)
+        subprocess.run(["git", "tag", "2026.10.15"], cwd=repo, check=True)
+
+        assert _get_previous_tag(repo_root=repo) == ""
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 

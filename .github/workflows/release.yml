@@ -332,6 +332,10 @@ jobs:
           fi
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
 
+          # Changelog/baseline rule: only CalVer tags (YYYY.MM.DD or
+          # YYYY.MM.DD.micro) count, ordered by parsed numeric date then
+          # micro; the previous release is the second entry. Enforced in
+          # scripts/generate_changelog.py as well.
           if [ -z "$LAST_TAG" ]; then
             echo "No existing CalVer tag found — will create one"
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -479,6 +483,10 @@ jobs:
                 --target main
             fi
           else
+            # Changelog/baseline rule (shared with scripts/generate_changelog.py):
+            # only CalVer tags (YYYY.MM.DD or YYYY.MM.DD.micro) count, ordered
+            # by parsed numeric date then micro; the previous release is the
+            # second entry.
             python3 scripts/generate_changelog.py --output CHANGELOG.md
 
             gh release create "$TAG" \
