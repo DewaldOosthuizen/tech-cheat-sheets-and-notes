@@ -486,3 +486,27 @@ class TestProductionReleaseWorkflow:
             content,
         )
         assert re.search(r"(?m)^  cancel-in-progress: true$", content)
+
+
+class TestReleaseActionPinning:
+    """All third-party GitHub Actions in release.yml must be pinned to a full SHA."""
+
+    def test_all_action_refs_use_full_commit_sha(self):
+        import re
+
+        content = RELEASE_YML.read_text()
+        uses_values = re.findall(r"(?m)^\s*uses:\s*(.+?)\s*$", content)
+        assert uses_values, "release.yml must contain uses: references"
+        for value in uses_values:
+            value = value.strip()
+            if value.startswith("./") or value.startswith(".\\"):
+                continue
+            assert "@" in value, f"Unpinned action reference: {value!r}"
+            action, rest = value.split("@", 1)
+            ref = rest.split()[0]
+            assert re.fullmatch(r"[0-9a-f]{40}", ref), (
+                f"Action {action!r} must be pinned to a 40-char SHA, got {ref!r}"
+            )
+            assert re.search(r"#\s*v\S+", rest), (
+                f"Action {action!r} must include a trailing version comment, got {value!r}"
+            )
