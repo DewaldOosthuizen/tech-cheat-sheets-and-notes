@@ -47,7 +47,7 @@ MMD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-mmd)
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install \
         markdownlint \
-		puppeteer-config npm-audit mermaid-check \
+		puppeteer-config npm-deps npm-audit mermaid-check \
         python-lint python-lint-fix \
         python-audit \
         python-test python-test-311 python-test-312 python-test-313 python-test-all \
@@ -107,16 +107,17 @@ markdownlint:
 puppeteer-config:
 	@echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > $(PUPPETEER_CONFIG_FILE)
 
-mermaid-check: venv puppeteer-config
-	@echo "--- mermaid-check ---"
+npm-deps:
 	npm ci
+
+mermaid-check: venv puppeteer-config npm-deps
+	@echo "--- mermaid-check ---"
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
 	  $(PY) scripts/validate_mermaid.py
 
-npm-audit:
+npm-audit: npm-deps
 	@echo "--- npm-audit ---"
-	npm ci
 	npm audit --audit-level=high
 
 # ── Python lint ───────────────────────────────────────────────────────────────

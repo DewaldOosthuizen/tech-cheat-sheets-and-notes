@@ -122,7 +122,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+      - name: Cache installed Node dependencies
+        id: node-modules-cache
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9  # v4.2.3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: Expose local bin on PATH
         # npm ci installs mmdc into node_modules/.bin; add it so validate_mermaid.py can call it.

@@ -48,7 +48,8 @@ class TestMakefileNodeDependencyReuse:
     def test_mermaid_and_audit_depend_on_shared_npm_install(self) -> None:
         content = MAKEFILE.read_text()
 
-        assert re.search(r"(?m)^\.PHONY: npm-deps$", content)
+        phony_declarations = re.search(r"(?ms)^\.PHONY:.*?(?=^[^ \t]|\Z)", content)
+        assert phony_declarations and "npm-deps" in phony_declarations.group()
         assert re.search(r"(?m)^npm-deps:\n\tnpm ci$", content)
         assert re.search(r"(?m)^mermaid-check: .*\bnpm-deps\b", content)
         assert re.search(r"(?m)^npm-audit: npm-deps$", content)
