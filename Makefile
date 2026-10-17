@@ -254,6 +254,8 @@ ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test ch
 	@echo "=== CI passed ==="
 
 ci-full: ci link-check ## Run the full pipeline including link checks
+	@echo ""
+	@echo "=== Full CI including link-check passed ==="
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 clean: ## Remove virtual environments, dependencies, and build artifacts
