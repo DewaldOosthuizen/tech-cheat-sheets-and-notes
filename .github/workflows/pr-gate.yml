@@ -35,7 +35,8 @@
 # 4. python-test (needs: mermaid-check)
 # 5. npm-audit (independent; runs in parallel with the chain)
 # 6. check-docs-deps (independent; runs in parallel with the chain)
-# 7. pr-gate-summary (needs: all above; if: always() to report status)
+# 7. link-check (independent; runs in parallel with the other checks)
+# 8. pr-gate-summary (needs: all above; if: always() to report status)
 
 name: PR Gate
 
@@ -209,13 +210,24 @@ jobs:
           grep -v '^[[:space:]]*#' /tmp/requirements-docs-generated.txt | grep -v '^[[:space:]]*$' > /tmp/docs-generated.txt
           diff /tmp/docs-committed.txt /tmp/docs-generated.txt
 
+  # 7. Dead-link audit
+  # Independent; runs in parallel because it doesn't depend on other checks.
+  link-check:
+    name: Dead Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Run dead-link audit
+        run: make link-check
+
   # Summary job — ensures all required checks pass before merge
   # if: always() guarantees this runs even if a previous job failed, so
   # the PR shows a clear "PR Gate Summary" failure instead of a gray skip.
   pr-gate-summary:
     name: PR Gate Summary
     runs-on: ubuntu-latest
-    needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit, check-docs-deps]
+    needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit, check-docs-deps, link-check]
     if: always()
     steps:
       - name: Check all jobs succeeded
@@ -242,6 +254,10 @@ jobs:
           fi
           if [[ "${{ needs.check-docs-deps.result }}" != "success" ]]; then
             echo "❌ check-docs-deps failed"
+            exit 1
+          fi
+          if [[ "${{ needs.link-check.result }}" != "success" ]]; then
+            echo "❌ link-check failed"
             exit 1
           fi
           echo "✅ All PR gate checks passed"

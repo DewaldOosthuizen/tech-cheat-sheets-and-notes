@@ -25,9 +25,11 @@ def test_pr_gate_summary_requires_and_checks_link_check() -> None:
     summary = re.search(r"^  pr-gate-summary:\n(.*)\Z", content, re.M | re.S)
 
     assert summary, "PR Gate must define the summary job"
-    assert "needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit, check-docs-deps, link-check]" in (
-        summary.group(1)
+    expected_needs = (
+        "needs: [markdownlint, python-lint, mermaid-check, python-test, "
+        "npm-audit, check-docs-deps, link-check]"
     )
+    assert expected_needs in summary.group(1)
     assert 'needs.link-check.result }}" != "success"' in summary.group(1)
 
 

@@ -269,6 +269,10 @@ ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test do
 	@echo ""
 	@echo "=== CI passed ==="
 
+ci-full: ci link-check
+	@echo ""
+	@echo "=== Full CI including link-check passed ==="
+
 # ── Clean ─────────────────────────────────────────────────────────────────────
 clean:
 	rm -rf $(VENV) .venv-311 .venv-312 .venv-313
