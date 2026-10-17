@@ -32,7 +32,12 @@ except ImportError:
 # baseline selection (must stay consistent with .github/workflows/release.yml).
 CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
 
-# Commit message prefixes mapped to changelog sections"""
+
+def _filter_calver_tags(raw_tags: list[str]) -> list[str]:
+    return [tag for tag in raw_tags if CALVER_TAG_RE.match(tag.strip())]
+
+
+# Commit message prefixes mapped to changelog sections
 
 CATEGORIES = [
     ("feat", "✨ Features"),
@@ -65,10 +70,6 @@ def _run(cmd: list[str], cwd: Path | None = None) -> str:
 def _parse_calver(tag: str) -> tuple[int, int, int, int]:
     """Thin wrapper around scripts.bump_version._parse_calver (re-exported for tests)."""
     return _bump_parse_calver(tag)
-
-
-def _filter_calver_tags(raw_tags: list[str]) -> list[str]:
-    return [t for t in raw_tags if CALVER_TAG_RE.match(t.strip())]
 
 
 def _get_previous_tag(cwd: Path | None = None, repo_root: Path | None = None) -> str:
