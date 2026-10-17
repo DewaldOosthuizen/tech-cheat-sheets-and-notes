@@ -10,6 +10,21 @@ import pytest
 SCRIPT = Path(__file__).parent.parent / "scripts" / "generate_changelog.py"
 
 
+@pytest.fixture(autouse=True)
+def _isolate_git_repository_context(monkeypatch):
+    """Keep subprocess Git commands scoped to their ``cwd`` repository."""
+    for variable in (
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_COMMON_DIR",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_PREFIX",
+    ):
+        monkeypatch.delenv(variable, raising=False)
+
+
 def _run_changelog(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
@@ -281,6 +296,7 @@ class TestCalverBaselineSelection:
         repo = tmp_path / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "core.hooksPath", "/dev/null"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
         (repo / "f").write_text("x")
@@ -303,6 +319,7 @@ class TestCalverBaselineSelection:
         repo = tmp_path / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "core.hooksPath", "/dev/null"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
         (repo / "f").write_text("x")
@@ -315,3 +332,49 @@ class TestCalverBaselineSelection:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestCalverBaselineHelpers:
+    def test_filter_calver_tags(self):
+        from scripts.generate_changelog import _filter_calver_tags
+
+        tags = ["v1.0.0", "release-foo", "2026.10.15", "2026.10.15.1", "not-a-date"]
+        assert _filter_calver_tags(tags) == ["2026.10.15", "2026.10.15.1"]
+
+    def test_parse_calver(self):
+        from scripts.generate_changelog import _parse_calver
+
+        assert _parse_calver("2026.10.15") == (2026, 10, 15, 0)
+        assert _parse_calver("2026.10.15.1") == (2026, 10, 15, 1)
+
+
+class TestCalverBaselineIntegration:
+    def _make_repo(self, tmp_path, name):
+        import subprocess
+
+        repo = tmp_path / name
+        repo.mkdir()
+        subprocess.run(["git", "init", "-b", "main"], cwd=repo, check=True, capture_output=True)
+        subprocess.run(["git", "config", "core.hooksPath", "/dev/null"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / "f.txt").write_text("x")
+        subprocess.run(["git", "add", "."], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-m", "feat: initial"], cwd=repo, check=True)
+        return repo, subprocess
+
+    def test_mixed_tags_baseline(self, tmp_path):
+        from scripts.generate_changelog import _get_previous_tag
+
+        repo, subprocess = self._make_repo(tmp_path, "repo")
+        for tag in ["v1.0.0", "release-foo", "2026.10.15", "2026.10.15.1", "not-a-date"]:
+            subprocess.run(["git", "tag", tag], cwd=repo, check=True)
+        assert _get_previous_tag(repo_root=repo) == "2026.10.15"
+
+    def test_fewer_than_two_calver_returns_empty(self, tmp_path):
+        from scripts.generate_changelog import _get_previous_tag
+
+        repo, subprocess = self._make_repo(tmp_path, "repo2")
+        for tag in ["v1.0.0", "2026.10.15", "not-a-date"]:
+            subprocess.run(["git", "tag", tag], cwd=repo, check=True)
+        assert _get_previous_tag(repo_root=repo) == ""
