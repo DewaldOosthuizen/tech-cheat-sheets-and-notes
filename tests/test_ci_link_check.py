@@ -43,6 +43,6 @@ def test_pr_gate_job_order_documents_link_check() -> None:
 def test_ci_full_includes_ci_and_link_check() -> None:
     content = MAKEFILE.read_text(encoding="utf-8")
 
-    assert re.search(r"^ci-full:\s+ci\s+link-check\s*$", content, re.M), (
+    assert re.search(r"^ci-full:\s+ci\s+link-check(?:\s+##.*)?\s*$", content, re.M), (
         "ci-full must depend on both ci and link-check"
     )
