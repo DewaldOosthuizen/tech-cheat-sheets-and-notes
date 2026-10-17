@@ -10,6 +10,7 @@ from conftest import REPO_ROOT
 
 MAKEFILE = REPO_ROOT / "Makefile"
 PR_GATE_YML = REPO_ROOT / ".github" / "workflows" / "pr-gate.yml"
+CACHE_ACTION_REF = "actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809"
 
 
 class TestPrGateNodeModulesCache:
@@ -22,7 +23,7 @@ class TestPrGateNodeModulesCache:
 
         assert len(cache_steps) == 1, "Mermaid job must define one installed-dependencies cache"
         cache_step = cache_steps[0]
-        assert re.fullmatch(r"actions/cache@[0-9a-f]{40}", cache_step["uses"])
+        assert cache_step["uses"] == CACHE_ACTION_REF
         assert cache_step["with"]["path"] == "node_modules"
         assert cache_step["with"]["key"] == (
             "${{ runner.os }}-node-${{ env.NODE_VERSION }}-"
