@@ -48,7 +48,7 @@ MMD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-mmd)
 # ── Phony declarations ─────────────────────────────────────────────────────────
 .PHONY: help venv install ensure-uv \
         markdownlint \
-		puppeteer-config npm-audit mermaid-check \
+		puppeteer-config npm-deps npm-audit mermaid-check \
         python-lint python-lint-fix \
         python-audit \
         python-test python-test-311 python-test-312 python-test-313 python-test-all \
@@ -90,16 +90,17 @@ markdownlint: ## Lint Markdown files
 puppeteer-config: ## Configure Puppeteer for sandboxed environments
 	@echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > $(PUPPETEER_CONFIG_FILE)
 
-mermaid-check: venv puppeteer-config ## Validate Mermaid diagrams in Markdown and .mmd files
-	@echo "--- mermaid-check ---"
+npm-deps: ## Install Node dependencies
 	npm ci
+
+mermaid-check: venv puppeteer-config npm-deps ## Validate Mermaid diagrams in Markdown and .mmd files
+	@echo "--- mermaid-check ---"
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
 	  $(PY) scripts/validate_mermaid.py
 
-npm-audit: ## Audit Node dependencies for high-severity vulnerabilities
+npm-audit: npm-deps ## Audit Node dependencies for high-severity vulnerabilities
 	@echo "--- npm-audit ---"
-	npm ci
 	npm audit --audit-level=high
 
 # ── Python lint ───────────────────────────────────────────────────────────────

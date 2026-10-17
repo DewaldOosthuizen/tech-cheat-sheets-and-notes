@@ -10,6 +10,21 @@ import pytest
 SCRIPT = Path(__file__).parent.parent / "scripts" / "generate_changelog.py"
 
 
+@pytest.fixture(autouse=True)
+def _isolate_git_repository_context(monkeypatch):
+    """Keep subprocess Git commands scoped to their ``cwd`` repository."""
+    for variable in (
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_COMMON_DIR",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+        "GIT_PREFIX",
+    ):
+        monkeypatch.delenv(variable, raising=False)
+
+
 def _run_changelog(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, str(SCRIPT), *args],
@@ -281,6 +296,7 @@ class TestCalverBaselineSelection:
         repo = tmp_path / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "core.hooksPath", "/dev/null"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
         (repo / "f").write_text("x")
@@ -303,6 +319,7 @@ class TestCalverBaselineSelection:
         repo = tmp_path / "repo"
         repo.mkdir()
         subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "core.hooksPath", "/dev/null"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
         (repo / "f").write_text("x")
@@ -338,6 +355,7 @@ class TestCalverBaselineIntegration:
         repo = tmp_path / name
         repo.mkdir()
         subprocess.run(["git", "init", "-b", "main"], cwd=repo, check=True, capture_output=True)
+        subprocess.run(["git", "config", "core.hooksPath", "/dev/null"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.email", "t@t.com"], cwd=repo, check=True)
         subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
         (repo / "f.txt").write_text("x")
