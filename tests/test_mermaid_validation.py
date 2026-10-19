@@ -4,6 +4,8 @@ import re
 import shutil
 from unittest.mock import patch
 
+import mermaid_discovery
+import mermaid_validation
 import pytest
 import validate_mermaid
 from conftest import REPO_ROOT
@@ -38,7 +40,7 @@ class TestValidateBlockFileNotFound:
     """Tests for FileNotFoundError handling in validate_block()."""
 
     def test_validate_block_returns_false_when_mmdc_not_on_path(self):
-        with patch("validate_mermaid.subprocess.run", side_effect=FileNotFoundError):
+        with patch("mermaid_validation.subprocess.run", side_effect=FileNotFoundError):
             result = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
         assert result[0] is False
         assert result[1] == "mmdc binary not found on PATH"
@@ -51,7 +53,7 @@ class TestValidateBlockTimeout:
         import subprocess
 
         timeout_exc = subprocess.TimeoutExpired(cmd="mmdc", timeout=60)
-        with patch("validate_mermaid.subprocess.run", side_effect=timeout_exc):
+        with patch("mermaid_validation.subprocess.run", side_effect=timeout_exc):
             result = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
         assert result[0] is False
         assert result[1] == "mmdc timed out after 60 s"
@@ -60,7 +62,7 @@ class TestValidateBlockTimeout:
         import subprocess
 
         timeout_exc = subprocess.TimeoutExpired(cmd="mmdc", timeout=120)
-        with patch("validate_mermaid.subprocess.run", side_effect=timeout_exc):
+        with patch("mermaid_validation.subprocess.run", side_effect=timeout_exc):
             result = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n", timeout=120)
         assert result[0] is False
         assert result[1] == "mmdc timed out after 120 s"
@@ -70,8 +72,8 @@ class TestValidateBlockTimeout:
 
         timeout_exc = subprocess.TimeoutExpired(cmd="mmdc", timeout=120)
         with (
-            patch.dict("validate_mermaid.os.environ", {"MMDC_TIMEOUT_SECONDS": "120"}),
-            patch("validate_mermaid.subprocess.run", side_effect=timeout_exc),
+            patch.dict("mermaid_validation.os.environ", {"MMDC_TIMEOUT_SECONDS": "120"}),
+            patch("mermaid_validation.subprocess.run", side_effect=timeout_exc),
         ):
             result = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
         assert result[0] is False
@@ -126,7 +128,7 @@ class TestExtractMermaidBlocks:
         ],
     )
     def test_extract(self, text, expected_count, expected_content):
-        result = validate_mermaid._extract_from_text(text)
+        result = mermaid_discovery._extract_from_text(text)
         assert len(result) == expected_count
         if expected_content is not None:
             assert result[0] == expected_content
@@ -139,9 +141,7 @@ class TestPathlibRefactor:
         """Cleanup must use Path.unlink, not os.unlink."""
         import inspect
 
-        import validate_mermaid as vm
-
-        src = inspect.getsource(vm._run_mmdc)
+        src = inspect.getsource(mermaid_validation._run_mmdc)
         assert "os.unlink" not in src, "_run_mmdc must not use os.unlink"
         assert "os.path.exists" not in src, "_run_mmdc must not use os.path.exists"
         assert "unlink(missing_ok=True)" in src
@@ -156,14 +156,12 @@ class TestPathlibRefactor:
         assert "os.path.isfile" not in src, "run() must not use os.path.isfile"
         assert ".is_file()" in src
 
-    def test_import_os_present(self):
-        """The script must import os (needed for os.environ.get in PUPPETEER_CONFIG)."""
+    def test_import_os_present_in_validation_module(self):
+        """mermaid_validation must import os (needed for os.environ.get in PUPPETEER_CONFIG)."""
         import ast
         import inspect
 
-        import validate_mermaid as vm
-
-        source = inspect.getsource(vm)
+        source = inspect.getsource(mermaid_validation)
         tree = ast.parse(source)
         os_imports = [
             node
@@ -180,9 +178,7 @@ class TestPathlibRefactor:
         """SVG path must be derived with Path.with_suffix, not string.replace."""
         import inspect
 
-        import validate_mermaid as vm
-
-        src = inspect.getsource(vm._run_mmdc)
+        src = inspect.getsource(mermaid_validation._run_mmdc)
         assert '.replace(".mmd"' not in src, "must not use string.replace for suffix"
         assert "with_suffix" in src
 
@@ -196,7 +192,7 @@ class TestExtractMermaidBlocksFromFile:
     def test_extract_reads_file_and_returns_blocks(self, tmp_path):
         md = tmp_path / "test.md"
         md.write_text("```mermaid\ngraph TD\n  A --> B\n```\n", encoding="utf-8")
-        result = validate_mermaid.extract_mermaid_blocks(str(md))
+        result = mermaid_discovery.extract_mermaid_blocks(str(md))
         assert len(result) == 1
         assert "graph TD" in result[0]
 
@@ -209,7 +205,7 @@ class TestExtractMermaidBlocksFileErrors:
         md.write_text("```mermaid\ngraph TD\n  A-->B\n```", encoding="utf-8")
         md.chmod(0o000)
         with pytest.raises(RuntimeError) as excinfo:
-            validate_mermaid.extract_mermaid_blocks(str(md))
+            mermaid_discovery.extract_mermaid_blocks(str(md))
         md.chmod(0o644)  # restore so pytest can clean up tmp_path
         assert str(md) in str(excinfo.value)
 
@@ -217,7 +213,7 @@ class TestExtractMermaidBlocksFileErrors:
         md = tmp_path / "binary.md"
         md.write_bytes(b"\xff\xfe invalid utf-8")
         with pytest.raises(RuntimeError) as excinfo:
-            validate_mermaid.extract_mermaid_blocks(str(md))
+            mermaid_discovery.extract_mermaid_blocks(str(md))
         assert str(md) in str(excinfo.value)
 
 
@@ -271,9 +267,9 @@ class TestValidateBlockPuppeteerConfig:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
             patch(
-                "validate_mermaid.subprocess.run",
+                "mermaid_validation.subprocess.run",
                 side_effect=_write_svg_and_succeed,
             ) as mock_run,
         ):
@@ -296,8 +292,8 @@ class TestValidateBlockPuppeteerConfig:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_write_svg_and_succeed),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_write_svg_and_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, stderr = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -462,7 +458,7 @@ class TestValidateBlockDegenerateSvg:
 
     def test_min_valid_svg_size_bytes_constant_exists_and_equals_100(self):
         """The MIN_VALID_SVG_SIZE_BYTES constant must be exposed and equal 100."""
-        assert validate_mermaid.MIN_VALID_SVG_SIZE_BYTES == 100
+        assert mermaid_validation.MIN_VALID_SVG_SIZE_BYTES == 100
 
     def test_validate_block_returns_false_on_degenerate_svg(self, tmp_path):
         import subprocess
@@ -478,8 +474,8 @@ class TestValidateBlockDegenerateSvg:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_write_empty_svg_and_succeed),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_write_empty_svg_and_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, msg = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -494,11 +490,11 @@ class TestRealCheatSheet:
     """Integration tests that read a real domain page from disk."""
 
     def test_extracts_nonzero_blocks_from_real_cheat_sheet(self):
-        blocks = validate_mermaid.extract_mermaid_blocks(_REAL_MD)
+        blocks = mermaid_discovery.extract_mermaid_blocks(_REAL_MD)
         assert len(blocks) > 0, "Expected at least one Mermaid block in the cheat sheet"
 
     def test_all_blocks_are_non_empty_strings(self):
-        blocks = validate_mermaid.extract_mermaid_blocks(_REAL_MD)
+        blocks = mermaid_discovery.extract_mermaid_blocks(_REAL_MD)
         for i, b in enumerate(blocks):
             assert isinstance(b, str) and b.strip(), f"Block {i + 1} is empty or not a string"
 
@@ -508,10 +504,10 @@ class TestRealCheatSheetIntegration:
     """Integration tests that invoke validate_block against the real cheat sheet."""
 
     def test_all_diagrams_pass(self):
-        blocks = validate_mermaid.extract_mermaid_blocks(_REAL_MD)
+        blocks = mermaid_discovery.extract_mermaid_blocks(_REAL_MD)
         assert len(blocks) > 0, "Expected at least one Mermaid block in the cheat sheet"
         for i, block in enumerate(blocks):
-            ok, err = validate_mermaid.validate_block(i, block)
+            ok, err = mermaid_validation.validate_block(i, block)
             assert ok, f"Diagram {i + 1} failed: {err}"
 
 
@@ -547,13 +543,13 @@ class TestExpandSnippetFileRead:
         snippet_file.write_text(snippet_content, encoding="utf-8")
 
         block = '--8<-- "azure/diagrams/networking/flow.mmd"'
-        result = validate_mermaid._expand_snippet(block, tmp_path)
+        result = mermaid_discovery._expand_snippet(block, tmp_path)
         assert result == snippet_content
 
     def test_raises_runtime_error_when_file_unreadable(self, tmp_path):
         block = '--8<-- "azure/diagrams/missing.mmd"'
         with pytest.raises(RuntimeError, match="Cannot read snippet file"):
-            validate_mermaid._expand_snippet(block, tmp_path)
+            mermaid_discovery._expand_snippet(block, tmp_path)
 
 
 class TestExpandSnippetsOSError:
@@ -561,7 +557,7 @@ class TestExpandSnippetsOSError:
 
     def test_missing_file_directive_left_unexpanded(self, tmp_path):
         directive = '--8<-- "missing/file.md"'
-        result = validate_mermaid.expand_snippets(directive, tmp_path)
+        result = mermaid_discovery.expand_snippets(directive, tmp_path)
         assert result == directive
 
 
@@ -571,7 +567,7 @@ class TestExpandSnippetRejectsTraversal:
     def test_rejects_traversal(self, tmp_path):
         block = '--8<-- "../../../../etc/passwd"'
         with pytest.raises(RuntimeError, match="escapes base directory"):
-            validate_mermaid._expand_snippet(block, tmp_path)
+            mermaid_discovery._expand_snippet(block, tmp_path)
 
 
 class TestExpandSnippetsRejectsTraversal:
@@ -579,7 +575,7 @@ class TestExpandSnippetsRejectsTraversal:
 
     def test_rejects_traversal(self, tmp_path):
         directive = '--8<-- "../../../../etc/passwd"'
-        result = validate_mermaid.expand_snippets(directive, tmp_path)
+        result = mermaid_discovery.expand_snippets(directive, tmp_path)
         assert result == directive
 
 
@@ -589,7 +585,7 @@ class TestExtractMermaidBlocksNoExpand:
     def test_returns_raw_blocks_without_expansion(self, tmp_path):
         md = tmp_path / "page.md"
         md.write_text("```mermaid\ngraph TD\n  A-->B\n```\n", encoding="utf-8")
-        blocks = validate_mermaid.extract_mermaid_blocks(str(md), do_expand_snippets=False)
+        blocks = mermaid_discovery.extract_mermaid_blocks(str(md), do_expand_snippets=False)
         assert len(blocks) == 1
         assert "A-->B" in blocks[0]
 
@@ -601,7 +597,7 @@ class TestExtractMermaidBlocksRuntimeErrorPropagation:
         md = tmp_path / "page.md"
         md.write_text('```mermaid\n--8<-- "missing.mmd"\n```\n', encoding="utf-8")
         with pytest.raises(RuntimeError):
-            validate_mermaid.extract_mermaid_blocks(str(md), snippet_base=tmp_path)
+            mermaid_discovery.extract_mermaid_blocks(str(md), snippet_base=tmp_path)
 
 
 class TestValidateBlockNonZeroReturnCode:
@@ -614,8 +610,8 @@ class TestValidateBlockNonZeroReturnCode:
             args=[], returncode=1, stdout="", stderr="syntax error"
         )
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", return_value=mock_result),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", return_value=mock_result),
         ):
             mock_cfg.exists.return_value = False
             ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -633,8 +629,8 @@ class TestValidateBlockStderrEmptyStdoutPresent:
             args=[], returncode=1, stdout="parse error: unexpected token", stderr=""
         )
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", return_value=mock_result),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", return_value=mock_result),
         ):
             mock_cfg.exists.return_value = False
             ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -648,8 +644,8 @@ class TestValidateBlockStderrEmptyStdoutPresent:
             args=[], returncode=1, stdout="syntax error", stderr=""
         )
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", return_value=mock_result),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", return_value=mock_result),
             patch(
                 "validate_mermaid.extract_mermaid_blocks",
                 return_value=["graph TD\n  A --> B\n"],
@@ -691,8 +687,8 @@ class TestValidateBlockRetryCountEnv:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_fail_once_then_succeed),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_fail_once_then_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -729,8 +725,8 @@ class TestValidateBlockRetryDelayEnv:
             return None
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_fail_once_then_succeed),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_fail_once_then_succeed),
             patch("time.sleep", fake_sleep),
         ):
             mock_cfg.exists.return_value = False
@@ -757,9 +753,9 @@ class TestValidateBlockRetryCountCustom:
             )
 
         with (
-            patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_COUNT": "0"}),
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_always_fail),
+            patch.dict("mermaid_validation.os.environ", {"MMDC_RETRY_COUNT": "0"}),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_always_fail),
         ):
             mock_cfg.exists.return_value = False
             ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -787,9 +783,9 @@ class TestValidateBlockRetryCountCustom:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_COUNT": "2"}),
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_fail_twice_then_succeed),
+            patch.dict("mermaid_validation.os.environ", {"MMDC_RETRY_COUNT": "2"}),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_fail_twice_then_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -809,8 +805,8 @@ class TestValidateBlockNoRetryOnFileNotFoundError:
             raise FileNotFoundError("mmdc not found")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_raise_file_not_found),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_raise_file_not_found),
         ):
             mock_cfg.exists.return_value = False
             ok, err = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -848,9 +844,9 @@ class TestValidateBlockRetryDelayCustom:
             return None
 
         with (
-            patch.dict("validate_mermaid.os.environ", {"MMDC_RETRY_DELAY_SECONDS": "5"}),
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_fail_once_then_succeed),
+            patch.dict("mermaid_validation.os.environ", {"MMDC_RETRY_DELAY_SECONDS": "5"}),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_fail_once_then_succeed),
             patch("time.sleep", fake_sleep),
         ):
             mock_cfg.exists.return_value = False
@@ -882,8 +878,8 @@ class TestValidateBlockRetryOnlyTransient:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_timeout_once_then_succeed),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_timeout_once_then_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -913,8 +909,8 @@ class TestValidateBlockRetryOnlyTransient:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.subprocess.run", side_effect=_degenerate_once_then_succeed),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.subprocess.run", side_effect=_degenerate_once_then_succeed),
         ):
             mock_cfg.exists.return_value = False
             ok, _ = validate_mermaid.validate_block(1, "graph TD\n  A --> B\n")
@@ -927,42 +923,42 @@ class TestValidateMmdFile:
 
     def test_returns_1_when_file_not_found(self, tmp_path):
         repo_root = tmp_path
-        result = validate_mermaid._validate_mmd_file(str(tmp_path / "nonexistent.mmd"), repo_root)
+        result = mermaid_validation._validate_mmd_file(str(tmp_path / "nonexistent.mmd"), repo_root)
         assert result == 1
 
     def test_returns_1_when_path_outside_repo_root(self, tmp_path):
         outside = tmp_path.parent / "outside.mmd"
         outside.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
-        result = validate_mermaid._validate_mmd_file(str(outside), tmp_path)
+        result = mermaid_validation._validate_mmd_file(str(outside), tmp_path)
         assert result == 1
 
     def test_returns_0_when_diagram_passes(self, tmp_path):
         mmd = tmp_path / "flow.mmd"
         mmd.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.validate_block", return_value=(True, "")),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.validate_block", return_value=(True, "")),
         ):
             mock_cfg.exists.return_value = False
-            result = validate_mermaid._validate_mmd_file(str(mmd), tmp_path)
+            result = mermaid_validation._validate_mmd_file(str(mmd), tmp_path)
         assert result == 0
 
     def test_returns_1_when_diagram_fails(self, tmp_path):
         mmd = tmp_path / "flow.mmd"
         mmd.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
         with (
-            patch("validate_mermaid.PUPPETEER_CONFIG") as mock_cfg,
-            patch("validate_mermaid.validate_block", return_value=(False, "bad diagram")),
+            patch("mermaid_validation.PUPPETEER_CONFIG") as mock_cfg,
+            patch("mermaid_validation.validate_block", return_value=(False, "bad diagram")),
         ):
             mock_cfg.exists.return_value = False
-            result = validate_mermaid._validate_mmd_file(str(mmd), tmp_path)
+            result = mermaid_validation._validate_mmd_file(str(mmd), tmp_path)
         assert result == 1
 
     def test_returns_1_on_read_error(self, tmp_path):
         mmd = tmp_path / "flow.mmd"
         mmd.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
-        with patch("validate_mermaid.Path.read_text", side_effect=OSError("perm denied")):
-            result = validate_mermaid._validate_mmd_file(str(mmd), tmp_path)
+        with patch("mermaid_validation.Path.read_text", side_effect=OSError("perm denied")):
+            result = mermaid_validation._validate_mmd_file(str(mmd), tmp_path)
         assert result == 1
 
 
@@ -1018,37 +1014,37 @@ class TestDiscoverFiles:
     """Tests for the new discover_files() function — canonical exclusion rules."""
 
     def test_discover_md_includes_google_files(self):
-        md_files, _mmd_files = validate_mermaid.discover_files()
+        md_files, _mmd_files = mermaid_discovery.discover_files()
         assert any("docs/google/files" in p for p in md_files), (
             "Google Cloud Markdown files not found by discover_files()"
         )
 
     def test_discover_md_includes_programming_files(self):
-        md_files, _mmd_files = validate_mermaid.discover_files()
+        md_files, _mmd_files = mermaid_discovery.discover_files()
         assert any("docs/programming" in p for p in md_files), (
             "Programming Markdown files not found by discover_files()"
         )
 
     def test_discover_md_excludes_azure_diagrams(self):
-        md_files, _mmd_files = validate_mermaid.discover_files()
+        md_files, _mmd_files = mermaid_discovery.discover_files()
         assert not any("docs/azure/diagrams" in p for p in md_files), (
             "docs/azure/diagrams Markdown files must be excluded by discover_files()"
         )
 
     def test_discover_md_excludes_overrides(self):
-        md_files, _mmd_files = validate_mermaid.discover_files()
+        md_files, _mmd_files = mermaid_discovery.discover_files()
         assert not any("docs/overrides" in p for p in md_files), (
             "docs/overrides paths must be excluded by discover_files()"
         )
 
     def test_discover_mmd_includes_google_diagrams(self):
-        _md_files, mmd_files = validate_mermaid.discover_files()
+        _md_files, mmd_files = mermaid_discovery.discover_files()
         assert any("docs/google/diagrams" in p for p in mmd_files), (
             "Google Cloud diagrams not found by discover_files()"
         )
 
     def test_discover_mmd_includes_programming_diagrams(self):
-        _md_files, mmd_files = validate_mermaid.discover_files()
+        _md_files, mmd_files = mermaid_discovery.discover_files()
         assert any("docs/programming" in p for p in mmd_files), (
             "Programming diagrams not found by discover_files()"
         )
@@ -1080,21 +1076,17 @@ class TestDiscoveryIncludesGoogleCloud:
 
     def test_makefile_mmd_find_output_includes_google_diagrams(self, tmp_path):
         """MMD_FILES_VALIDATE discovery must produce Google Cloud .mmd paths."""
-        import validate_mermaid
-
-        _, mmd_files = validate_mermaid.discover_files()
+        _, mmd_files = mermaid_discovery.discover_files()
         assert any("docs/google/diagrams" in p for p in mmd_files), (
-            "Google Cloud diagrams not found by validate_mermaid.discover_files(). "
+            "Google Cloud diagrams not found by mermaid_discovery.discover_files(). "
             "If you see this, the discover_files() exclusion rules are too aggressive."
         )
 
     def test_makefile_md_find_output_includes_google_files(self, tmp_path):
         """MD_FILES_VALIDATE discovery must produce Google Cloud .md paths."""
-        import validate_mermaid
-
-        md_files, _ = validate_mermaid.discover_files()
+        md_files, _ = mermaid_discovery.discover_files()
         assert any("docs/google/files" in p for p in md_files), (
-            "Google Cloud Markdown files not found by validate_mermaid.discover_files(). "
+            "Google Cloud Markdown files not found by mermaid_discovery.discover_files(). "
             "If you see this, the discover_files() exclusion rules are too aggressive."
         )
 
@@ -1129,21 +1121,17 @@ class TestDiscoveryIncludesProgramming:
 
     def test_discover_mmd_includes_programming_diagrams(self):
         """MMD discovery must produce Programming .mmd paths."""
-        import validate_mermaid
-
-        _, mmd_files = validate_mermaid.discover_files()
+        _, mmd_files = mermaid_discovery.discover_files()
         assert any("docs/programming" in p for p in mmd_files), (
-            "Programming diagrams not found by validate_mermaid.discover_files(). "
+            "Programming diagrams not found by mermaid_discovery.discover_files(). "
             "If you see this, the discover_files() exclusion rules are too aggressive."
         )
 
     def test_discover_md_includes_programming_files(self):
         """MD discovery must produce Programming .md paths."""
-        import validate_mermaid
-
-        md_files, _ = validate_mermaid.discover_files()
+        md_files, _ = mermaid_discovery.discover_files()
         assert any("docs/programming/java/files" in p for p in md_files), (
-            "Programming Markdown files not found by validate_mermaid.discover_files(). "
+            "Programming Markdown files not found by mermaid_discovery.discover_files(). "
             "If you see this, the discover_files() exclusion rules are too aggressive."
         )
 

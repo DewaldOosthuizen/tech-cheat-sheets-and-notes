@@ -17,11 +17,11 @@ from __future__ import annotations
 
 import ast
 import inspect
-
-import pytest
+from unittest.mock import patch
 
 import mermaid_discovery
 import mermaid_validation
+import pytest
 import validate_mermaid
 
 
@@ -67,7 +67,6 @@ class TestModuleBoundaries:
         }
 
     def test_discovery_owns_snippet_expansion(self):
-        assert mermaid_discovery.expand_snippets is not validate_mermaid.expand_snippets
         assert mermaid_discovery.expand_snippets.__module__ == "mermaid_discovery"
 
     def test_validation_owns_mmdc_invocation(self):
@@ -136,7 +135,67 @@ class TestReExportSurface:
 
     def test_pinned_discovery_names_resolve_to_expected_values(self):
         assert validate_mermaid._MAX_EXPAND_DEPTH == mermaid_discovery._MAX_EXPAND_DEPTH == 10
-        assert validate_mermaid.MIN_VALID_SVG_SIZE_BYTES == mermaid_validation.MIN_VALID_SVG_SIZE_BYTES
+        assert (
+            validate_mermaid.MIN_VALID_SVG_SIZE_BYTES == mermaid_validation.MIN_VALID_SVG_SIZE_BYTES
+        )
+
+
+class TestRunTupleNormalisation:
+    """run() accepts the discover_files() 2-tuple as well as a flat list."""
+
+    def test_run_concats_the_discover_files_tuple(self, tmp_path):
+        md = tmp_path / "page.md"
+        md.write_text("```mermaid\ngraph TD\n  A --> B\n```\n", encoding="utf-8")
+        mmd = tmp_path / "diagram.mmd"
+        mmd.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
+
+        with (
+            patch("validate_mermaid._repo_root", return_value=tmp_path),
+            patch("validate_mermaid.Path.is_file", return_value=True),
+            patch(
+                "validate_mermaid.extract_mermaid_blocks",
+                return_value=["graph TD\n  A --> B\n"],
+            ),
+            patch("validate_mermaid.validate_block", return_value=(True, "")),
+            patch("validate_mermaid._validate_mmd_file", return_value=0) as mock_mmd,
+        ):
+            result = validate_mermaid.run(([str(md)], [str(mmd)]))
+
+        assert result == 0
+        mock_mmd.assert_called_once()
+
+
+class TestMainGuard:
+    """The __main__ guard must remain the module's entry point."""
+
+    def test_main_guard_is_the_last_statement_of_the_module(self):
+        source = inspect.getsource(validate_mermaid)
+        guard_index = source.index('if __name__ == "__main__":')
+        tail = source[guard_index:]
+        assert "main()" in tail
+        assert tail.strip() == 'if __name__ == "__main__":\n    main()'
+
+
+class TestDiscoverFilesExclusionFilters:
+    """discover_files() applies its exclusion filters in both directions."""
+
+    def test_non_file_entries_are_skipped_and_filters_applied(self, tmp_path):
+        docs = tmp_path / "docs"
+        (docs / "azure" / "diagrams").mkdir(parents=True)
+        (docs / "overrides").mkdir(parents=True)
+        (docs / "files").mkdir(parents=True)
+        (docs / "files" / "keep.md").write_text("# keep", encoding="utf-8")
+        (docs / "files" / "diagram.mmd").write_text("graph LR\n  A-->B\n", encoding="utf-8")
+        (docs / "azure" / "diagrams" / "excluded.mmd").write_text("graph LR\n", encoding="utf-8")
+        (docs / "overrides" / "theme.md").write_text("# theme", encoding="utf-8")
+
+        with patch("mermaid_discovery._repo_root", return_value=tmp_path):
+            md_files, mmd_files = mermaid_discovery.discover_files()
+
+        # The diagrams/ and overrides/ filters exclude .md files only; .mmd
+        # files are collected from anywhere under docs/.
+        assert md_files == ["docs/files/keep.md"]
+        assert mmd_files == ["docs/azure/diagrams/excluded.mmd", "docs/files/diagram.mmd"]
 
 
 class TestOwningModuleLookupRule:
