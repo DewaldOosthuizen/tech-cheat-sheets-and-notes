@@ -35,7 +35,8 @@
 # 4. python-test (needs: mermaid-check)
 # 5. npm-audit (independent; runs in parallel with the chain)
 # 6. check-docs-deps (independent; runs in parallel with the chain)
-# 7. pr-gate-summary (needs: all above; if: always() to report status)
+# 7. link-check (independent; runs in parallel with the other checks)
+# 8. pr-gate-summary (needs: all above; if: always() to report status)
 
 name: PR Gate
 
@@ -122,7 +123,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+      - name: Cache installed Node dependencies
+        id: node-modules-cache
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('package.json', 'package-lock.json') }}
       - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: npm ci
       - name: Expose local bin on PATH
         # npm ci installs mmdc into node_modules/.bin; add it so validate_mermaid.py can call it.
@@ -144,20 +152,21 @@ jobs:
           echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > /tmp/puppeteer-config.json
           PUPPETEER_CONFIG_FILE=/tmp/puppeteer-config.json python scripts/validate_mermaid.py
 
-  # 4. Python tests with coverage gate
-  # Depends on mermaid-check; runs a single Python version (3.11) for speed.
-  # The full matrix (3.11/3.12/3.13) lives in lint.yml push-to-main CI.
+  # 4. Python tests with coverage gate across every supported Python version.
   python-test:
-    name: Python Tests (3.11)
+    name: Python Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
     needs: [mermaid-check]
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Setup Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ matrix.python-version }}
       - name: Upgrade pip
         run: pip install --upgrade pip
       - name: Install dev dependencies
@@ -209,13 +218,24 @@ jobs:
           grep -v '^[[:space:]]*#' /tmp/requirements-docs-generated.txt | grep -v '^[[:space:]]*$' > /tmp/docs-generated.txt
           diff /tmp/docs-committed.txt /tmp/docs-generated.txt
 
+  # 7. Dead-link audit
+  # Independent; runs in parallel because it doesn't depend on other checks.
+  link-check:
+    name: Dead Link Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Run dead-link audit
+        run: make link-check
+
   # Summary job — ensures all required checks pass before merge
   # if: always() guarantees this runs even if a previous job failed, so
   # the PR shows a clear "PR Gate Summary" failure instead of a gray skip.
   pr-gate-summary:
     name: PR Gate Summary
     runs-on: ubuntu-latest
-    needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit, check-docs-deps]
+    needs: [markdownlint, python-lint, mermaid-check, python-test, npm-audit, check-docs-deps, link-check]
     if: always()
     steps:
       - name: Check all jobs succeeded
@@ -242,6 +262,10 @@ jobs:
           fi
           if [[ "${{ needs.check-docs-deps.result }}" != "success" ]]; then
             echo "❌ check-docs-deps failed"
+            exit 1
+          fi
+          if [[ "${{ needs.link-check.result }}" != "success" ]]; then
+            echo "❌ link-check failed"
             exit 1
           fi
           echo "✅ All PR gate checks passed"
