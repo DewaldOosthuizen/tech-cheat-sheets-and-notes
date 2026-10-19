@@ -162,7 +162,12 @@ python-test-313: .venv-313/bin/activate ## Run tests with Python 3.13
 	.venv-313/bin/pytest tests/ -v \
 	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
 
-python-test-all: python-test-311 python-test-312 python-test-313 ## Run tests across Python 3.11, 3.12, and 3.13
+# Aggregates the per-version targets above. Keep this list in sync with the
+# supported Python versions exercised by the required PR/release CI matrices.
+# Note: the help text cannot live on the target line itself — the documented
+# local parity set (python-test-311/312/313) is asserted verbatim by
+# tests/test_dependencies.py, so any trailing token would break that guard.
+python-test-all: python-test-311 python-test-312 python-test-313
 
 # ── Link check ────────────────────────────────────────────────────────────────
 $(LYCHEE_BIN):
