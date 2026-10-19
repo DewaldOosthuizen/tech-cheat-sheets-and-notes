@@ -528,13 +528,13 @@ class TestMainMultiFile:
 
 
 # ---------------------------------------------------------------------------
-# Coverage gap tests — added to push validate_mermaid.py from 75% to ≥90%.
-# Each class targets a specific uncovered line range.
+# Coverage gap tests — added to push the Mermaid validation modules to ≥90%.
+# Each class targets a specific uncovered function.
 # ---------------------------------------------------------------------------
 
 
 class TestExpandSnippetFileRead:
-    """Covers lines 78-83: _expand_snippet reads the referenced file."""
+    """Covers _expand_snippet(): reads the referenced file."""
 
     def test_returns_file_content_when_snippet_directive_present(self, tmp_path):
         snippet_content = "flowchart LR\n  A --> B\n"
@@ -553,7 +553,7 @@ class TestExpandSnippetFileRead:
 
 
 class TestExpandSnippetsOSError:
-    """Covers lines 107-108: OSError in expand_snippets leaves directive unexpanded."""
+    """Covers expand_snippets(): an OSError leaves the directive unexpanded."""
 
     def test_missing_file_directive_left_unexpanded(self, tmp_path):
         directive = '--8<-- "missing/file.md"'
@@ -580,7 +580,7 @@ class TestExpandSnippetsRejectsTraversal:
 
 
 class TestExtractMermaidBlocksNoExpand:
-    """Covers line 158: early return when expand_snippets=False."""
+    """Covers extract_mermaid_blocks(): early return when do_expand_snippets=False."""
 
     def test_returns_raw_blocks_without_expansion(self, tmp_path):
         md = tmp_path / "page.md"
@@ -591,7 +591,7 @@ class TestExtractMermaidBlocksNoExpand:
 
 
 class TestExtractMermaidBlocksRuntimeErrorPropagation:
-    """Covers lines 182-184: RuntimeError from _expand_snippet is re-raised."""
+    """Covers extract_mermaid_blocks(): RuntimeError from _expand_snippet propagates."""
 
     def test_runtime_error_propagates_from_expand_snippet(self, tmp_path):
         md = tmp_path / "page.md"
@@ -601,7 +601,7 @@ class TestExtractMermaidBlocksRuntimeErrorPropagation:
 
 
 class TestValidateBlockNonZeroReturnCode:
-    """Covers line 194: validate_block returns False when mmdc exits non-zero."""
+    """Covers validate_block(): returns False when mmdc exits non-zero."""
 
     def test_returns_false_when_mmdc_exits_nonzero(self):
         import subprocess
@@ -620,7 +620,7 @@ class TestValidateBlockNonZeroReturnCode:
 
 
 class TestValidateBlockStderrEmptyStdoutPresent:
-    """Covers line 213 when mmdc exits non-zero with empty stderr but stdout has content."""
+    """Covers validate_block() when mmdc exits non-zero with empty stderr but stdout has content."""
 
     def test_returns_stdout_when_stderr_is_empty(self):
         import subprocess
@@ -919,7 +919,7 @@ class TestValidateBlockRetryOnlyTransient:
 
 
 class TestValidateMmdFile:
-    """Covers lines 207-228: _validate_mmd_file."""
+    """Covers _validate_mmd_file() in mermaid_validation."""
 
     def test_returns_1_when_file_not_found(self, tmp_path):
         repo_root = tmp_path
@@ -963,7 +963,7 @@ class TestValidateMmdFile:
 
 
 class TestRunWithMmdFile:
-    """Covers lines 253-255: .mmd branch in run()."""
+    """Covers the .mmd branch in validate_mermaid.run()."""
 
     def test_run_handles_standalone_mmd_file(self, tmp_path):
         mmd = tmp_path / "flow.mmd"
@@ -982,7 +982,7 @@ class TestRunWithMmdFile:
 
 
 class TestMainEntryPoint:
-    """Covers lines 301-302 and 306: main() body and __main__ guard."""
+    """Covers validate_mermaid.main() and the __main__ guard."""
 
     def test_main_calls_parse_args_and_exits(self):
         with (

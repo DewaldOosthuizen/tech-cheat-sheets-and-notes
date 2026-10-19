@@ -10,7 +10,8 @@ Fenced blocks may contain a PyMdown Snippets directive instead of inline source:
     ```
 
 When such a directive is found the content is read from the referenced file
-(resolved relative to the Markdown file's parent directory) before validation.
+(resolved relative to the ``pymdownx.snippets`` ``base_path`` configured in
+mkdocs.yml — ``<repo>/docs/`` in this project) before validation.
 Standalone ``.mmd`` files are validated directly without any expansion step.
 """
 
@@ -146,10 +147,7 @@ def extract_mermaid_blocks(
 
     expanded: list[str] = []
     for block in raw_blocks:
-        try:
-            resolved = _expand_snippet(block, snippet_base)
-        except RuntimeError:
-            raise
+        resolved = _expand_snippet(block, snippet_base)
         expanded.append(resolved if resolved is not None else block)
     return expanded
 
