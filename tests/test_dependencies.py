@@ -131,6 +131,35 @@ class TestCIPythonTestJob:
         )
 
 
+AGENTS_MD = REPO_ROOT / "AGENTS.md"
+README_MD = REPO_ROOT / "README.md"
+
+
+def _declared_supported_versions(text: str) -> tuple[str, ...]:
+    """Return the Python versions named as supported by a documentation file.
+
+    Extracts every semver ``3.x`` token from the file's supported-version
+    statement, so the value is parsed from the policy text itself rather than
+    copied from a literal that could drift away from the documentation.
+    """
+    match = re.search(r"(?im)^[^\n]*supported python versions?[^\n]*$", text)
+    assert match, "documentation must declare the supported Python versions"
+    return tuple(dict.fromkeys(re.findall(r"\b3\.\d+\b", match.group())))
+
+
+@pytest.mark.parametrize(
+    "doc_path",
+    (AGENTS_MD, README_MD),
+    ids=("AGENTS.md", "README.md"),
+)
+def test_documented_python_support_matches_ci_versions(doc_path):
+    """The documented support policy must equal the CI test matrix versions."""
+    assert _declared_supported_versions(doc_path.read_text()) == SUPPORTED_PYTHON_VERSIONS, (
+        f"{doc_path.name} must declare exactly {', '.join(SUPPORTED_PYTHON_VERSIONS)} "
+        "as the supported Python versions"
+    )
+
+
 @pytest.mark.parametrize("workflow", (PR_GATE_YML, RELEASE_YML))
 def test_python_test_workflow_matrix_covers_supported_versions(workflow):
     lines = workflow.read_text().splitlines()
