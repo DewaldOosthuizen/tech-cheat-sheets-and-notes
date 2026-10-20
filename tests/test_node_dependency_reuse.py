@@ -10,7 +10,7 @@ from conftest import REPO_ROOT
 
 MAKEFILE = REPO_ROOT / "Makefile"
 PR_GATE_YML = REPO_ROOT / ".github" / "workflows" / "pr-gate.yml"
-CACHE_ACTION_REF = "actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809"
+CACHE_ACTION_REF = "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9"
 
 
 class TestPrGateNodeModulesCache:
