@@ -224,21 +224,25 @@ docs-build: venv ## Build the documentation site in strict mode
 
 update-docs-reqs: ensure-uv ## Regenerate requirements-docs.txt from uv.lock
 	@echo "--- update-docs-reqs ---"
-	@echo "# Minimal Python dependencies for building the MkDocs documentation site." > requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@echo "# This file is auto-generated from uv.lock via:" >> requirements-docs.txt
-	@echo "#   uv export --format requirements.txt --output-file requirements-docs.txt --extra docs --no-dev --no-header --python 3.12" >> requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@echo "# Do not edit manually. To add or update documentation dependencies, edit" >> requirements-docs.txt
-	@echo "# pyproject.toml [project.optional-dependencies] docs, then run" >> requirements-docs.txt
-	@echo "# \`make update-docs-reqs\` to regenerate this file." >> requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@echo "# All three build environments consume this file:" >> requirements-docs.txt
-	@echo "#   - Local:   \`make venv\` installs the full \`[dev]\` extra (includes docs deps)" >> requirements-docs.txt
-	@echo "#   - CI:      \`pip install -r requirements-docs.txt\` in the docs-build job" >> requirements-docs.txt
-	@echo "#   - Vercel:  \`python -m pip install -r requirements-docs.txt\` in vercel.json" >> requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@$(UV) export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 >> requirements-docs.txt 2>/dev/null
+	@rm -f requirements-docs.txt.tmp
+	@( \
+		echo "# Minimal Python dependencies for building the MkDocs documentation site." > requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		echo "# This file is auto-generated from uv.lock via:" >> requirements-docs.txt.tmp && \
+		echo "#   uv export --format requirements.txt --output-file requirements-docs.txt --extra docs --no-dev --no-header --python 3.12" >> requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		echo "# Do not edit manually. To add or update documentation dependencies, edit" >> requirements-docs.txt.tmp && \
+		echo "# pyproject.toml [project.optional-dependencies] docs, then run" >> requirements-docs.txt.tmp && \
+		echo "# \`make update-docs-reqs\` to regenerate this file." >> requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		echo "# All three build environments consume this file:" >> requirements-docs.txt.tmp && \
+		echo "#   - Local:   \`make venv\` installs the full \`[dev]\` extra (includes docs deps)" >> requirements-docs.txt.tmp && \
+		echo "#   - CI:      \`pip install -r requirements-docs.txt\` in the docs-build job" >> requirements-docs.txt.tmp && \
+		echo "#   - Vercel:  \`python -m pip install -r requirements-docs.txt\` in vercel.json" >> requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		$(UV) export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 >> requirements-docs.txt.tmp 2>/dev/null && \
+		mv requirements-docs.txt.tmp requirements-docs.txt \
+	) || (rm -f requirements-docs.txt.tmp; exit 1)
 
 check-docs-deps: ensure-uv ## Verify requirements-docs.txt matches uv.lock
 	@echo "--- check-docs-deps ---"
