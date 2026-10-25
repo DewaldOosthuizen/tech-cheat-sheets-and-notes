@@ -510,3 +510,26 @@ class TestReleaseActionPinning:
             assert re.search(r"#\s*v\S+", rest), (
                 f"Action {action!r} must include a trailing version comment, got {value!r}"
             )
+
+
+class TestPRGateWorkflowPermissions:
+    """The PR Gate declares only the minimum read-only permissions."""
+
+    PR_GATE_YML = REPO_ROOT / ".github" / "workflows" / "pr-gate.yml"
+
+    def test_workflow_level_permissions_are_readonly(self):
+        content = self.PR_GATE_YML.read_text()
+        workflow = yaml.safe_load(content)
+        assert workflow["permissions"] == {"contents": "read"}, (
+            "PR Gate must declare read-only workflow-level permissions"
+        )
+
+    def test_no_job_grants_write_permission(self):
+        content = self.PR_GATE_YML.read_text()
+        workflow = yaml.safe_load(content)
+        jobs = workflow["jobs"]
+        assert jobs, "PR Gate must declare at least one job"
+        for job_name, job in jobs.items():
+            assert all(access != "write" for access in job.get("permissions", {}).values()), (
+                f"{job_name} must not grant write permissions"
+            )

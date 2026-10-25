@@ -52,6 +52,12 @@ env:
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "20"
 
+# Job-level permissions default: repository contents are read-only for PR
+# Gate jobs, which only checkout and run checks. Jobs that require write
+# access declare it explicitly at job scope.
+permissions:
+  contents: read
+
 jobs:
   # 1. Markdown content formatting
   # Runs first; failure blocks the rest of the chain.
