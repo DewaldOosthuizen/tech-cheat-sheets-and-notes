@@ -12,7 +12,7 @@ Exit codes:
 import argparse
 import re
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -78,7 +78,7 @@ def _compute_next_version(current: str, override: str | None) -> tuple[str, bool
         _parse_calver(override)
         return override, override != current
 
-    today = datetime.now().date()
+    today = datetime.now(UTC).date()
     cur_year, cur_month, cur_day, cur_micro = _parse_calver(current)
 
     if (cur_year, cur_month, cur_day) == (today.year, today.month, today.day):

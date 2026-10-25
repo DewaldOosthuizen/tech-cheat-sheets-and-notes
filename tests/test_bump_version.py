@@ -63,6 +63,28 @@ class TestVersionComputation:
             assert new_version == "2026.09.07"
             assert changed is True
 
+    def test_utc_local_date_boundary(self):
+        from datetime import UTC
+        from datetime import datetime as _dt
+        from unittest.mock import patch
+
+        from scripts.bump_version import _compute_next_version
+
+        # Fixed clock: 2026-09-07 01:30 UTC is 2026-09-06 23:30 local
+        # (a UTC-01:00 zone). The fixed implementation must derive the version
+        # from the UTC date, so this boundary case returns "2026.09.07", not
+        # "2026.09.06" which the local date would have produced.
+        fixed_now = _dt(2026, 9, 7, 1, 30, tzinfo=UTC)
+
+        with patch("scripts.bump_version.datetime") as mock_dt:
+            mock_dt.now.return_value = fixed_now
+            new_version, changed = _compute_next_version("2026.09.06", None)
+
+        assert changed is True
+        assert new_version == "2026.09.07"
+        # The implementation read the UTC calendar date, not the local wall clock.
+        mock_dt.now.assert_called_once_with(UTC)
+
     def test_same_day_increments_micro(self):
         from datetime import date
         from unittest.mock import patch
