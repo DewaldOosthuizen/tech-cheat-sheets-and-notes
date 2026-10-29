@@ -96,9 +96,7 @@ def _extract_update_docs_reqs_recipe() -> str:
     match = re.search(r"update-docs-reqs:.*?\n((?:\t[^\n]*\n?)+)", makefile)
     assert match, "Could not locate update-docs-reqs recipe in Makefile"
     commands = [
-        line.removeprefix("\t").lstrip("@")
-        for line in match.group(1).splitlines()
-        if line.strip()
+        line.removeprefix("\t").lstrip("@") for line in match.group(1).splitlines() if line.strip()
     ]
     return "\n".join(commands)
 
