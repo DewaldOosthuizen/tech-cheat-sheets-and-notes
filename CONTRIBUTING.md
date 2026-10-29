@@ -471,7 +471,9 @@ available.
 1. Edit `pyproject.toml`, adding or changing the package in the `docs` list
    under `[project.optional-dependencies]`.
 2. Run `make update-docs-reqs` to regenerate `requirements-docs.txt` from
-   the updated lockfile. This runs `uv export --extra docs --no-dev`.
+   the updated lockfile. This generates into a temporary staging file and
+   atomically replaces `requirements-docs.txt` only after `uv export` succeeds,
+   preserving the existing file and cleaning up temporary files if export fails.
 3. Run `make check-docs-deps` to verify the committed file matches the
    generated output. The check strips comment lines, so only package lines
    and hashes are compared.

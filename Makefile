@@ -30,6 +30,7 @@ VENV     := .venv
 VENV_BIN := $(VENV)/bin
 PY       := $(VENV_BIN)/python
 PIP      := $(VENV_BIN)/pip
+UV       := $(VENV_BIN)/uv
 
 PUPPETEER_CONFIG_FILE ?= /tmp/puppeteer-config.json
 LYCHEE_VERSION        ?= lychee-v0.24.2
@@ -45,9 +46,9 @@ MD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-md)
 MMD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-mmd)
 
 # ── Phony declarations ─────────────────────────────────────────────────────────
-.PHONY: help venv install \
+.PHONY: help venv install ensure-uv \
         markdownlint \
-		puppeteer-config npm-audit mermaid-check \
+		puppeteer-config npm-deps npm-audit mermaid-check \
         python-lint python-lint-fix \
         python-audit \
         python-test python-test-311 python-test-312 python-test-313 python-test-all \
@@ -58,29 +59,8 @@ MMD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-mmd)
         clean
 
 # ── Default target ─────────────────────────────────────────────────────────────
-help:
-	@echo ""
-	@echo "tech-cheat-sheets-and-notes — local CI targets"
-	@echo ""
-	@echo "  make venv              Create .venv and install dev deps (idempotent)"
-	@echo "  make install           venv + npm ci"
-	@echo "  make markdownlint      Lint Markdown files"
-	@echo "  make npm-audit         Audit Node dependencies for high-severity vulnerabilities"
-	@echo "  make mermaid-check     Validate Mermaid diagrams (MD files + .mmd files)"
-	@echo "  make python-lint       ruff check + format check (inside .venv)"
-	@echo "  make python-lint-fix   Auto-fix safe ruff violations"
-	@echo "  make python-audit      pip-audit CVE scan (inside .venv)"
-	@echo "  make python-test       pytest with coverage (inside .venv)"
-	@echo "  make python-test-all   pytest on Python 3.11, 3.12, and 3.13"
-	@echo "  make link-check        Dead-link check (auto-installs local lychee binary)"
-	@echo "  make docs-serve        Serve MkDocs site locally at http://127.0.0.1:8000"
-	@echo "  make docs-build        Build static MkDocs site into site/"
-	@echo "  make update-docs-reqs  Regenerate requirements-docs.txt from uv.lock"
-	@echo "  make check-docs-deps   Verify requirements-docs.txt matches uv.lock"
-	@echo "  make ci                Full pipeline — markdownlint, mermaid-check, lint, audit, test, docs-build"
-	@echo "  make ci-full           Full pipeline including link-check"
-	@echo "  make clean             Remove .venv, node_modules, site/, build artefacts"
-	@echo ""
+help: ## List documented Make targets
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS=":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 # ── Venv bootstrap ────────────────────────────────────────────────────────────
 # The sentinel file $(VENV_BIN)/activate is recreated only when pyproject.toml
@@ -92,53 +72,57 @@ $(VENV_BIN)/activate: pyproject.toml
 	$(PIP) install -e '.[dev]' --quiet
 	@touch $(VENV_BIN)/activate
 
-venv: $(VENV_BIN)/activate
+venv: $(VENV_BIN)/activate ## Create .venv and install development dependencies
 
 # ── Install (Python + Node) ────────────────────────────────────────────────────
-install: venv
+install: venv ## Install Python and Node development dependencies
 	npm ci
 
+ensure-uv: venv ## Install uv in the project venv when absent
+	@if [ ! -x "$(UV)" ]; then $(PIP) install uv; fi
+
 # ── markdownlint ──────────────────────────────────────────────────────────────
-markdownlint:
+markdownlint: ## Lint Markdown files
 	@echo "--- markdownlint ---"
 	npx markdownlint-cli2 $(MD_GLOBS)
 
 # ── Mermaid check ─────────────────────────────────────────────────────────────
-puppeteer-config:
+puppeteer-config: ## Configure Puppeteer for sandboxed environments
 	@echo '{"args":["--no-sandbox","--disable-setuid-sandbox"]}' > $(PUPPETEER_CONFIG_FILE)
 
-mermaid-check: venv puppeteer-config
-	@echo "--- mermaid-check ---"
+npm-deps: ## Install Node dependencies
 	npm ci
+
+mermaid-check: venv puppeteer-config npm-deps ## Validate Mermaid diagrams in Markdown and .mmd files
+	@echo "--- mermaid-check ---"
 	PUPPETEER_CONFIG_FILE=$(PUPPETEER_CONFIG_FILE) \
 	  PATH="$(CURDIR)/node_modules/.bin:$(PATH)" \
 	  $(PY) scripts/validate_mermaid.py
 
-npm-audit:
+npm-audit: npm-deps ## Audit Node dependencies for high-severity vulnerabilities
 	@echo "--- npm-audit ---"
-	npm ci
 	npm audit --audit-level=high
 
 # ── Python lint ───────────────────────────────────────────────────────────────
-python-lint: venv
+python-lint: venv ## Run Ruff checks and formatting verification
 	@echo "--- python-lint ---"
 	$(VENV_BIN)/ruff check $(LINT_TARGETS)
 	$(VENV_BIN)/ruff format --check $(LINT_TARGETS)
 
-python-lint-fix: venv
+python-lint-fix: venv ## Automatically fix safe Ruff violations and formatting
 	@echo "--- python-lint-fix ---"
 	$(VENV_BIN)/ruff check --fix $(LINT_TARGETS)
 	$(VENV_BIN)/ruff format $(LINT_TARGETS)
 
 # ── Python audit ──────────────────────────────────────────────────────────────
 # Mirrors: Audit Python dependencies step in the python-lint CI job.
-python-audit: venv
+python-audit: venv ## Scan Python dependencies for known vulnerabilities
 	@echo "--- python-audit ---"
 	$(VENV_BIN)/pip-audit --skip-editable
 
 # ── Python test ───────────────────────────────────────────────────────────────
 # Default: uses the venv created from $(PYTHON) (python3 unless overridden).
-python-test: venv
+python-test: venv ## Run tests with coverage using the default Python version
 	@echo "--- python-test ($(PY)) ---"
 	$(VENV_BIN)/pytest tests/ -v \
 	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
@@ -163,21 +147,26 @@ python-test: venv
 	.venv-313/bin/pip install -e '.[dev]' --quiet
 	@touch .venv-313/bin/activate
 
-python-test-311: .venv-311/bin/activate
+python-test-311: .venv-311/bin/activate ## Run tests with Python 3.11
 	@echo "--- python-test (3.11) ---"
 	.venv-311/bin/pytest tests/ -v \
 	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
 
-python-test-312: .venv-312/bin/activate
+python-test-312: .venv-312/bin/activate ## Run tests with Python 3.12
 	@echo "--- python-test (3.12) ---"
 	.venv-312/bin/pytest tests/ -v \
 	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
 
-python-test-313: .venv-313/bin/activate
+python-test-313: .venv-313/bin/activate ## Run tests with Python 3.13
 	@echo "--- python-test (3.13) ---"
 	.venv-313/bin/pytest tests/ -v \
 	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
 
+# Aggregates the per-version targets above. Keep this list in sync with the
+# supported Python versions exercised by the required PR/release CI matrices.
+# Note: the help text cannot live on the target line itself — the documented
+# local parity set (python-test-311/312/313) is asserted verbatim by
+# tests/test_dependencies.py, so any trailing token would break that guard.
 python-test-all: python-test-311 python-test-312 python-test-313
 
 # ── Link check ────────────────────────────────────────────────────────────────
@@ -199,9 +188,9 @@ $(LYCHEE_BIN):
 	install -m 0755 "$$binary_path" "$(LYCHEE_BIN)"; \
 	rm -rf "$$tmp_dir"
 
-ensure-lychee: $(LYCHEE_BIN)
+ensure-lychee: $(LYCHEE_BIN) ## Install lychee if its local binary is absent
 
-link-check: ensure-lychee
+link-check: ensure-lychee ## Check documentation links using lychee
 	@echo "--- link-check ---"
 	$(LYCHEE_BIN) --verbose --no-progress \
 	  --retry-wait-time 5 --max-retries 3 --timeout 30 \
@@ -212,11 +201,11 @@ link-check: ensure-lychee
 # from the cheat-sheet Markdown files via PyMdown Snippets directives.
 # MkDocs+Material renders Mermaid in-browser; no pre-compilation is required.
 
-start: venv
+start: venv ## Serve the documentation site locally with hot reload
 	@echo "--- docs-serve (http://127.0.0.1:8000) ---"
 	$(VENV_BIN)/mkdocs serve --dev-addr 127.0.0.1:8000
 
-docs-build: venv
+docs-build: venv ## Build the documentation site in strict mode
 	@echo "--- docs-build ---"
 	$(VENV_BIN)/mkdocs build --strict
 
@@ -233,27 +222,31 @@ docs-build: venv
 #   2. Run `make update-docs-reqs` to regenerate requirements-docs.txt
 #   3. Run `make check-docs-deps` to verify the file is in sync
 
-update-docs-reqs:
+update-docs-reqs: ensure-uv ## Regenerate requirements-docs.txt from uv.lock
 	@echo "--- update-docs-reqs ---"
-	@echo "# Minimal Python dependencies for building the MkDocs documentation site." > requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@echo "# This file is auto-generated from uv.lock via:" >> requirements-docs.txt
-	@echo "#   uv export --format requirements.txt --output-file requirements-docs.txt --extra docs --no-dev --no-header --python 3.12" >> requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@echo "# Do not edit manually. To add or update documentation dependencies, edit" >> requirements-docs.txt
-	@echo "# pyproject.toml [project.optional-dependencies] docs, then run" >> requirements-docs.txt
-	@echo "# \`make update-docs-reqs\` to regenerate this file." >> requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@echo "# All three build environments consume this file:" >> requirements-docs.txt
-	@echo "#   - Local:   \`make venv\` installs the full \`[dev]\` extra (includes docs deps)" >> requirements-docs.txt
-	@echo "#   - CI:      \`pip install -r requirements-docs.txt\` in the docs-build job" >> requirements-docs.txt
-	@echo "#   - Vercel:  \`python -m pip install -r requirements-docs.txt\` in vercel.json" >> requirements-docs.txt
-	@echo "#" >> requirements-docs.txt
-	@uv export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 >> requirements-docs.txt 2>/dev/null
+	@rm -f requirements-docs.txt.tmp
+	@( \
+		echo "# Minimal Python dependencies for building the MkDocs documentation site." > requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		echo "# This file is auto-generated from uv.lock via:" >> requirements-docs.txt.tmp && \
+		echo "#   uv export --format requirements.txt --output-file requirements-docs.txt --extra docs --no-dev --no-header --python 3.12" >> requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		echo "# Do not edit manually. To add or update documentation dependencies, edit" >> requirements-docs.txt.tmp && \
+		echo "# pyproject.toml [project.optional-dependencies] docs, then run" >> requirements-docs.txt.tmp && \
+		echo "# \`make update-docs-reqs\` to regenerate this file." >> requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		echo "# All three build environments consume this file:" >> requirements-docs.txt.tmp && \
+		echo "#   - Local:   \`make venv\` installs the full \`[dev]\` extra (includes docs deps)" >> requirements-docs.txt.tmp && \
+		echo "#   - CI:      \`pip install -r requirements-docs.txt\` in the docs-build job" >> requirements-docs.txt.tmp && \
+		echo "#   - Vercel:  \`python -m pip install -r requirements-docs.txt\` in vercel.json" >> requirements-docs.txt.tmp && \
+		echo "#" >> requirements-docs.txt.tmp && \
+		$(UV) export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 >> requirements-docs.txt.tmp 2>/dev/null && \
+		mv requirements-docs.txt.tmp requirements-docs.txt \
+	) || (rm -f requirements-docs.txt.tmp; exit 1)
 
-check-docs-deps:
+check-docs-deps: ensure-uv ## Verify requirements-docs.txt matches uv.lock
 	@echo "--- check-docs-deps ---"
-	@uv export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 > /tmp/requirements-docs-generated.txt 2>/dev/null && \
+	@$(UV) export --format requirements.txt --extra docs --no-dev --no-header --python 3.12 > /tmp/requirements-docs-generated.txt 2>/dev/null && \
 	(grep -v '^[[:space:]]*#' requirements-docs.txt | grep -v '^[[:space:]]*$$' > /tmp/docs-committed.txt && \
 	 grep -v '^[[:space:]]*#' /tmp/requirements-docs-generated.txt | grep -v '^[[:space:]]*$$' > /tmp/docs-generated.txt && \
 	 diff /tmp/docs-committed.txt /tmp/docs-generated.txt >/dev/null && \
@@ -265,12 +258,16 @@ check-docs-deps:
 	 exit 1)
 
 # ── Full CI pipeline ──────────────────────────────────────────────────────────
-ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test docs-build
+ci: markdownlint npm-audit mermaid-check python-lint python-audit python-test check-docs-deps docs-build ## Run the full local verification pipeline
 	@echo ""
 	@echo "=== CI passed ==="
 
+ci-full: ci link-check ## Run the full pipeline including link checks
+	@echo ""
+	@echo "=== Full CI including link-check passed ==="
+
 # ── Clean ─────────────────────────────────────────────────────────────────────
-clean:
+clean: ## Remove virtual environments, dependencies, and build artifacts
 	rm -rf $(VENV) .venv-311 .venv-312 .venv-313
 	rm -rf .tools/
 	rm -rf node_modules

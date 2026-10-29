@@ -60,6 +60,9 @@ mkdocs.yml                      — MkDocs Material site configuration
 
 Requirements: Python 3.11+, Node/npm on PATH.
 
+Supported Python versions: 3.11, 3.12, and 3.13; required PR and release
+validation run the test suite on all three versions.
+
 ```bash
 # One-time per clone: creates .venv, installs Python + Node deps
 make install

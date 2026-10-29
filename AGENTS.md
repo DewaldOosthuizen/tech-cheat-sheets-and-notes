@@ -39,10 +39,13 @@ docs/
       <section>.md          — e.g. networking/networking.md, security/security.md
   index.md                  — MkDocs home page
 scripts/
-  validate_mermaid.py       — Mermaid diagram validation helper
+  validate_mermaid.py       — CLI entry point for Mermaid diagram validation
+  mermaid_discovery.py      — Discovery and extraction of Mermaid diagram sources
+  mermaid_validation.py     — mmdc subprocess validation of diagram sources
 tests/
   conftest.py
-  test_validate_mermaid.py
+  test_mermaid_validation.py
+  test_mermaid_module_split.py
   test_<domain>_<topic>.py   — domain-organized tests (e.g. test_java_structure.py, test_aws_exam_coverage.py)
   tests/<domain>/            — domain-specific test packages (e.g. tests/azure/, tests/aws/, tests/programming/)
 mkdocs.yml                  — MkDocs Material configuration
@@ -180,7 +183,7 @@ Tests must be organized by domain/topic, not by issue number:
 
 - **Domain tests**: `tests/<domain>/test_<topic>.py` (e.g. `tests/aws/test_exam_coverage.py`)
 - **Topic tests**: `tests/test_<domain>_<topic>.py` (e.g. `test_java_structure.py`)
-- **Infrastructure tests**: `tests/test_<infrastructure>.py` (e.g. `test_validate_mermaid.py`)
+- **Infrastructure tests**: `tests/test_<infrastructure>.py` (e.g. `test_mermaid_validation.py`)
 
 **Do NOT use issue-number naming** like `test_issue_283.py`. Issue numbers are transient
 metadata that becomes stale; test files should describe WHAT is being tested, not WHY it
