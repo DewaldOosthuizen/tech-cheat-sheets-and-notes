@@ -254,6 +254,13 @@ Closes #42
 5. Request a review. Do not merge your own PR without a review.
 6. Address review feedback with follow-up commits — do not force-push a reviewed branch unless asked.
 
+7. PR Gate workflow permissions are read-only. The PR Gate workflow
+   (`.github/workflows/pr-gate.yml`) declares `permissions: contents: read`
+   at workflow level, so checkout and validation jobs operate with the
+   minimum repository access required. No job in the PR Gate writes to the
+   repository; write access is granted only to jobs that push tags or
+   create releases (Section 14).
+
 ---
 
 ## 9. Coding Standards
