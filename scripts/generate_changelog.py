@@ -32,6 +32,7 @@ except ImportError:
 # baseline selection (must stay consistent with .github/workflows/release.yml).
 CALVER_TAG_RE = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
 
+
 def _filter_calver_tags(raw_tags: list[str]) -> list[str]:
     return [tag for tag in raw_tags if CALVER_TAG_RE.match(tag.strip())]
 
