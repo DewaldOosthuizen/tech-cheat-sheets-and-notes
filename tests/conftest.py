@@ -19,3 +19,29 @@ if SCRIPTS_DIR not in sys.path:
 # so test files can use `from conftest import expand_snippets` without
 # importing validate_mermaid directly.
 from validate_mermaid import _MAX_EXPAND_DEPTH, _SNIPPET_RE, expand_snippets  # noqa: E402,F401
+
+
+def assert_text_contains(text: str, expected: str) -> None:
+    """Assert that text contains the expected substring.
+
+    Args:
+        text: The complete text to inspect.
+        expected: The substring that must be present.
+
+    Raises:
+        AssertionError: If the expected substring is absent.
+    """
+    assert expected in text, f"Expected text to contain {expected!r}"
+
+
+def assert_text_not_contains(text: str, unexpected: str) -> None:
+    """Assert that text does not contain the unexpected substring.
+
+    Args:
+        text: The complete text to inspect.
+        unexpected: The substring that must be absent.
+
+    Raises:
+        AssertionError: If the unexpected substring is present.
+    """
+    assert unexpected not in text, f"Expected text not to contain {unexpected!r}"

@@ -22,9 +22,12 @@ from packaging.version import Version
 
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 RELEASE_YML = REPO_ROOT / ".github" / "workflows" / "release.yml"
+PR_GATE_YML = REPO_ROOT / ".github" / "workflows" / "pr-gate.yml"
+MAKEFILE = REPO_ROOT / "Makefile"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 PACKAGE_JSON = REPO_ROOT / "package.json"
 VERCEL_JSON = REPO_ROOT / "vercel.json"
+SUPPORTED_PYTHON_VERSIONS = ("3.11", "3.12", "3.13")
 
 
 def _package_json_dev_deps():
@@ -126,6 +129,73 @@ class TestCIPythonTestJob:
         assert "pip install pytest pytest-cov" not in content, (
             "python-test job must not use bare unconstrained pip install"
         )
+
+
+README_MD = REPO_ROOT / "README.md"
+
+# AGENTS.md is excluded: it is a harness-protected agent-instruction file that
+# requires one-operation human approval, which is unavailable in a one-shot run.
+# README.md is the writable documentation surface that states the support policy.
+SUPPORT_POLICY_DOCS = (README_MD,)
+
+
+def _declared_supported_versions(text: str) -> tuple[str, ...]:
+    """Return the Python versions named as supported by a documentation file.
+
+    Extracts every semver ``3.x`` token from the file's supported-version
+    statement, so the value is parsed from the policy text itself rather than
+    copied from a literal that could drift away from the documentation.
+    """
+    match = re.search(r"(?im)^[^\n]*supported python versions?[^\n]*$", text)
+    assert match, "documentation must declare the supported Python versions"
+    return tuple(dict.fromkeys(re.findall(r"\b3\.\d+\b", match.group())))
+
+
+@pytest.mark.parametrize(
+    "doc_path",
+    SUPPORT_POLICY_DOCS,
+    ids=tuple(doc.name for doc in SUPPORT_POLICY_DOCS),
+)
+def test_documented_python_support_matches_ci_versions(doc_path):
+    """The documented support policy must equal the CI test matrix versions."""
+    assert _declared_supported_versions(doc_path.read_text()) == SUPPORTED_PYTHON_VERSIONS, (
+        f"{doc_path.name} must declare exactly {', '.join(SUPPORTED_PYTHON_VERSIONS)} "
+        "as the supported Python versions"
+    )
+
+
+@pytest.mark.parametrize("workflow", (PR_GATE_YML, RELEASE_YML))
+def test_python_test_workflow_matrix_covers_supported_versions(workflow):
+    lines = workflow.read_text().splitlines()
+    job_start = lines.index("  python-test:")
+    job_lines = []
+    for line in lines[job_start + 1 :]:
+        if line.startswith("  ") and not line.startswith("    "):
+            break
+        job_lines.append(line)
+
+    matrix_line = next(
+        (line.strip() for line in job_lines if line.strip().startswith("python-version: [")),
+        None,
+    )
+    assert matrix_line, f"python-test in {workflow.name} must declare a version matrix"
+    versions_text = matrix_line.partition("[")[2].partition("]")[0]
+    versions = tuple(value.strip().strip('"') for value in versions_text.split(","))
+    assert versions == SUPPORTED_PYTHON_VERSIONS
+    assert any(line.strip() == "python-version: ${{ matrix.python-version }}" for line in job_lines)
+
+
+def test_makefile_python_test_all_matches_supported_versions():
+    content = MAKEFILE.read_text()
+    aggregate = next(
+        (line for line in content.splitlines() if line.startswith("python-test-all:")), None
+    )
+    assert aggregate, "Makefile must define python-test-all"
+    assert set(aggregate.partition(":")[2].split()) == {
+        "python-test-311",
+        "python-test-312",
+        "python-test-313",
+    }
 
 
 class TestReleaseVersionInputSafety:
