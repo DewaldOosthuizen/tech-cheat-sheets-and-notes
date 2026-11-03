@@ -59,6 +59,8 @@ class TestModuleBoundaries:
         """The CLI wrapper must not import the mmdc machinery itself."""
         assert self._module_imports(validate_mermaid) == {
             "argparse",
+            "concurrent.futures",
+            "os",
             "shutil",
             "sys",
             "pathlib",
@@ -156,13 +158,15 @@ class TestRunTupleNormalisation:
                 "validate_mermaid.extract_mermaid_blocks",
                 return_value=["graph TD\n  A --> B\n"],
             ),
-            patch("validate_mermaid.validate_block", return_value=(True, "")),
-            patch("validate_mermaid._validate_mmd_file", return_value=0) as mock_mmd,
+            patch("validate_mermaid.validate_block", return_value=(True, "")) as mock_validate,
         ):
             result = validate_mermaid.run(([str(md)], [str(mmd)]))
 
         assert result == 0
-        mock_mmd.assert_called_once()
+        # The standalone .mmd is validated through validate_block, one call per
+        # diagram block (1 in md + 1 in .mmd).  _validate_mmd_file is no longer
+        # the routing for .mmd files.
+        assert mock_validate.call_count == 2
 
 
 class TestMainGuard:
@@ -204,8 +208,9 @@ class TestOwningModuleLookupRule:
     def test_run_resolves_discovery_names_in_wrapper_globals(self):
         source = inspect.getsource(validate_mermaid.run)
         assert "_repo_root" in source
-        assert "extract_mermaid_blocks" in source
-        assert "_validate_mmd_file" in source
+        assert "_discover_work_items" in source
+        assert "_validate_work_items" in source
+        assert "_render_output" in source
 
     def test_main_resolves_discovery_in_wrapper_globals(self):
         assert "discover_files" in inspect.getsource(validate_mermaid.main)

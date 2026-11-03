@@ -176,20 +176,50 @@ Validate all Mermaid diagrams (snippet refs in cheat sheets + standalone `.mmd` 
 make mermaid-check
 ```
 
+Bounded-parallel validation:
+
+`validate_mermaid.py` now validates diagrams concurrently using a bounded
+thread pool (see the `MERMYDRID_MAX_WORKERS` / `--max-workers` documentation
+above). The duration of `make mermaid-check` is recorded to measure the
+performance improvement:
+
+1. Record the baseline before the change: `make mermaid-check` (previously
+   ≈240 s with the serial implementation).
+2. After the change, record the post-change duration the same way, using the
+   same diagram set and environment. Both measurements are compared in the
+   PR description.
+
+Baseline: ≈240 s (measured). Post-change: record the measured value here.
+
 `validate_mermaid.py` respects two environment variables:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `PUPPETEER_CONFIG_FILE` | `<tmp>/puppeteer-config.json` | Path to a Puppeteer config file passed to `mmdc --puppeteerConfigFile` |
-| `MMDC_TIMEOUT_SECONDS` | `60` | Timeout in seconds passed to `subprocess.run()` when invoking `mmdc`. Set higher on slow CI runners where headless Chromium stalls. |
+|| Variable | Default | Purpose |
+||----------|---------|---------|
+|| `PUPPETEER_CONFIG_FILE` | `<tmp>/puppeteer-config.json` | Path to a Puppeteer config file passed to `mmdc --puppeteerConfigFile` |
+|| `MMDC_TIMEOUT_SECONDS` | `60` | Timeout in seconds passed to `subprocess.run()` when invoking `mmdc`. Set higher on slow CI runners where headless Chromium stalls. |
+
+Bounded-parallel worker limit:
+
+`validate_mermaid.py` validates diagrams concurrently using a bounded thread pool.
+The pool size is controlled by:
+
+|| Variable / flag | Default | Purpose |
+||-----------------|---------|---------|
+|| `MERMYDRID_MAX_WORKERS` env var | `4` | Maximum number of concurrent mmdc subprocesses. Set to a higher value on developer machines with many CPU cores, or lower on slow CI runners to avoid OOM. Must be a positive integer; non-integer and values below 1 fall back to the default. |
+|| `--max-workers` CLI flag | `None` | Overrides `MERMYDRID_MAX_WORKERS` for one invocation. |
+
+Validation is performed in three phases — discover/normalise into a flat ordered
+work list, validate every work item concurrently with a bounded thread pool, and
+render the results back in original (file, diagram) order — so the output stays
+deterministic and every failing diagram is reported against its source file.
 
 `validate_mermaid.py` exit codes:
 
-| Exit code | Meaning |
-|-----------|---------|
-| `0` | All diagrams passed validation (or no diagrams found — see note below). |
-| `1` | One or more diagrams failed validation, or a specified file was not found. |
-| `2` | `mmdc` is not installed or not on `PATH`. |
+|| Exit code | Meaning |
+||-----------|---------|
+|| `0` | All diagrams passed validation (or no diagrams found — see note below). |
+|| `1` | One or more diagrams failed validation, or a specified file was not found. |
+|| `2` | `mmdc` is not installed or not on `PATH`. |
 
 > **Note:** When no Mermaid blocks are found the script emits a WARNING to
 > stderr and exits `0` — it does not treat missing diagrams as an error.
