@@ -11,7 +11,7 @@ repos:
     rev: v0.17.2
     hooks:
       - id: markdownlint-cli2
-        files: ^(docs/.*\.md|README\.md|AGENTS\.md)$
+        files: ^(docs/.*\.md|README\.md|AGENTS\.md|CONTRIBUTING\.md)$
 
   - repo: local
     hooks:

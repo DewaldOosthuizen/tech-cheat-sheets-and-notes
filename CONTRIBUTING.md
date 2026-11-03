@@ -127,6 +127,11 @@ markdownlint only and complete in seconds.
 > compatible release of ruff-pre-commit. This ensures local hooks and CI always
 > run the same Ruff version.
 
+The pre-commit `markdownlint-cli2` hook now covers the same Markdown files as
+the Makefile `markdownlint` target and both GitHub Actions workflows
+(`.github/workflows/pr-gate.yml` and `.github/workflows/release.yml`):
+`docs/**/*.md`, `README.md`, `AGENTS.md`, and `CONTRIBUTING.md`.
+
 Option B installs the local `pre-commit` hook shipped in this repository
 (`.git/hooks/pre-commit`).  That hook runs the **full** `make ci` pipeline —
 markdownlint, Mermaid validation, ruff, pytest, and strict MkDocs build — and
