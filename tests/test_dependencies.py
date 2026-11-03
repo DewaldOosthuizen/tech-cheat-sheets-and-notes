@@ -347,6 +347,31 @@ class TestContributingDevSetup:
         )
 
 
+class TestPreCommitRuffRevision:
+    """The pre-commit Ruff revision must track pyproject.toml's supported Ruff range."""
+
+    @staticmethod
+    def _pre_commit_ruff_revision() -> str:
+        """Return the ruff-pre-commit rev declared in .pre-commit-config.yaml."""
+        with open(REPO_ROOT / ".pre-commit-config.yaml", encoding="utf-8") as fh:
+            config = yaml.safe_load(fh)
+        for repo in config["repos"]:
+            if repo.get("repo") == "https://github.com/astral-sh/ruff-pre-commit":
+                return repo["rev"]
+        raise AssertionError("ruff-pre-commit repo not found in .pre-commit-config.yaml")
+
+    def test_ruff_pre_commit_revision_within_supported_range(self):
+        """The pre-commit Ruff revision must satisfy pyproject.toml's ruff constraint."""
+        revision = self._pre_commit_ruff_revision()
+        version = Version(revision.lstrip("v"))
+        assert version >= Version("0.17.1"), (
+            f"pre-commit Ruff revision {revision} is below the supported lower bound >=0.17.1"
+        )
+        assert version < Version("1"), (
+            f"pre-commit Ruff revision {revision} is at or above major version 1"
+        )
+
+
 # ── Issues #293, #295, #296: Pin dependency versions and enforce strict builds ──
 
 
