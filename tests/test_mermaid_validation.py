@@ -135,7 +135,7 @@ class TestExtractMermaidBlocks:
 
 
 class TestPathlibRefactor:
-    """Tests for pathlib usage in validate_block() and run()."""
+    """Tests for pathlib usage in validate_block() and run()/discovery."""
 
     def test_validate_block_unlinks_tmp_via_pathlib(self):
         """Cleanup must use Path.unlink, not os.unlink."""
@@ -146,14 +146,14 @@ class TestPathlibRefactor:
         assert "os.path.exists" not in src, "_run_mmdc must not use os.path.exists"
         assert "unlink(missing_ok=True)" in src
 
-    def test_main_uses_pathlib_is_file(self):
-        """run() must check the markdown file via Path.is_file(), not os.path.isfile()."""
+    def test_discover_work_items_uses_pathlib_is_file(self):
+        """File existence checks must use Path.is_file(), not os.path.isfile()."""
         import inspect
 
         import validate_mermaid as vm
 
-        src = inspect.getsource(vm.run)
-        assert "os.path.isfile" not in src, "run() must not use os.path.isfile"
+        src = inspect.getsource(vm._discover_work_items)
+        assert "os.path.isfile" not in src, "_discover_work_items must not use os.path.isfile"
         assert ".is_file()" in src
 
     def test_import_os_present_in_validation_module(self):
@@ -970,7 +970,7 @@ class TestRunWithMmdFile:
         mmd.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
         with (
             patch("validate_mermaid.shutil.which", return_value="/usr/bin/mmdc"),
-            patch("validate_mermaid._validate_mmd_file", return_value=0) as mock_validate,
+            patch("validate_mermaid.validate_block", return_value=(True, "")) as mock_validate,
             patch(
                 "validate_mermaid._repo_root",
                 return_value=tmp_path,
@@ -1145,3 +1145,188 @@ class TestDiscoveryIncludesProgramming:
             "CI mermaid-check must not inline find commands — "
             "discovery moved to validate_mermaid.py"
         )
+
+
+class TestBoundedParallel:
+    """Tests for the bounded-parallel validation phase.
+
+    These tests pin the worker-limit configuration and the concurrency bound
+    so a regression that drops concurrency, breaks the default limit, or
+    re-serialises the pool would fail the suite.
+    """
+
+    def test_worker_limit_defaults_to_4(self):
+        """With MERMYDRID_MAX_WORKERS unset, _worker_limit() returns 4."""
+        assert validate_mermaid._worker_limit() == 4
+
+    def test_worker_limit_respects_env_var(self):
+        """MERMYDRID_MAX_WORKERS=2 caps the pool at 2 workers."""
+        with patch.dict("validate_mermaid.os.environ", {"MERMYDRID_MAX_WORKERS": "2"}):
+            assert validate_mermaid._worker_limit() == 2
+
+    def test_worker_limit_ignores_bad_env(self):
+        """Non-integer MERMYDRID_MAX_WORKERS falls back to 4."""
+        with patch.dict("validate_mermaid.os.environ", {"MERMYDRID_MAX_WORKERS": "nope"}):
+            assert validate_mermaid._worker_limit() == 4
+
+    def test_executor_created_with_worker_limit(self):
+        """The executor is created with max_workers = the worker limit."""
+        with patch("validate_mermaid.concurrent.futures.ThreadPoolExecutor") as mock_executor:
+            # Make the mock behave as a context manager that returns itself.
+            mock_executor.return_value.__enter__.return_value = mock_executor.return_value
+            validate_mermaid._validate_work_items([], 4)
+            mock_executor.assert_called_once_with(max_workers=4)
+
+    def test_parallel_mmdc_subprocesses_within_cap(self):
+        """At most MERMYDRID_MAX_WORKERS mmdc subprocesses run concurrently."""
+        import subprocess
+        import threading
+
+        import validate_mermaid
+
+        max_workers = 4
+        with (
+            patch.dict(
+                "mermaid_validation.os.environ",
+                {"MERMYDRID_MAX_WORKERS": str(max_workers)},
+            ),
+            patch("mermaid_validation.subprocess.run") as mock_run,
+        ):
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+
+            call_count = 0
+            running = 0
+            max_running = 0
+            lock = threading.Lock()
+
+            def tracking_run(*args, **kwargs):
+                nonlocal call_count
+                nonlocal running
+                nonlocal max_running
+                with lock:
+                    call_count += 1
+                    running += 1
+                    max_running = max(max_running, running)
+                try:
+                    # Return a successful result directly; the caller only
+                    # inspects the CompletedProcess, not the underlying
+                    # mock itself.
+                    return mock_run.return_value
+                finally:
+                    with lock:
+                        running -= 1
+
+            mock_run.side_effect = tracking_run
+
+            work_items = [
+                ("file1.md", 1, "graph TD\n  A --> B\n", False),
+                ("file1.md", 2, "graph LR\n  C --> D\n", False),
+                ("file1.md", 3, "graph TD\n  E --> F\n", False),
+                ("file1.md", 4, "graph LR\n  G --> H\n", False),
+                ("file1.md", 5, "graph TD\n  I --> J\n", False),
+            ]
+
+            results = validate_mermaid._validate_work_items(work_items, max_workers)
+
+        with lock:
+            # All work items must be processed; the number of subprocess.run
+            # calls can exceed the work-item count because validate_block
+            # retries transient failures.
+            assert call_count >= len(work_items)
+            assert max_running <= max_workers
+            assert len(results) == len(work_items)
+
+
+class TestDeterministicOrdering:
+    """Tests for rendering results in the original order.
+
+    The work list is flat and ordered; _validate_work_items stores results by
+    work-item index, so a racing completion order cannot affect the rendered
+    output.
+    """
+
+    def test_render_output_uses_original_order(self, capsys):
+        """Rendered output lists diagrams in original (file, diagram) order."""
+        import validate_mermaid
+
+        work_items = [
+            ("file1.md", 1, "graph TD\n  A --> B\n", False),
+            ("file1.md", 2, "graph LR\n  C --> D\n", False),
+            ("file1.md", 3, "graph TD\n  E --> F\n", False),
+        ]
+        results = [
+            ("file1.md", 1, True, "", False),
+            ("file1.md", 2, True, "", False),
+            ("file1.md", 3, True, "", False),
+        ]
+
+        validate_mermaid._render_output(work_items, results)
+
+        captured = capsys.readouterr()
+        out = captured.out
+        assert out.count("Diagram 1: PASS") == 1
+        assert out.count("Diagram 2: PASS") == 1
+        assert out.count("Diagram 3: PASS") == 1
+        assert (
+            out.index("Diagram 1: PASS")
+            < out.index("Diagram 2: PASS")
+            < out.index("Diagram 3: PASS")
+        )
+
+
+class TestFailureAggregation:
+    """Tests for failure aggregation and .mmd file handling.
+
+    Several failing diagrams must still produce per-file summaries and a
+    non-zero exit code, not a silently swallowed aggregate.
+    """
+
+    def test_failure_aggregation(self, capsys):
+        """Two failing diagrams in two files produce per-file summaries and exit code 1."""
+        import validate_mermaid
+
+        with (
+            patch("validate_mermaid.Path.is_file", return_value=True),
+            patch(
+                "validate_mermaid.extract_mermaid_blocks",
+                side_effect=[
+                    ["graph TD\n  A --> B\n"],
+                    ["graph LR\n  C --> D\n"],
+                ],
+            ),
+            patch(
+                "validate_mermaid.validate_block",
+                side_effect=[(False, "syntax error"), (False, "unknown identifier")],
+            ),
+        ):
+            result = validate_mermaid.run(["file1.md", "file2.md"])
+
+        captured = capsys.readouterr()
+        out = captured.out
+        assert result == 1
+        assert out.count("Diagram 1: FAIL") == 2
+        assert out.count("1 diagram(s) failed validation.") == 2
+        # The source file is printed above each block.
+        assert "file1.md" in out
+        assert "file2.md" in out
+
+    def test_failing_standalone_mmd_file(self, tmp_path, capsys):
+        """A failing standalone .mmd file produces a FAIL line and exit code 1."""
+        import validate_mermaid
+
+        mmd_file = tmp_path / "flow.mmd"
+        mmd_file.write_text("flowchart LR\n  A-->B\n", encoding="utf-8")
+
+        with (
+            patch("validate_mermaid.shutil.which", return_value="/usr/bin/mmdc"),
+            patch("validate_mermaid.validate_block", return_value=(False, "render error")),
+            patch("validate_mermaid._repo_root", return_value=tmp_path),
+        ):
+            result = validate_mermaid.run([str(mmd_file)])
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Diagram: FAIL" in captured.out
+        assert "render error" in captured.out
