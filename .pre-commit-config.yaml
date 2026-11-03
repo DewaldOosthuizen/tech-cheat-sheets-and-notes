@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.13
+    rev: v0.17.3
     hooks:
       - id: ruff
         args: [--fix, scripts/, tests/]
@@ -11,7 +11,7 @@ repos:
     rev: v0.17.2
     hooks:
       - id: markdownlint-cli2
-        files: ^(docs/.*\.md|README\.md|AGENTS\.md)$
+        files: ^(docs/.*\.md|README\.md|AGENTS\.md|CONTRIBUTING\.md)$
 
   - repo: local
     hooks:

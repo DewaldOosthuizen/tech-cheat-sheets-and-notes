@@ -120,6 +120,18 @@ Option A installs the [pre-commit](https://pre-commit.com/) framework hooks
 defined in `.pre-commit-config.yaml` (if present).  Those hooks run ruff and
 markdownlint only and complete in seconds.
 
+> Note: the ruff revision pinned in `.pre-commit-config.yaml` must track the
+> `[project.optional-dependencies] dev` ruff constraint declared in
+> `pyproject.toml` (currently `>=0.17.1,<1`). When a change to the pyproject
+> ruff version range is merged, update `.pre-commit-config.yaml` to the latest
+> compatible release of ruff-pre-commit. This ensures local hooks and CI always
+> run the same Ruff version.
+
+The pre-commit `markdownlint-cli2` hook now covers the same Markdown files as
+the Makefile `markdownlint` target and both GitHub Actions workflows
+(`.github/workflows/pr-gate.yml` and `.github/workflows/release.yml`):
+`docs/**/*.md`, `README.md`, `AGENTS.md`, and `CONTRIBUTING.md`.
+
 Option B installs the local `pre-commit` hook shipped in this repository
 (`.git/hooks/pre-commit`).  That hook runs the **full** `make ci` pipeline —
 markdownlint, Mermaid validation, ruff, pytest, and strict MkDocs build — and
