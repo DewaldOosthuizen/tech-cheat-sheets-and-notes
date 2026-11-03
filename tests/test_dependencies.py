@@ -358,9 +358,7 @@ class TestPreCommitRuffRevision:
         for repo in config["repos"]:
             if repo.get("repo") == "https://github.com/astral-sh/ruff-pre-commit":
                 return repo["rev"]
-        raise AssertionError(
-            "ruff-pre-commit repo not found in .pre-commit-config.yaml"
-        )
+        raise AssertionError("ruff-pre-commit repo not found in .pre-commit-config.yaml")
 
     def test_ruff_pre_commit_revision_within_supported_range(self):
         """The pre-commit Ruff revision must satisfy pyproject.toml's ruff constraint."""
