@@ -16,7 +16,7 @@ dev = [
     "pymdown-extensions>=12.2",
     "pytest>=9.2.0,<10",
     "pytest-cov>=7.1.0,<8",
-    "ruff>=0.17.3,<1",
+    "ruff>=0.17.4,<1",
     "setuptools>=84.2.1",
 ]
 docs = [
