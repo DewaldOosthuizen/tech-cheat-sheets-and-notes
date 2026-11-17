@@ -577,8 +577,14 @@ input overrides the computed CalVer. `skip_deploy` skips only the Vercel
 production deployment. Override versions must be real calendar dates
 (YYYY.MM.DD[.micro], a valid YYYY-MM-DD date) and the optional micro
 component must be a non-negative integer. `skip_changelog` uses GitHub-generated release notes
-with the preceding CalVer tag as the baseline; when there is no prior tag,
-GitHub-generated notes are used without an explicit baseline tag.
+with the latest existing CalVer tag as the baseline for a new release; when
+there is no prior tag, GitHub-generated notes are used without an explicit
+baseline tag. If a run pushes a CalVer tag but does not create its GitHub
+Release, rerunning detects the tag at `HEAD` and creates the missing Release
+without recomputing or pushing the tag. Recovery-generated notes use the
+immediately preceding CalVer tag as their baseline, or omit the explicit
+baseline when none exists. The production deployment depends on successful
+release completion and checks out the selected release tag.
 
 The workflow defaults to read-only `contents` permissions. Only the
 `version-tag-release` job receives `contents: write`, which it needs to push
