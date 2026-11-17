@@ -27,7 +27,7 @@ MAKEFILE = REPO_ROOT / "Makefile"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 PACKAGE_JSON = REPO_ROOT / "package.json"
 VERCEL_JSON = REPO_ROOT / "vercel.json"
-SUPPORTED_PYTHON_VERSIONS = ("3.11", "3.12", "3.13")
+SUPPORTED_PYTHON_VERSIONS = ("3.11", "3.12", "3.13", "3.14")
 
 
 def _package_json_dev_deps():
@@ -195,6 +195,7 @@ def test_makefile_python_test_all_matches_supported_versions():
         "python-test-311",
         "python-test-312",
         "python-test-313",
+        "python-test-314",
     }
 
 
