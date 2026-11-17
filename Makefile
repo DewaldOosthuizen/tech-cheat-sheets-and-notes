@@ -12,7 +12,7 @@
 #   make python-lint       ruff check + ruff format --check
 #   make python-lint-fix   Auto-fix safe ruff violations
 #   make python-test       pytest with coverage (default venv Python)
-#   make python-test-all   pytest across Python 3.11, 3.12, 3.13
+#   make python-test-all   pytest across Python 3.11, 3.12, 3.13, 3.14
 #   make link-check        Dead-link check (requires lychee on PATH)
 #   make docs-serve        Serve the MkDocs site locally (hot-reload)
 #   make docs-build        Build the static MkDocs site into site/
@@ -51,7 +51,7 @@ MMD_FILES_VALIDATE := $(shell $(PY) scripts/validate_mermaid.py --discover-mmd)
 		puppeteer-config npm-deps npm-audit mermaid-check \
         python-lint python-lint-fix \
         python-audit \
-        python-test python-test-311 python-test-312 python-test-313 python-test-all \
+        python-test python-test-311 python-test-312 python-test-313 python-test-314 python-test-all \
 		ensure-lychee link-check \
         start docs-build \
         update-docs-reqs check-docs-deps \
@@ -147,6 +147,12 @@ python-test: venv ## Run tests with coverage using the default Python version
 	.venv-313/bin/pip install -e '.[dev]' --quiet
 	@touch .venv-313/bin/activate
 
+.venv-314/bin/activate: pyproject.toml
+	python3.14 -m venv .venv-314
+	.venv-314/bin/pip install --upgrade pip --quiet
+	.venv-314/bin/pip install -e '.[dev]' --quiet
+	@touch .venv-314/bin/activate
+
 python-test-311: .venv-311/bin/activate ## Run tests with Python 3.11
 	@echo "--- python-test (3.11) ---"
 	.venv-311/bin/pytest tests/ -v \
@@ -162,12 +168,17 @@ python-test-313: .venv-313/bin/activate ## Run tests with Python 3.13
 	.venv-313/bin/pytest tests/ -v \
 	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
 
+python-test-314: .venv-314/bin/activate ## Run tests with Python 3.14
+	@echo "--- python-test (3.14) ---"
+	.venv-314/bin/pytest tests/ -v \
+	  --cov=scripts --cov-report=term-missing --cov-fail-under=90
+
 # Aggregates the per-version targets above. Keep this list in sync with the
 # supported Python versions exercised by the required PR/release CI matrices.
 # Note: the help text cannot live on the target line itself — the documented
-# local parity set (python-test-311/312/313) is asserted verbatim by
+# local parity set (python-test-311/312/313/314) is asserted verbatim by
 # tests/test_dependencies.py, so any trailing token would break that guard.
-python-test-all: python-test-311 python-test-312 python-test-313
+python-test-all: python-test-311 python-test-312 python-test-313 python-test-314
 
 # ── Link check ────────────────────────────────────────────────────────────────
 $(LYCHEE_BIN):
@@ -268,7 +279,7 @@ ci-full: ci link-check ## Run the full pipeline including link checks
 
 # ── Clean ─────────────────────────────────────────────────────────────────────
 clean: ## Remove virtual environments, dependencies, and build artifacts
-	rm -rf $(VENV) .venv-311 .venv-312 .venv-313
+	rm -rf $(VENV) .venv-311 .venv-312 .venv-313 .venv-314
 	rm -rf .tools/
 	rm -rf node_modules
 	rm -rf site/
