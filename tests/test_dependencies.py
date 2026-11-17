@@ -296,6 +296,7 @@ class TestReleaseVersionInputSafety:
                 f"{step_name} must consume the validated version step output"
             )
 
+
 class TestReleaseNpmAuditGate:
     """The release validation gate must require a high-severity npm audit."""
 
@@ -518,13 +519,13 @@ class TestProductionReleaseWorkflow:
                 git_file.write(
                     "#!/bin/sh\n"
                     'case "$1" in\n'
-                    '  fetch) exit 0 ;;\n'
-                    '  tag) printf \'%s\\n\' "$MOCK_TAGS" ;;\n'
-                    '  rev-parse)\n'
+                    "  fetch) exit 0 ;;\n"
+                    "  tag) printf '%s\\n' \"$MOCK_TAGS\" ;;\n"
+                    "  rev-parse)\n"
                     '    if [ "$2" = "HEAD" ]; then printf \'%s\\n\' "$MOCK_HEAD_SHA"; '
-                    'else printf \'%s\\n\' "$MOCK_TAG_SHA"; fi ;;\n'
-                    '  *) exit 99 ;;\n'
-                    'esac\n'
+                    "else printf '%s\\n' \"$MOCK_TAG_SHA\"; fi ;;\n"
+                    "  *) exit 99 ;;\n"
+                    "esac\n"
                 )
             gh_path = os.path.join(bin_dir, "gh")
             with open(gh_path, "w", encoding="utf-8") as gh_file:
@@ -639,7 +640,8 @@ class TestProductionReleaseWorkflow:
         release_step = self._release_step(job, "Create GitHub Release")
         assert "steps.skip-check.outputs.skip != 'true'" in release_step
         assert "steps.skip-check.outputs.recovery_tag" in release_step
-        assert 'TAG="${{ steps.version.outputs.tag }}"' not in release_step
+        assert 'TAG="${{ steps.version.outputs.tag }}"' in release_step
+        assert 'if [ -n "$RECOVERY_TAG" ]; then\n            TAG="$RECOVERY_TAG"' in release_step
 
         output = re.search(r"(?m)^      tag: (.+)$", job)
         assert output, "version-tag-release must expose the selected release tag"
@@ -667,7 +669,6 @@ class TestProductionReleaseWorkflow:
         assert "steps.skip-check.outputs.recovery_notes_start_tag" in release_step
         assert "steps.skip-check.outputs.last_tag" in release_step
         assert '--notes-start-tag "$BASELINE_TAG"' in release_step
-        assert "steps.skip-check.outputs.previous_tag" in release_step
         assert "scripts/generate_changelog.py --output CHANGELOG.md" in release_step
         assert "--notes-file CHANGELOG.md" in release_step
 
@@ -748,6 +749,18 @@ class TestProductionReleaseWorkflow:
         assert '--notes-start-tag "$BASELINE_TAG"' in release_step
         assert "steps.skip-check.outputs.last_tag" in release_step
         assert "steps.skip-check.outputs.recovery_notes_start_tag" in release_step
+        baseline_selection = re.search(
+            r'(?s)if \[ -n "\$RECOVERY_TAG" \]; then\s+'
+            r'BASELINE_TAG="([^"]*)"\s+else\s+BASELINE_TAG="([^"]*)"\s+fi',
+            release_step,
+        )
+        assert baseline_selection, (
+            "Release notes must select separate recovery and normal baselines"
+        )
+        assert baseline_selection.groups() == (
+            "${{ steps.skip-check.outputs.recovery_notes_start_tag }}",
+            "${{ steps.skip-check.outputs.last_tag }}",
+        )
 
     def test_skip_changelog_without_baseline_omits_notes_start_tag(self):
         content = RELEASE_YML.read_text()

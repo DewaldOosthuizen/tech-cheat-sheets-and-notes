@@ -28,18 +28,16 @@
 #   - The release tag and GitHub Release target the main-branch commit SHA,
 #     not the PR head SHA.
 #
-# Version/tag/release skip rule
+# Version/tag/release retry rule
 # ------------------------------
-#   If HEAD's SHA equals the commit SHA of the last CalVer tag on origin/main,
-#   the bump/tag/release step is skipped and Vercel deploy proceeds with the
-#   current state. If no CalVer tag exists yet, or HEAD has moved past the
-#   last tag, the step runs: bump_version.py computes CalVer, updates
-#   pyproject.toml, commits, pushes tag, and creates a GitHub Release.
+#   If HEAD matches the latest CalVer tag, skip only when its GitHub Release
+#   exists. Otherwise, create the missing Release against that tag without
+#   recomputing or pushing it. If no tag exists or HEAD has moved past the
+#   latest tag, compute a new CalVer tag, push it, and create its Release.
 #
 # Vercel deploy
 # -------------
-#   Runs after the version step (whether it executed or was skipped). Always
-#   deploys the tag reference when a tag was created; otherwise deploys HEAD.
+#   Runs only after version-tag-release succeeds and deploys its selected tag.
 #   No environment gate — deploys straight to production.
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -308,7 +306,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     outputs:
-      tag: ${{ steps.tag.outputs.tag }}
+      tag: ${{ steps.tag.outputs.tag || steps.skip-check.outputs.release_tag }}
       skip: ${{ steps.skip-check.outputs.skip }}
     steps:
       - name: Checkout
@@ -325,20 +323,36 @@ jobs:
 
           git fetch --tags --force origin
 
-          # Baseline selection considers only CalVer tags (YYYY.MM.DD or YYYY.MM.DD.Micro),
-          # ordered by parsed numeric date then micro; the previous release is the second entry.
-          # generate_changelog.py enforces the same rule.
+          # Keep only valid CalVer tags and order them by numeric date and micro.
+          CALVER_TAGS=$(git tag -l | python3 -c '
+          import re
+          import sys
+          from datetime import date
 
-          LAST_TAG=""
-          if LAST_TAG=$(git tag -l --sort=-version:refname | grep -E '^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$' | head -n 1); then
-            : # tag found
-          fi
+          tag_pattern = re.compile(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$")
+          parsed_tags = []
+          for tag in sys.stdin.read().splitlines():
+              if not tag_pattern.fullmatch(tag):
+                  continue
+              parts = [int(part) for part in tag.split(".")]
+              try:
+                  date(parts[0], parts[1], parts[2])
+              except ValueError:
+                  continue
+              micro = parts[3] if len(parts) == 4 else 0
+              parsed_tags.append(((parts[0], parts[1], parts[2], micro), tag))
+
+          for _, tag in sorted(parsed_tags, reverse=True):
+              print(tag)
+          ')
+          mapfile -t CALVER_TAGS <<< "$CALVER_TAGS"
+          LAST_TAG="${CALVER_TAGS[0]:-}"
+          PREVIOUS_TAG="${CALVER_TAGS[1]:-}"
           echo "last_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=${PREVIOUS_TAG}" >> "$GITHUB_OUTPUT"
 
-          # Changelog/baseline rule: only CalVer tags (YYYY.MM.DD or
-          # YYYY.MM.DD.micro) count, ordered by parsed numeric date then
-          # micro; the previous release is the second entry. Enforced in
-          # scripts/generate_changelog.py as well.
+          echo "recovery=false" >> "$GITHUB_OUTPUT"
+          echo "release_tag=" >> "$GITHUB_OUTPUT"
           if [ -z "$LAST_TAG" ]; then
             echo "No existing CalVer tag found — will create one"
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -352,8 +366,18 @@ jobs:
           echo "HEAD commit:      $HEAD_SHA"
 
           if [ "$TAG_SHA" = "$HEAD_SHA" ]; then
-            echo "HEAD matches last release tag — skipping version/tag/release"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+            if gh release view "$LAST_TAG" >/dev/null 2>&1; then
+              echo "HEAD matches a tag with an existing GitHub Release — skipping"
+              echo "release_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "HEAD matches a tag without a GitHub Release — recovering release"
+              echo "recovery=true" >> "$GITHUB_OUTPUT"
+              echo "recovery_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+              echo "recovery_notes_start_tag=${PREVIOUS_TAG}" >> "$GITHUB_OUTPUT"
+              echo "release_tag=${LAST_TAG}" >> "$GITHUB_OUTPUT"
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "HEAD differs from last release tag — proceeding"
             echo "skip=false" >> "$GITHUB_OUTPUT"
@@ -362,7 +386,7 @@ jobs:
       # ── 7b. Compute CalVer tag ─────────────────────────────────────────────
       - name: Compute CalVer tag
         id: version
-        if: steps.skip-check.outputs.skip != 'true'
+        if: steps.skip-check.outputs.skip != 'true' && steps.skip-check.outputs.recovery != 'true'
         env:
           VERSION_INPUT: ${{ github.event.inputs.version }}
         run: |
@@ -418,7 +442,7 @@ jobs:
           echo "Computed version: $TAG (base=$BASE, micro=${MICRO:-none})"
 
       - name: Verify tag does not already exist
-        if: steps.skip-check.outputs.skip != 'true'
+        if: steps.skip-check.outputs.skip != 'true' && steps.skip-check.outputs.recovery != 'true'
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           if git ls-remote --tags origin | grep -q "refs/tags/${TAG}$"; then
@@ -428,7 +452,7 @@ jobs:
           echo "Tag '${{ steps.version.outputs.tag }}' does not exist yet"
 
       - name: Warn if HEAD is not yet on origin/main
-        if: steps.skip-check.outputs.skip != 'true'
+        if: steps.skip-check.outputs.skip != 'true' && steps.skip-check.outputs.recovery != 'true'
         run: |
           git fetch origin main
           if ! git diff --quiet origin/main...HEAD; then
@@ -438,7 +462,7 @@ jobs:
       # ── 7c. Tag current commit ───────────────────────────────────────────────
       - name: Create tag and push
         id: tag
-        if: steps.skip-check.outputs.skip != 'true'
+        if: steps.skip-check.outputs.skip != 'true' && steps.skip-check.outputs.recovery != 'true'
         run: |
           set -euo pipefail
 
@@ -468,11 +492,19 @@ jobs:
         if: steps.skip-check.outputs.skip != 'true'
         run: |
           TAG="${{ steps.version.outputs.tag }}"
+          RECOVERY_TAG="${{ steps.skip-check.outputs.recovery_tag }}"
+          if [ -n "$RECOVERY_TAG" ]; then
+            TAG="$RECOVERY_TAG"
+          fi
           # Changelog baseline uses only CalVer tags (YYYY.MM.DD or YYYY.MM.DD.Micro),
           # ordered by parsed date then micro, previous release as second entry.
           # generate_changelog.py enforces the same rule.
           if [[ "${{ inputs.skip_changelog }}" == "true" ]]; then
-            BASELINE_TAG="${{ steps.skip-check.outputs.last_tag }}"
+            if [ -n "$RECOVERY_TAG" ]; then
+              BASELINE_TAG="${{ steps.skip-check.outputs.recovery_notes_start_tag }}"
+            else
+              BASELINE_TAG="${{ steps.skip-check.outputs.last_tag }}"
+            fi
             if [ -n "$BASELINE_TAG" ]; then
               gh release create "$TAG" \
                 --title "Release $TAG" \
@@ -515,7 +547,7 @@ jobs:
       - name: Summary (tag)
         if: steps.skip-check.outputs.skip != 'true'
         run: |
-          TAG="${{ steps.tag.outputs.tag }}"
+          TAG="${{ steps.tag.outputs.tag || steps.skip-check.outputs.recovery_tag }}"
           BASE="${{ steps.version.outputs.base }}"
           MICRO="${{ steps.version.outputs.micro }}"
 
@@ -538,7 +570,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          ref: ${{ needs.version-tag-release.outputs.tag != '' && needs.version-tag-release.outputs.tag || github.sha }}
+          ref: ${{ needs.version-tag-release.outputs.tag }}
           fetch-depth: 0
 
       - name: Setup Python
@@ -570,10 +602,10 @@ jobs:
 
       - name: Summary (deploy)
         run: |
-          TAG_OR_SHA="${{ needs.version-tag-release.outputs.tag != '' && needs.version-tag-release.outputs.tag || github.sha }}"
+          TAG="${{ needs.version-tag-release.outputs.tag }}"
           cat <<EOF >> "$GITHUB_STEP_SUMMARY"
           ## Deployed to Vercel Production
 
-          - **Deployed:** \`${TAG_OR_SHA}\`
+          - **Deployed:** \`${TAG}\`
           - **Frontend URL:** https://tech-cheat-sheets-and-notes.vercel.app
           EOF
