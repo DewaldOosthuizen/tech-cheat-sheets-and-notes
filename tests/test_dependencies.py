@@ -27,7 +27,7 @@ MAKEFILE = REPO_ROOT / "Makefile"
 CONTRIBUTING = REPO_ROOT / "CONTRIBUTING.md"
 PACKAGE_JSON = REPO_ROOT / "package.json"
 VERCEL_JSON = REPO_ROOT / "vercel.json"
-SUPPORTED_PYTHON_VERSIONS = ("3.11", "3.12", "3.13")
+SUPPORTED_PYTHON_VERSIONS = ("3.11", "3.12", "3.13", "3.14")
 
 
 def _package_json_dev_deps():
@@ -195,6 +195,7 @@ def test_makefile_python_test_all_matches_supported_versions():
         "python-test-311",
         "python-test-312",
         "python-test-313",
+        "python-test-314",
     }
 
 
@@ -491,6 +492,204 @@ class TestProductionReleaseWorkflow:
         assert "needs: build" in version_release
         assert "needs: version-tag-release" in deploy
 
+    @staticmethod
+    def _release_step(content: str, step_name: str) -> str:
+        match = re.search(
+            rf"(?ms)^      - name: {re.escape(step_name)}\n(?P<body>.*?)(?=^      - name:|\Z)",
+            content,
+        )
+        assert match, f"Could not locate workflow step {step_name!r}"
+        return match.group("body")
+
+    @classmethod
+    def _run_skip_check(cls, *, tags, head_sha, tag_sha, release_exists):
+        content = RELEASE_YML.read_text()
+        step = cls._release_step(content, "Check if HEAD already matches last release tag")
+        match = re.search(r"(?ms)^        run: \|\n(?P<script>.*)", step)
+        assert match, "Skip-check step must contain a shell script"
+        script = "\n".join(
+            line[10:] if line.startswith("          ") else line
+            for line in match.group("script").splitlines()
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            bin_dir = os.path.join(temp_dir, "bin")
+            os.makedirs(bin_dir)
+            git_path = os.path.join(bin_dir, "git")
+            with open(git_path, "w", encoding="utf-8") as git_file:
+                git_file.write(
+                    "#!/bin/sh\n"
+                    'case "$1" in\n'
+                    "  fetch) exit 0 ;;\n"
+                    "  tag) printf '%s\\n' \"$MOCK_TAGS\" ;;\n"
+                    "  rev-parse)\n"
+                    '    if [ "$2" = "HEAD" ]; then printf \'%s\\n\' "$MOCK_HEAD_SHA"; '
+                    "else printf '%s\\n' \"$MOCK_TAG_SHA\"; fi ;;\n"
+                    "  *) exit 99 ;;\n"
+                    "esac\n"
+                )
+            gh_path = os.path.join(bin_dir, "gh")
+            with open(gh_path, "w", encoding="utf-8") as gh_file:
+                gh_file.write(
+                    "#!/bin/sh\n"
+                    'printf "%s\\n" "$*" >> "$MOCK_GH_LOG"\n'
+                    'if [ "$1" = "release" ] && [ "$2" = "view" ]; then '
+                    'exit "$MOCK_RELEASE_VIEW_EXIT"; fi\n'
+                    "exit 99\n"
+                )
+            os.chmod(git_path, 0o755)
+            os.chmod(gh_path, 0o755)
+            output_path = os.path.join(temp_dir, "github-output")
+            gh_log = os.path.join(temp_dir, "gh.log")
+            with open(output_path, "w", encoding="utf-8"):
+                pass
+            result = subprocess.run(
+                ["bash", "-euo", "pipefail", "-c", script],
+                env={
+                    **os.environ,
+                    "PATH": f"{bin_dir}:{os.environ['PATH']}",
+                    "GITHUB_OUTPUT": output_path,
+                    "MOCK_TAGS": "\n".join(tags),
+                    "MOCK_HEAD_SHA": head_sha,
+                    "MOCK_TAG_SHA": tag_sha,
+                    "MOCK_RELEASE_VIEW_EXIT": "0" if release_exists else "1",
+                    "MOCK_GH_LOG": gh_log,
+                },
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            with open(output_path, encoding="utf-8") as output_file:
+                outputs = dict(
+                    line.split("=", 1) for line in output_file.read().splitlines() if "=" in line
+                )
+            if os.path.exists(gh_log):
+                with open(gh_log, encoding="utf-8") as log_file:
+                    gh_calls = log_file.read().splitlines()
+            else:
+                gh_calls = []
+        return result, outputs, gh_calls
+
+    def test_skip_check_selects_recovery_for_incomplete_latest_tag(self):
+        tags = [
+            "2025.12.31",
+            "2026.02.01",
+            "2026.01.01.2",
+            "2026.01.01.10",
+            "2026.01.01",
+            "2026.1.01",
+            "not-a-calver-tag",
+        ]
+        result, outputs, gh_calls = self._run_skip_check(
+            tags=tags, head_sha="release-sha", tag_sha="release-sha", release_exists=False
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert outputs["last_tag"] == "2026.02.01"
+        assert outputs["previous_tag"] == "2026.01.01.10"
+        assert outputs["recovery"] == "true"
+        assert outputs["recovery_tag"] == "2026.02.01"
+        assert outputs["recovery_notes_start_tag"] == "2026.01.01.10"
+        assert outputs["release_tag"] == "2026.02.01"
+        assert outputs["skip"] == "false"
+        assert gh_calls == ["release view 2026.02.01"]
+
+    def test_skip_check_skips_only_when_latest_tag_has_a_release(self):
+        result, outputs, gh_calls = self._run_skip_check(
+            tags=["2026.02.01", "2026.01.01"],
+            head_sha="release-sha",
+            tag_sha="release-sha",
+            release_exists=True,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert outputs["skip"] == "true"
+        assert outputs["recovery"] == "false"
+        assert outputs["release_tag"] == "2026.02.01"
+        assert "recovery_tag" not in outputs
+        assert gh_calls == ["release view 2026.02.01"]
+
+    def test_skip_check_keeps_new_release_path_and_empty_preceding_tag(self):
+        result, outputs, gh_calls = self._run_skip_check(
+            tags=["2026.02.01", "2026.1.01", "release-candidate"],
+            head_sha="new-sha",
+            tag_sha="old-sha",
+            release_exists=False,
+        )
+
+        assert result.returncode == 0, result.stderr
+        assert outputs["last_tag"] == "2026.02.01"
+        assert outputs["previous_tag"] == ""
+        assert outputs["skip"] == "false"
+        assert outputs["recovery"] == "false"
+        assert outputs["release_tag"] == ""
+        assert gh_calls == []
+
+    def test_recovery_uses_existing_tag_without_computing_or_pushing_another(self):
+        content = RELEASE_YML.read_text()
+        job = self._job(content, "version-tag-release")
+        for step_name in (
+            "Compute CalVer tag",
+            "Verify tag does not already exist",
+            "Warn if HEAD is not yet on origin/main",
+            "Create tag and push",
+        ):
+            step = self._release_step(job, step_name)
+            assert "steps.skip-check.outputs.recovery != 'true'" in step, (
+                f"{step_name} must be bypassed during recovery"
+            )
+        release_step = self._release_step(job, "Create GitHub Release")
+        assert "steps.skip-check.outputs.skip != 'true'" in release_step
+        assert "steps.skip-check.outputs.recovery_tag" in release_step
+        assert 'TAG="${{ steps.version.outputs.tag }}"' in release_step
+        assert 'if [ -n "$RECOVERY_TAG" ]; then\n            TAG="$RECOVERY_TAG"' in release_step
+
+        output = re.search(r"(?m)^      tag: (.+)$", job)
+        assert output, "version-tag-release must expose the selected release tag"
+        assert "steps.skip-check.outputs.release_tag" in output.group(1)
+
+    def test_deploy_requires_successful_release_and_checks_out_the_release_tag(self):
+        content = RELEASE_YML.read_text()
+        deploy = self._job(content, "deploy")
+        assert re.search(r"(?m)^    needs: version-tag-release$", deploy)
+        assert "always()" not in deploy
+        assert "needs.version-tag-release.outputs.tag" in deploy
+        assert "github.sha" not in deploy
+
+        condition = re.search(r"(?m)^    if: \$\{\{ (?P<expr>.+) }}$", deploy)
+        assert condition
+        assert "github.ref == 'refs/heads/main'" in condition.group("expr")
+        assert "!inputs.skip_deploy" in condition.group("expr")
+
+    def test_generated_notes_baseline_differs_for_recovery_and_new_release(self):
+        content = RELEASE_YML.read_text()
+        release_step = self._release_step(
+            self._job(content, "version-tag-release"), "Create GitHub Release"
+        )
+        assert "steps.skip-check.outputs.recovery_tag" in release_step
+        assert "steps.skip-check.outputs.recovery_notes_start_tag" in release_step
+        assert "steps.skip-check.outputs.last_tag" in release_step
+        assert '--notes-start-tag "$BASELINE_TAG"' in release_step
+        assert "scripts/generate_changelog.py --output CHANGELOG.md" in release_step
+        assert "--notes-file CHANGELOG.md" in release_step
+
+    def test_release_tag_output_and_preceding_baseline_are_available_without_prior_tag(self):
+        content = RELEASE_YML.read_text()
+        skip_check = self._release_step(
+            self._job(content, "version-tag-release"),
+            "Check if HEAD already matches last release tag",
+        )
+        assert 'echo "previous_tag=${PREVIOUS_TAG}" >> "$GITHUB_OUTPUT"' in skip_check
+        release_step = self._release_step(
+            self._job(content, "version-tag-release"), "Create GitHub Release"
+        )
+        assert re.search(r'if \[ -n "\$BASELINE_TAG" \].*?--notes-start-tag', release_step, re.S)
+        assert re.search(
+            r"else\s+gh release create.*?--generate-notes(?!.*--notes-start-tag)",
+            release_step,
+            re.S,
+        )
+
     def test_mutating_jobs_have_explicit_main_ref_guards(self):
         content = RELEASE_YML.read_text()
         for job_name in ("version-tag-release", "deploy"):
@@ -543,20 +742,26 @@ class TestProductionReleaseWorkflow:
 
     def test_skip_changelog_with_prior_tag_uses_previous_tag_as_notes_baseline(self):
         content = RELEASE_YML.read_text()
-        skip_check = self._job(content, "version-tag-release")
-        release_step = re.search(
-            r"(?ms)^      - name: Create GitHub Release\n(?P<body>.*?)(?=^      - name:|\Z)",
-            skip_check,
+        release_step = self._release_step(
+            self._job(content, "version-tag-release"), "Create GitHub Release"
         )
-        assert release_step, "GitHub Release creation step must exist"
-        assert "last_tag=${LAST_TAG}" in skip_check
-        assert skip_check.index('echo "last_tag=${LAST_TAG}"') < skip_check.index(
-            'git push origin "$TAG"'
+        assert "--generate-notes" in release_step
+        assert '"${{ inputs.skip_changelog }}" == "true"' in release_step
+        assert '--notes-start-tag "$BASELINE_TAG"' in release_step
+        assert "steps.skip-check.outputs.last_tag" in release_step
+        assert "steps.skip-check.outputs.recovery_notes_start_tag" in release_step
+        baseline_selection = re.search(
+            r'(?s)if \[ -n "\$RECOVERY_TAG" \]; then\s+'
+            r'BASELINE_TAG="([^"]*)"\s+else\s+BASELINE_TAG="([^"]*)"\s+fi',
+            release_step,
         )
-        assert "--generate-notes" in release_step.group("body")
-        assert '"${{ inputs.skip_changelog }}" == "true"' in release_step.group("body")
-        assert '--notes-start-tag "$BASELINE_TAG"' in release_step.group("body")
-        assert "steps.skip-check.outputs.last_tag" in release_step.group("body")
+        assert baseline_selection, (
+            "Release notes must select separate recovery and normal baselines"
+        )
+        assert baseline_selection.groups() == (
+            "${{ steps.skip-check.outputs.recovery_notes_start_tag }}",
+            "${{ steps.skip-check.outputs.last_tag }}",
+        )
 
     def test_skip_changelog_without_baseline_omits_notes_start_tag(self):
         content = RELEASE_YML.read_text()
